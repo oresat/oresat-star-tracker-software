@@ -218,7 +218,12 @@ class StarTrackerServer:
             <signal name='error'>
                 <arg type='s' />
             </signal>
-            <property name='coor' type='(dddds)' access='read' />
+            <property name='coor' type='(dddd)' access='read'>
+                <annotation name="org.freedesktop.DBus.Property.EmitsChangedSignal" value="true" />
+            </property>
+            <property name='filepath' type='s' access='read'>
+                <annotation name="org.freedesktop.DBus.Property.EmitsChangedSignal" value="true" />
+            </property>
         </interface>
     </node>
     """
@@ -308,9 +313,17 @@ class StarTrackerServer:
     @property
     def coor(self):
         self.st_lock.acquire()
-        dec, ra, ori, t_solve, p_solve = self.dec, self.ra, self.ori, self.t_solve, self.p_solve
+        dec, ra, ori, t_solve = self.dec, self.ra, self.ori, self.t_solve
         self.st_lock.release()
-        return (dec, ra, ori, t_solve, p_solve)
+        return (dec, ra, ori, t_solve)
+
+    # Filepath of last solved image
+    @property
+    def filepath(self):
+        self.st_lock.acquire()
+        p_solve = self.p_solve
+        self.st_lock.release()
+        return p_solve
 
 ##########
 
