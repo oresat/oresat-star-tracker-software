@@ -230,6 +230,7 @@ class StarTrackerServer:
 
     # Error signal
     error = signal()
+    PropertiesChanged = signal()
 
     # Initialize properties and worker thread
     def __init__(self):
@@ -270,6 +271,7 @@ class StarTrackerServer:
 
             # Solve the image
             self.dec, self.ra, self.ori, self.l_solve = self.st.solve(img)
+            self.PropertiesChanged(INTERFACE_NAME, {"coor": self.dec}, []) #TODO need to handle the struct
             if self.dec == self.ra == self.ori == 0.0:
                 self.st.error("bad solve")
                 logger.error("bad solve (for {})".format(p_solve))
