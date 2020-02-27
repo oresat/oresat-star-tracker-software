@@ -336,6 +336,6 @@ class StarTrackerServer:
 # Test if run independently
 if __name__ == "__main__":
     server = StarTrackerServer()
-    db_root = "/opt/oresat-star-tracker-software/"
-    data_root = "/opt/oresat-star-tracker-software/datasets/downsample/"
+    db_root = "/opt/oresat-star-tracker/"
+    data_root = "/opt/oresat-star-tracker/datasets/downsample/"
     server.start(data_root + "median_image.png", data_root + "calibration.txt", db_root + "hip_main.dat", sample_dir = data_root + "samples/")
