@@ -259,6 +259,7 @@ class StarTrackerServer:
             # Capture an image
             self.st_lock.acquire()
             self.p_solve, img = self.st.capture()
+            # self.PropertiesChanged(self.interface_name, {"filepath": self.p_solve}, [])
 
             # Check the image
             check = self.st.preprocess(img)
@@ -271,7 +272,7 @@ class StarTrackerServer:
 
             # Solve the image
             self.dec, self.ra, self.ori, self.l_solve = self.st.solve(img)
-            self.PropertiesChanged(INTERFACE_NAME, {"coor": self.dec}, []) #TODO need to handle the struct
+            # self.PropertiesChanged(self.interface_name, {"coor": self.dec}, []) #TODO need to handle the struct
             if self.dec == self.ra == self.ori == 0.0:
                 self.st.error("bad solve")
                 logger.error("bad solve (for {})".format(p_solve))
@@ -282,6 +283,9 @@ class StarTrackerServer:
             # Update the solution timestamp
             self.t_solve = time.time()
             self.st_lock.release()
+
+            # Send property signal
+            self.PropertiesChanged(self.interface_name, {"filepath": self.p_solve}, [])
             time.sleep(0.5)
 
     # Start up solver and server
@@ -332,6 +336,6 @@ class StarTrackerServer:
 # Test if run independently
 if __name__ == "__main__":
     server = StarTrackerServer()
-    db_root = "/home/debian/oresat-star-tracker/openstartracker/"
-    data_root = "/home/debian/oresat-star-tracker/openstartracker/datasets/downsample/"
+    db_root = "/home/debian/oresat-star-tracker-software/"
+    data_root = "/home/debian/oresat-star-tracker-software/datasets/downsample/"
     server.start(data_root + "median_image.png", data_root + "calibration.txt", db_root + "hip_main.dat", sample_dir = data_root + "samples/")
