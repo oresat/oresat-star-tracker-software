@@ -4,8 +4,8 @@ Description=Daemon for Oresat's star tracker software.
 [Service]
 Type=forking
 PIDFile=/run/oresat-star-tracker.pid
-ExecStart=/usr/bin/python3 /home/debian/oresat-star-tracker/openstartracker/startracker_daemon.py start
-ExecStop=/usr/bin/python3 /home/debian/oresat-star-tracker/openstartracker/startracker_daemon.py stop
+ExecStart=/usr/bin/python3 /opt/oresat-star-tracker/startracker_daemon.py start
+ExecStop=/usr/bin/python3 /opt/oresat-star-tracker/startracker_daemon.py stop
 
 [Install]
 WantedBy=multi-user.target
