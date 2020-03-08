@@ -1,5 +1,5 @@
 [Unit]
-Description=Daemon for Oresat's star tracker software.
+Description=daemon for Oresat's star tracker software.
 
 [Service]
 Type=forking

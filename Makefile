@@ -4,7 +4,7 @@ INSTALL_DIR = /opt/oresat-star-tracker/
 
 install-conf:
 	cp configs/org.OreSat.StarTracker.conf /usr/share/dbus-1/system.d/
-	cp configs/oresat-startrackerd.service /usr/lib/systemd/system/
+	cp configs/oresat-startracker.service /usr/lib/systemd/system/
 
 install:
 	mkdir -p $(INSTALL_DIR)
