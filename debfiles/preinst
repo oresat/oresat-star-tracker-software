@@ -1,0 +1,6 @@
+#!/bin/sh
+PKG_NAME=oresat-startracker
+if [ -f "/usr/bin/$PKGNAME" ]; then
+	systemctl stop $PKG_NAME
+	rm -f /run/$PKG_NAME.pid
+fi
