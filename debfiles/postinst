@@ -1,5 +1,0 @@
-#!/bin/sh
-PKG_NAME=oresat-startracker
-systemctl daemon-reload
-systemctl enable $PKG_NAME
-systemctl start $PKG_NAME

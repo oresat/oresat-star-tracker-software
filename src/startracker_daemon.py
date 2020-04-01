@@ -131,8 +131,8 @@ class StarTrackerDaemon:
 if __name__ == "__main__":
     assert len(sys.argv) > 1, "usage:\t{0} start\n\t\t\t{0} stop\n\t\t\t{0} restart".format(sys.argv[0])
     daemon = StarTrackerDaemon('/run/oresat-star-tracker.pid')
-    db_root = "/opt/oresat-star-tracker/"
-    data_root = "/opt/oresat-star-tracker/datasets/downsample/"
+    db_root = "/usr/share/oresat-star-tracker/data/"
+    data_root = db_root + "downsample/"
     if 'start' == sys.argv[1]:
         daemon.start(db_root, data_root)
     elif 'stop' == sys.argv[1]:
