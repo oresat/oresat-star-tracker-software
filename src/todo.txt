@@ -1,0 +1,4 @@
+1) put star tracker code (including beast) in startracker directory
+2) put camera code in camera directory
+3) make both into modules
+4) write a basic state machine
