@@ -1,11 +1,13 @@
 # beast files
-beast/beast_wrap.*
-beast/_beast.so
-beast/beast.py
-beast/__pycache__/
+src/beast/beast_wrap.*
+src/beast/_beast.so
+src/beast/beast.py
 
 # pycache
 __pycache__/
 
 # vim swap files
 *.swp
+
+# sphinx build directory
+docs/_build/
