@@ -22,34 +22,32 @@ class Camera:
 
     Parameters
     ----------
-    image_dir : str
-        The path to the directory containing images to choose from. (Everything
-        in the directory should be an OpenCV-readable image.)
     logger
         The logger to be used for all informational and error output,
         created with ``logging.getLogger()``.
 
     """
 
-    # Initialization -- set up image directory and logger
-    def __init__(self, image_dir, logger):
-        self.image_dir = image_dir
-        self.image_paths = glob.glob(self.image_dir + "*")
+    # Initialization -- set up logger
+    def __init__(self, logger):
         self.logger = logger
+        self.image_dir = None
+        self.image_paths = None
 
     # Set the image directory
-    def change_dir(self, new_dir):
-        """Change the directory to pull images from.
+    def set_dir(self, dirpath):
+        """Set the directory to pull images from.
 
         Parameters
         ----------
-        new_dir : str
-            Path to the new directory.
+        dirpath : str
+            The path to the directory containing images to choose from. (Everything
+            in the directory should be an OpenCV-readable image.)
 
         """
-        self.image_dir = new_dir
+        self.image_dir = dirpath
         self.image_paths = glob.glob(self.image_dir + "*")
-        self.logger.info("Changed image directory to {}".format(new_dir))
+        self.logger.info("Set image directory to {}".format(dirpath))
 
     # Capture an image (random choice from directory)
     def capture(self):
