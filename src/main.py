@@ -23,7 +23,7 @@ from systemd import journal
 
 # Imports - custom modules
 import camera
-import startracker
+import solver
 
 # Set up systemd logger
 # modified from https://medium.com/@trstringer/logging-to-systemd-in-python-45150662440a
@@ -34,7 +34,7 @@ logger.addHandler(journald_handler)
 logger.setLevel(logging.DEBUG)
 
 # Server
-class StarTrackerServer:
+class StarTracker:
 
     # XML definition
     dbus = """
@@ -73,7 +73,7 @@ class StarTrackerServer:
         self.camera = camera.Camera(logger)
 
         # Set up star tracker solver
-        self.st = startracker.StarTracker(logger)
+        self.st = solver.Solver(logger)
         self.st_thread = threading.Thread(target = self.star_tracker)
         self.st_lock = threading.Lock()
         self.st_running = True
@@ -157,7 +157,7 @@ class StarTrackerServer:
 
 # Test if run independently
 if __name__ == "__main__":
-    server = StarTrackerServer()
+    server = StarTracker()
     db_root = "/usr/share/oresat-star-tracker/data/"
     data_root = db_root + "downsample/"
     server.start(data_root + "median_image.png", data_root + "calibration.txt", db_root + "hip_main.dat", sample_dir = data_root + "samples/")

@@ -1,4 +1,4 @@
-# startracker.py
+# solver.py
 # by Umair Khan, from the Portland State Aerospace Society
 # based on OpenStarTracker from Andrew Tennenbaum at the University of Buffalo
 # openstartracker.org
@@ -6,9 +6,9 @@
 # Use this class to solve images.
 
 """
-startracker.py
+solver.py
 ==============
-The core of the star tracker module, located in src/startracker.
+The core of the star tracker module, located in src/solver.
 """
 
 # Imports
@@ -24,7 +24,7 @@ except:
     import src.beast
 
 # Class definition
-class StarTracker:
+class Solver:
     """This class contains all solver functionality.
 
     Parameters
