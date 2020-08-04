@@ -17,11 +17,8 @@ import logging
 import numpy as np
 import cv2
 
-# The backend may be here, or it may be one level down
-try:
-    import beast
-except:
-    import src.beast
+# Import backend
+import beast
 
 # Class definition
 class Solver:
