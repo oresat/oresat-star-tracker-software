@@ -23,7 +23,6 @@ class Solver:
         # Prepare constants
         self.P_MATCH_THRESH = 0.99
         self.YEAR = 1991.25
-        self.SAMPLE_DIR = None
         self.MEDIAN_IMAGE = None
         self.S_DB = None
         self.SQ_RESULTS = None
@@ -42,23 +41,23 @@ class Solver:
             # Load median image
             self.logger.info("Beginning startup sequence...")
             self.MEDIAN_IMAGE = cv2.imread(median_path)
-            self.logger.info("Loaded median image from {}".format(median_path))
+            self.logger.info("Loaded median image from {}.".format(median_path))
 
             # Load configuration
             beast.load_config(config_path)
-            self.logger.info("Loaded configuration from {}".format(config_path))
+            self.logger.info("Loaded configuration from {}.".format(config_path))
 
             # Load star database
             self.S_DB = beast.star_db()
             self.S_DB.load_catalog(db_path, self.YEAR)
-            self.logger.info("Loaded star database from {}".format(db_path))
+            self.logger.info("Loaded star database from {}.".format(db_path))
 
             # Filter stars
             self.SQ_RESULTS = beast.star_query(self.S_DB)
             self.SQ_RESULTS.kdmask_filter_catalog()
             self.SQ_RESULTS.kdmask_uniform_density(beast.cvar.REQUIRED_STARS)
             self.S_FILTERED = self.SQ_RESULTS.from_kdmask()
-            self.logger.info("Filtered stars")
+            self.logger.info("Filtered stars.")
 
             # Set up constellation database
             self.C_DB = beast.constellation_db(self.S_FILTERED, 2 + beast.cvar.DB_REDUNDANCY, 0)
