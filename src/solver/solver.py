@@ -5,12 +5,6 @@
 
 # Use this class to solve images.
 
-"""
-solver.py
-==============
-The core of the star tracker module, located in src/solver.
-"""
-
 # Imports
 import time
 import logging
@@ -22,15 +16,6 @@ import beast
 
 # Class definition
 class Solver:
-    """This class contains all solver functionality.
-
-    Parameters
-    ----------
-    logger
-        The logger to be used for all informational and error output,
-        created with ``logging.getLogger()``.
-
-    """
 
     # Initialization
     def __init__(self, logger):
@@ -50,29 +35,6 @@ class Solver:
 
     # Startup sequence
     def startup(self, median_path, config_path, db_path):
-        """Get the solver ready to accept images.
-
-        Note that both ``median_path`` and ``config_path`` point to files that come from
-        OpenStarTracker `calibration process <https://github.com/UBNanosatLab/openstartracker/wiki>`_.
-        For now, ``calibrate.py`` is a file included in the ``misc`` directory that must be
-        run separately, prior to usage of the star tracker.
-
-        Parameters
-        ----------
-        median_path : str
-            Path to the camera's median image.
-        config_path : str
-            Path to the camera's configuration file.
-        db_path : str
-            Path to star catalog.
-
-        Returns
-        -------
-        int
-            ``0`` if startup was successful, ``1`` otherwise. Errors will be logged with the logger
-            provided during class initialization.
-
-        """
 
         # Attempt startup with given parameters
         try:
@@ -109,23 +71,7 @@ class Solver:
             return 1
 
     # Solution function
-    # TODO: use try-except blocks
     def solve(self, orig_img):
-        """Solve the provided image.
-
-        Parameters
-        ----------
-        orig_img
-            The image to solve, provided as an OpenCV image array.
-
-        Returns
-        -------
-        (float, float, float, float)
-            The declination, right ascension, and orientation (rotation about camera
-            axis) at the center of the solved image, along with the time (in seconds)
-            taken to solve the image. If no solution was found, all values will be ``0.0``.
-
-        """
 
         # Keep track of solution time
         t0 = time.time()
