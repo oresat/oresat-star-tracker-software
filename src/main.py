@@ -20,7 +20,7 @@ import camera
 import solver
 
 # Set up systemd logger
-# modified from https://medium.com/@trstringer/logging-to-systemd-in-python-45150662440a
+# modified from https://trstringer.com/systemd-logging-in-python/
 logger = logging.getLogger("org.OreSat.StarTracker")
 journald_handler = journal.JournalHandler()
 journald_handler.setFormatter(logging.Formatter('[%(levelname)s] %(message)s'))
@@ -30,38 +30,21 @@ logger.setLevel(logging.DEBUG)
 # State definitions
 class State(Enum):
     STANDBY = 0
-    STAR_TRACKING = 1
-    CAPTURE = 2
-    ERROR = 3
+    SOLVE = 1
 
 # Server
 class StarTracker:
 
     # D-Bus XML definition
-    # TODO: use method for state change
     dbus = """
     <node>
         <interface name='org.OreSat.StarTracker'>
-            <signal name='Error'>
-                <arg type='s' />
-            </signal>
-            <property name='capture_filepath' type='s' access='read'>
-                <annotation name="org.freedesktop.DBus.Property.EmitsChangedSignal" value="true" />
-            </property>
-            <property name='capture_time' type='d' access='read'>
-                <annotation name="org.freedesktop.DBus.Property.EmitsChangedSignal" value="true" />
-            </property>
-            <property name='coor' type='(dddd)' access='read'>
-                <annotation name="org.freedesktop.DBus.Property.EmitsChangedSignal" value="true" />
-            </property>
-            <property name='solve_filepath' type='s' access='read'>
-                <annotation name="org.freedesktop.DBus.Property.EmitsChangedSignal" value="true" />
-            </property>
-            <method name='set_state'>
-                <arg type='i' name='new_state' direction='in' />
-            </method>
-            <method name='get_state'>
-                <arg type='i' name='curr_state' direction='out' />
+            <property name='CapturePath' type='s' access='read' />
+            <property name='SolvePath' type='s' access='read' />
+            <property name='Coor' type='(dddd)' access='read' />
+            <method name='Capture' />
+            <method name='ChangeState'>
+                <arg type='i' name='NewState' direction='in' />
             </method>
         </interface>
     </node>
@@ -72,8 +55,6 @@ class StarTracker:
 
         # D-Bus variables
         self.interface_name = "org.OreSat.StarTracker"
-        self.Error = signal()
-        self.PropertiesChanged = signal()
 
         # Set up initial state
         self.state = STANDBY
@@ -273,12 +254,3 @@ class StarTracker:
         solve_path = self.solve_path
         self.s_lock.release()
         return solve_path
-
-##########
-
-# # Test if run independently
-# if __name__ == "__main__":
-#     server = StarTracker()
-#     db_root = "/usr/share/oresat-star-tracker/data/"
-#     data_root = db_root + "downsample/"
-#     server.start(data_root + "median_image.png", data_root + "calibration.txt", db_root + "hip_main.dat", sample_dir = data_root + "samples/")
