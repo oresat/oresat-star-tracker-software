@@ -1,14 +1,13 @@
-# camera.py
+# stcam.py
 # by Umair Khan, from the Portland State Aerospace Society
 
 # Use this class to control the camera.
 
 # Imports
-import glob
-import random
+from prucam import Camera, PRU
 
 # Class definition
-class Camera:
+class STCam:
 
     # Initialization -- set up logger
     def __init__(self, logger):
