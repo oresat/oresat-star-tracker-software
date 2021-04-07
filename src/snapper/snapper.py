@@ -1,4 +1,4 @@
-# stcam.py
+# snapper.py
 # by Umair Khan, from the Portland State Aerospace Society
 
 # Use this class to control the camera.
@@ -7,7 +7,7 @@
 from prucam import Camera, PRU
 
 # Class definition
-class STCam:
+class Snapper:
 
     # Initialization -- set up logger
     def __init__(self, logger):
