@@ -70,7 +70,7 @@ class Solver:
             return 1
 
     # Solution function
-    def solve(self, orig_img):
+    def solve(self, img_path):
 
         # Keep track of solution time
         t0 = time.time()
@@ -81,6 +81,7 @@ class Solver:
         fov_db = None
 
         # Process the image for solving
+        orig_img = cv2.imread(img_path)
         img = np.clip(orig_img.astype(np.int16) - self.MEDIAN_IMAGE, a_min = 0, a_max = 255).astype(np.uint8)
         img_grey = cv2.cvtColor(img, cv2.COLOR_RGB2GRAY)
 
@@ -144,10 +145,12 @@ class Solver:
             ra = match.winner.get_ra()
             ori = match.winner.get_ori()
         else:
+            self.logger.info(f"Solution failed for {img_path}.")
             return 0.0, 0.0, 0.0, 0.0
 
         # Calculate how long it took to process
         runtime = time.time() - t0
+        self.logger.info(f"Found solution for {img_path} in {runtime}s.")
 
-        # Return solution
-        return dec, ra, ori, time
+        # Return solution and timestamp
+        return dec, ra, ori, time.time()
