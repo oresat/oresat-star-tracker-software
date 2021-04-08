@@ -68,7 +68,7 @@ class Snapper:
 
         # Turn off the camera and return path
         self.stop()
-        self.logger.info(f"Saved snap to f{new_path}.")
+        self.logger.info(f"Saved snap to {new_path}.")
         return new_path
 
     # Capture a photo to solve
@@ -93,5 +93,5 @@ class Snapper:
 
         # Turn off the camera and return path
         self.stop()
-        self.logger.info(f"Saved photo to solve to f{new_path}.")
+        self.logger.info(f"Saved photo to solve to {new_path}.")
         return new_path
