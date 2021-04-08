@@ -9,7 +9,7 @@ import atexit
 import signal
 
 # Imports (external)
-import main
+from star_tracker.main import StarTracker
 
 # Class definition
 class StarTrackerDaemon:
@@ -125,7 +125,7 @@ class StarTrackerDaemon:
 
     # Run the star tracker
     def run(self):
-        st = main.StarTracker()
+        st = StarTracker()
         st.start(self.data_dir + "median-image.png", self.data_dir + "configuration.txt", self.data_dir + "hipparcos.dat")
 
 # Run script
