@@ -10,13 +10,12 @@ import logging
 from enum import Enum
 
 # Imports - external
-from pydbus.generic import signal
 from pydbus import SystemBus
 from gi.repository import GLib
 from systemd import journal
 
 # Imports - custom modules
-import camera
+import snapper
 import solver
 
 # Set up systemd logger
@@ -53,56 +52,62 @@ class StarTracker:
     # Initialization
     def __init__(self):
 
-        # D-Bus variables
+        # Set up interface name and initial state
         self.interface_name = "org.OreSat.StarTracker"
+        self.state = State.STANDBY
 
-        # Set up initial state
-        self.state = STANDBY
-
-        # Set up booleans to control threads
-        self.solving = False
-        self.capturing = False
-
-        # Properties
-        self.capture_time = 0.0
+        # Set up properties
         self.capture_path = ""
+        self.solve_path = ""
         self.dec = 0.0
         self.ra = 0.0
         self.ori = 0.0
-        self.solve_length = 0.0
         self.solve_time = 0.0
-        self.solve_path = ""
 
-        # Set up capture thread
-        self.camera = None
-        self.c_thread = threading.Thread(target = self.capture_thread)
-        self.c_lock = threading.Lock()
+        # Set up snapper variables
+        self.snapper = None
 
-        # Set up solver thread
+        # Set up solver variables
         self.solver = None
+        self.stop_thread = False
         self.s_thread = threading.Thread(target = self.solve_thread)
         self.s_lock = threading.Lock()
 
-    # Startup
-    # TODO: maybe pass in camera instead of dir? be agnostic to mock vs. real
-    def start(self, sample_dir, median_path, config_path, db_path):
+        # Set up counting variables
+        self.snap_count = 0
+        self.solve_count = 0
 
-        # Always return to standby
-        self.state_change(STANDBY)
+    # Change states
+    def set_state(self, new_state):
+
+        # Acquire lock
+        self.s_lock.acquire()
+
+        # Ignore reflexive or invalid transitions
+        ns = State(new_state)
+        if (ns == self.state) or not (ns == State.STANDBY or ns == State.SOLVE):
+            self.s_lock.release()
+            return
+
+        # Change state and release lock
+        self.state = ns
+        self.s_lock.release()
+
+    # Startup sequence
+    def start(self, median_path, config_path, db_path):
+
+        # Always start in standby
+        self.set_state(State.STANDBY)
 
         # Start up camera
-        self.camera = camera.Camera(logger)
-        self.camera.set_dir(sample_dir)
+        self.camera = snapper.Snapper(logger)
 
         # Start up solver
-        # TODO: don't use sleep here
         self.solver = solver.Solver(logger)
         self.solver.startup(median_path, config_path, db_path)
         time.sleep(30)
 
-        # Start threads
-        self.c_thread.start()
-        logger.info("Started capture thread.")
+        # Start solver thread
         self.s_thread.start()
         logger.info("Started solver thread.")
 
@@ -111,146 +116,82 @@ class StarTracker:
         loop = GLib.MainLoop()
         bus.publish(self.interface_name, self)
         try:
-            logger.info("Starting D-Bus loop...")
+            logger.info("Starting D-Bus loop.")
             loop.run()
         except KeyboardInterrupt as e:
             loop.quit()
             logger.info("Ended D-Bus loop.")
             self.end()
 
-    # Change states
-    # TODO: hold locks while changing
-    def state_change(self, new_state):
-
-        # Ignore invalid or reflexive transitions
-        if not (STANDBY <= new_state <= ERROR) or new_state == self.state:
-            return
-
-        # Change state
-        self.state == new_state
-        if self.state == STANDBY or self.state == ERROR:
-            self.solving = False
-            self.capturing = False
-        elif self.state == STAR_TRACKING:
-            self.solving = True
-            self.capturing = False
-        elif self.state == CAPTURE:
-            self.solving = False
-            self.capturing = True
-
-    # Change states
-    # TODO: hold locks while changing
-    def set_state(self, new_state):
-
-        # Acquire locks
-        self.s_lock.acquire()
-        self.c_lock.acquire()
-
-        # Ignore invalid or reflexive transitions
-        ns = State(new)
-        if not (State.STANDBY <= new_state <= ERROR) or new_state == self.state:
-            return
-
-        # Change state
-        self.state == new_state
-        if self.state == STANDBY or self.state == ERROR:
-            self.solving = False
-            self.capturing = False
-        elif self.state == STAR_TRACKING:
-            self.solving = True
-            self.capturing = False
-        elif self.state == CAPTURE:
-            self.solving = False
-            self.capturing = True
-
-        # Release locks
-        self.c_lock.release()
-        self.s_lock.release()
-
-    # Capture thread
-    def capture_thread(self):
-
-        # Keep going while this boolean is true
-        # TODO: should not be while
-        while (self.capturing):
-
-            # Capture an image and update timestamp
-            self.c_lock.acquire()
-            self.capture_path, img = self.camera.capture()
-            self.capture_time = time.time()
-            self.c_lock.release()
-
-            # Send property change signals
-            # TODO: put in locked area
-            self.PropertiesChanged(self.interface_name, {"capture_filepath": self.capture_path}, [])
-            self.PropertiesChanged(self.interface_name, {"capture_time": self.capture_time}, [])
-            time.sleep(0.5)
+    # Stop solver thread in preparation to exit
+    def end(self):
+        self.set_state(State.STANDBY)
+        self.stop_thread = True
+        self.s_thread.join()
 
     # Solver thread
     def solver_thread(self):
 
-        # Keep going while this boolean is true
-        # TODO: should not be while
-        while (self.solving):
+        # Keep going until the thread exits
+        while True:
 
-            # Capture an image
-            self.s_lock.acquire()
-            self.solve_path, img = self.camera.capture()
+            # If we're in the solve state, capture and solve an image
+            if self.state = State.SOLVE:
 
-            # Solve the image
-            self.dec, self.ra, self.ori, self.solve_length = self.solver.solve(img)
-            if self.dec == self.ra == self.ori == 0.0:
-                logger.error("Bad solve ({}).".format(self.solve_path))
-                self.Error("Bad solve ({})".format(self.solve_path))
-                time.sleep(0.5)
-                continue
+                # Acquire lock
+                self.s_lock.acquire()
 
-            # Update the solution timestamp
-            self.solve_time = time.time()
-            self.st_lock.release()
+                # Capture an image and set property
+                cap_path = self.snapper.capture_solve(self.solve_count)
+                self.solve_count += 1
+                self.solve_path = cap_path
 
-            # Send property change signals
-            # TODO: put in locked area
-            self.PropertiesChanged(self.interface_name, {"coor": (self.dec, self.ra, self.ori, self.solve_time)}, [])
-            self.PropertiesChanged(self.interface_name, {"solve_filepath": self.solve_path}, [])
+                # Solve the image and set properties
+                self.dec, self.ra, self.ori, self.solve_time = self.solver.solve(cap_path)
+
+                # Release lock
+                self.s_lock.release()
+
+            # If it's time to exit, break
+            if self.stop_thread:
+                break
+
+            # Sleep for half a second (target solve rate is 2Hz)
             time.sleep(0.5)
 
-    # Stop threads in preparation to exit
-    def end(self):
-        self.state_change(STANDBY)
-        if self.c_thread.is_alive():
-            self.c_thread.join()
-        if self.s_thread.is_alive():
-            self.s_thread.join()
+    # Take a snap (D-Bus method)
+    def Capture(self):
 
-    # Filepath of last captured image
-    @property
-    def capture_filepath(self):
-        self.c_lock.acquire()
-        capture_path = self.capture_path
-        self.c_lock.release()
-        return capture_path
+        # Make sure we're in the standby state
+        if self.state != State.STANDBY:
+            return
 
-    # Timestamp of last captured image
-    @property
-    def capture_time(self):
-        self.c_lock.acquire()
-        capture_time = self.capture_time
-        self.c_lock.release()
-        return capture_time
+        # Take a photo and set properties
+        cap_path = self.snapper.capture_snap(self.snap_count)
+        self.snap_count += 1
+        self.capture_path = cap_path
 
-    # Coordinates
+    # Change the state from outside (D-Bus method)
+    def ChangeState(self, NewState):
+        self.set_state(NewState)
+
+    # Filepath of last captured snap
     @property
-    def coor(self):
-        self.s_lock.acquire()
-        dec, ra, ori, solve_time = self.dec, self.ra, self.ori, self.solve_time
-        self.s_lock.release()
-        return (dec, ra, ori, solve_time)
+    def CapturePath(self):
+        return self.capture_path
 
     # Filepath of last solved image
     @property
-    def solve_filepath(self):
+    def SolvePath(self):
         self.s_lock.acquire()
         solve_path = self.solve_path
         self.s_lock.release()
         return solve_path
+
+    # Coordinates
+    @property
+    def Coor(self):
+        self.s_lock.acquire()
+        dec, ra, ori, solve_time = self.dec, self.ra, self.ori, self.solve_time
+        self.s_lock.release()
+        return (dec, ra, ori, solve_time)
