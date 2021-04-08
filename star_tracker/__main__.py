@@ -4,142 +4,77 @@
 # Imports (internal)
 import sys
 import os
-import time
-import atexit
-import signal
+from argparse import ArgumentParser
 
 # Imports (external)
 from star_tracker.main import StarTracker
 
-# Class definition
-class StarTrackerDaemon:
 
-    # Initialize PID file and data directory
-    def __init__(self, pidfile):
-        self.pidfile = pidfile
-        self.data_dir = None
+def _daemonize(pid_file: str):
+    """Daemonize the process
 
-    # Daemonize the class by forking
-    def daemonize(self):
+    Parameters
+    ----------
+    pid_file: str
+        The path to the pid file for the daemon.
+    """
 
-        # Make the first child (the parent exits)
-        try:
-            pid = os.fork()
-            if pid > 0:
-                sys.exit(0)
-        except OSError as err:
-            sys.stderr.write('fork #1 failed: {0}\n'.format(err))
-            sys.exit(1)
+    # Check for a pidfile to see if the daemon is already running
+    try:
+        with open(pid_file, 'r') as fptr:
+            pid = int(fptr.read().strip())
+    except IOError:
+        pid = None
 
-        # Decouple from parent environment
-        os.chdir('/')
-        os.setsid()
-        os.umask(0)
+    if pid:
+        sys.stderr.write("pid file {0} already exist".format(pid_file))
+        sys.exit(1)
 
-        # Make the second child (the parent exits)
-        try:
-            pid = os.fork()
-            if pid > 0:
-                sys.exit(0)
-        except OSError as err:
-            sys.stderr.write('fork #2 failed: {0}\n'.format(err))
-            sys.exit(1)
+    try:
+        pid = os.fork()
+        if pid > 0:
+            # exit from parent
+            sys.exit(0)
+    except OSError as err:
+        sys.stderr.write('fork failed: {0}\n'.format(err))
+        sys.exit(1)
 
-        # Redirect file descriptors
-        sys.stdout.flush()
-        sys.stderr.flush()
-        si = open(os.devnull, 'r')
-        so = open(os.devnull, 'a+')
-        se = open(os.devnull, 'a+')
+    # decouple from parent environment
+    os.chdir('/')
+    os.setsid()
+    os.umask(0)
 
-        os.dup2(si.fileno(), sys.stdin.fileno())
-        os.dup2(so.fileno(), sys.stdout.fileno())
-        os.dup2(se.fileno(), sys.stderr.fileno())
+    # redirect standard file descriptors
+    sys.stdout.flush()
+    sys.stderr.flush()
+    stdin = open(os.devnull, 'r')
+    stdout = open(os.devnull, 'a+')
+    stderr = open(os.devnull, 'a+')
 
-        # Write PID file
-        atexit.register(self.delpid)
-        pid = str(os.getpid())
-        with open(self.pidfile,'w+') as f:
-            f.write(pid + '\n')
+    os.dup2(stdin.fileno(), sys.stdin.fileno())
+    os.dup2(stdout.fileno(), sys.stdout.fileno())
+    os.dup2(stderr.fileno(), sys.stderr.fileno())
 
-    # Delete PID file
-    def delpid(self):
-        os.remove(self.pidfile)
+    pid = str(os.getpid())
+    with open(pid_file, 'w+') as fptr:
+        fptr.write(pid + '\n')
 
-    # Start the daemon
-    def start(self, data_dir):
-
-        # Set the working directory
-        self.data_dir = data_dir
-
-        # Check for a pidfile to see if the daemon is already running
-        try:
-            with open(self.pidfile,'r') as pf:
-                pid = int(pf.read().strip())
-        except IOError:
-            pid = None
-
-        # If so, don't do anything
-        if pid:
-            message = "pidfile {0} already exists. Daemon already running?\n".format(self.pidfile)
-            sys.stderr.write(message)
-            sys.exit(1)
-
-        # Start the daemon
-        self.daemonize()
-        self.run()
-
-    # Stop the daemon
-    def stop(self):
-
-        # Get the pid from the pidfile
-        try:
-            with open(self.pidfile,'r') as pf:
-                pid = int(pf.read().strip())
-        except IOError:
-            pid = None
-
-        if not pid:
-            message = "pidfile {0} does not exist. Daemon not running?\n".format(self.pidfile)
-            sys.stderr.write(message)
-            return
-
-        # Try killing the daemon process
-        try:
-            while 1:
-                os.kill(pid, signal.SIGTERM)
-                time.sleep(0.1)
-        except OSError as err:
-            e = str(err.args)
-            if e.find("No such process") > 0:
-                if os.path.exists(self.pidfile):
-                    os.remove(self.pidfile)
-            else:
-                print(str(err.args))
-                sys.exit(1)
-
-    # Restart the daemon
-    def restart(self, data_dir):
-        self.stop()
-        self.start(data_dir)
-
-    # Run the star tracker
-    def run(self):
-        st = StarTracker()
-        st.start(self.data_dir + "median-image.png", self.data_dir + "configuration.txt", self.data_dir + "hipparcos.dat")
 
 # Run script
 if __name__ == "__main__":
-    assert len(sys.argv) > 1, "usage:\t{0} start\n\t\t\t{0} stop\n\t\t\t{0} restart".format(sys.argv[0])
-    daemon = StarTrackerDaemon('/run/oresat-star-tracker.pid')
+    pid_file = "/run/oresat-star-trackerd.pid"
+
+    parser = ArgumentParser()
+    parser.add_argument("-d", "--daemon", action="store_true",
+                        help="daemonize the process")
+    args = parser.parse_args()
+
+    if args.daemon:
+        _daemonize(pid_file)
+
     data_dir = "/usr/share/oresat-star-tracker/data/"
-    if 'start' == sys.argv[1]:
-        daemon.start(data_dir)
-    elif 'stop' == sys.argv[1]:
-        daemon.stop()
-    elif 'restart' == sys.argv[1]:
-        daemon.restart(data_dir)
-    else:
-        print("Unknown command")
-        sys.exit(2)
-    sys.exit(0)
+    st = StarTracker()
+    st.start(data_dir + "median-image.png", data_dir + "configuration.txt", data_dir + "hipparcos.dat")
+
+    if args.daemon:
+        os.remove(pid_file)  # clean up daemon

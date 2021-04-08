@@ -70,7 +70,7 @@ class StarTracker:
         # Set up solver variables
         self.solver = None
         self.stop_thread = False
-        self.s_thread = threading.Thread(target = self.solve_thread)
+        self.s_thread = threading.Thread(target = self.solver_thread)
         self.s_lock = threading.Lock()
 
         # Set up counting variables

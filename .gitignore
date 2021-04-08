@@ -11,3 +11,14 @@ __pycache__/
 
 # sphinx build directory
 docs/_build/
+
+# package build directories
+build/
+dist/
+*.egg-info/
+*.debhelper
+*debhelper*
+*.debhelper/
+*.substvars
+debian/oresat_star_tracker
+debian/files
