@@ -1,6 +1,0 @@
-#!/bin/sh
-PKG_NAME=oresat-star-tracker
-cp /usr/share/$PKG_NAME/config/oresat-star-tracker.service /lib/systemd/system
-cp /usr/share/$PKG_NAME/config/org.OreSat.StarTracker.conf /usr/share/dbus-1/system.d
-systemctl daemon-reload
-systemctl enable $PKG_NAME

@@ -1,0 +1,10 @@
+[Unit]
+Description=OreSat Star Tracker daemon.
+
+[Service]
+Type=forking
+PIDFile=/run/oresat-star-trackerd.pid
+ExecStart=/usr/bin/python3 /usr/bin/oresat-star-tracker -d
+
+[Install]
+WantedBy=multi-user.target

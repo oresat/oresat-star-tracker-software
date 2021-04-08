@@ -15,8 +15,8 @@ from gi.repository import GLib
 from systemd import journal
 
 # Imports - custom modules
-import snapper
-import solver
+from star_tracker.snapper import Snapper
+from star_tracker.solver import Solver
 
 # Set up systemd logger
 # modified from https://trstringer.com/systemd-logging-in-python/
@@ -70,7 +70,7 @@ class StarTracker:
         # Set up solver variables
         self.solver = None
         self.stop_thread = False
-        self.s_thread = threading.Thread(target = self.solve_thread)
+        self.s_thread = threading.Thread(target = self.solver_thread)
         self.s_lock = threading.Lock()
 
         # Set up counting variables
@@ -100,10 +100,10 @@ class StarTracker:
         self.set_state(State.STANDBY)
 
         # Start up camera
-        self.camera = snapper.Snapper(logger)
+        self.camera = Snapper(logger)
 
         # Start up solver
-        self.solver = solver.Solver(logger)
+        self.solver = Solver(logger)
         self.solver.startup(median_path, config_path, db_path)
         time.sleep(30)
 
@@ -136,7 +136,7 @@ class StarTracker:
         while True:
 
             # If we're in the solve state, capture and solve an image
-            if self.state = State.SOLVE:
+            if self.state == State.SOLVE:
 
                 # Acquire lock
                 self.s_lock.acquire()

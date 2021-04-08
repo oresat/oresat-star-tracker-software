@@ -12,7 +12,7 @@ import numpy as np
 import cv2
 
 # Import backend
-import beast
+from star_tracker import beast
 
 # Class definition
 class Solver:
