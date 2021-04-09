@@ -9,7 +9,7 @@ BEAST_EXT = Extension(
         'star_tracker/beast/beast.i',
     ],
     include_dirs=[
-        'star-tracker',
+        'star_tracker',
     ],
     extra_compile_args=[
         '-std=c++11',
@@ -40,6 +40,23 @@ setup(
     cmdclass={
         'build_py': BuildPy,
     },
+    install_requires=[
+        "pydbus",
+        "astropy",
+        "numpy",
+        "ply",
+        "scipy",
+        "systemd",
+    ],
+    entry_points={
+        'console_scripts': [
+            'oresat-star-tracker = oresat_star_tracker.main:main',
+        ],
+    },
+    classifiers=[
+        "Programming Language :: Python :: 3",
+        "License :: OSI Approved :: GNU General Public License v3 (GPLv3)",
+    ],
 
     python_requires='>=3.7',
 )
