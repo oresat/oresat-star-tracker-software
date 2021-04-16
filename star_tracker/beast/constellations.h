@@ -4,6 +4,10 @@
 #include "stars.h"
 #include <set>
 
+// Debug
+#include <iostream>
+#include <fstream>
+
 struct constellation {
 	float p;
 	size_t s1;
@@ -74,6 +78,10 @@ public:
 		DBG_CONSTELLATION_DB_COUNT++;
 		DBG_PRINT("DBG_CONSTELLATION_DB_COUNT++ %d\n",DBG_CONSTELLATION_DB_COUNT);
 
+		// Debug
+		ofstream debug_file;
+		debug_file.open("/usr/share/oresat-star-tracker/debug.txt");
+		debug_file << "test";
 
 		if (from_image) {
 			stars=s->copy();
@@ -120,6 +128,9 @@ public:
 				map[idx].idx=idx;
 			}
 		}
+
+		// Debug
+		debug_file.close();
 	}
 	~constellation_db() {
 		DBG_CONSTELLATION_DB_COUNT--;
