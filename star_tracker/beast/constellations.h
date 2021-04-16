@@ -79,7 +79,7 @@ public:
 		DBG_PRINT("DBG_CONSTELLATION_DB_COUNT++ %d\n",DBG_CONSTELLATION_DB_COUNT);
 
 		// Debug
-		ofstream debug_file;
+		std::ofstream debug_file;
 		debug_file.open("/usr/share/oresat-star-tracker/debug.txt");
 		debug_file << "test";
 
