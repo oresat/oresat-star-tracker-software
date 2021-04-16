@@ -61,12 +61,12 @@ class Solver:
 
             # Set up constellation database
             self.C_DB = beast.constellation_db(self.S_FILTERED, 2 + beast.cvar.DB_REDUNDANCY, 0)
-            logger.info("Set constellation databse -- startup sequence complete!")
+            self.logger.info("Set constellation databse -- startup sequence complete!")
             return 0
 
         # Catch any errors
         except:
-            logger.error("Startup sequence failed!", exc_info = True)
+            self.logger.error("Startup sequence failed!", exc_info = True)
             return 1
 
     # Solution function
