@@ -81,7 +81,7 @@ public:
 		// Debug
 		std::ofstream debug_file;
 		debug_file.open("/usr/share/oresat-star-tracker/debug.txt");
-		debug_file << "test";
+		debug_file << "1";
 
 		if (from_image) {
 			stars=s->copy();
@@ -103,33 +103,54 @@ public:
 			std::sort(map, map+map_size,constellation_lt_p);
 			while (--idx>=0) map[idx].idx=idx;
 		} else {
+			debug_file << "\n2";
 			stars=s->copy();
+			debug_file << "\n3";
 			results=new star_query(stars);
+			debug_file << "\n4";
 			results->kdmask_uniform_density(stars_per_fov);//2+DB_REDUNDANCY
+			debug_file << "\n5";
 			std::set<constellation,constellation_lt> c_set;
+			debug_file << "\n6";
 			for (size_t i=0;i<results->map_size;i++) if (results->get_kdmask(i)==0) {
+				debug_file << "\n\t7";
 				results->kdsearch(results->map[i].x,results->map[i].y,results->map[i].z,MAXFOV,THRESH_FACTOR*IMAGE_VARIANCE);
+				debug_file << "\n\t8";
 				constellation c;
+				debug_file << "\n\t9";
 				for (size_t j=0;j<results->r_size();j++) if (i!=results->kdresults[j] && results->map[i].flux>=results->map[results->kdresults[j]].flux){
+					debug_file << "\n\t\t10";
 					c.p=results->map[i]*results->map[results->kdresults[j]];
+					debug_file << "\n\t\t11";
 					c.s1=results->map[i].star_idx;
+					debug_file << "\n\t\t12";
 					c.s2=results->map[results->kdresults[j]].star_idx;
+					debug_file << "\n\t\t13";
 					c_set.insert(c);
 				}
+				debug_file << "\n\t14";
 				results->clear_kdresults();
 			}
+			debug_file << "\n15";
 			results->reset_kdmask();
 			//preallocate map
+			debug_file << "\n16";
 			map_size=c_set.size();
+			debug_file << "\n17";
 			map=(constellation*)malloc(map_size*sizeof(map[0]));
+			debug_file << "\n18";
 			std::set<constellation>::iterator it = c_set.begin();
+			debug_file << "\n19";
 			for (size_t idx=0; idx<map_size;idx++,it++) {
+				debug_file << "\n\t20";
 				map[idx]=*it;
+				debug_file << "\n\t21";
 				map[idx].idx=idx;
 			}
 		}
 
 		// Debug
+		debug_file << "\n22\n";
 		debug_file.close();
 	}
 	~constellation_db() {
