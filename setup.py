@@ -46,7 +46,7 @@ setup(
     ],
     entry_points={
         'console_scripts': [
-            'oresat-star-tracker = oresat_star_tracker.main:main',
+            'oresat-star-tracker = star_tracker.main:main',
         ],
     },
     classifiers=[
