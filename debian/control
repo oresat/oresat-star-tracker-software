@@ -8,5 +8,5 @@ Homepage: https://github.com/oresat/oresat-star-tracker
 
 Package: oresat-star-tracker
 Architecture: armhf
-Depends: python3, python3-numpy, python3-opencv, python3-pydbus, python3-systemd, python3-astropy, swig (>=4.0.1), astrometry.net
+Depends: python3, python3-numpy, python3-opencv-headless, python3-pydbus, python3-systemd, python3-prucam, swig (>=4.0.1)
 Description: Attitude determination using star tracking on OreSat.
