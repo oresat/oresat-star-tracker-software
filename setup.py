@@ -42,11 +42,7 @@ setup(
     },
     install_requires=[
         "pydbus",
-        "astropy",
         "numpy",
-        "ply",
-        "scipy",
-        "systemd",
     ],
     entry_points={
         'console_scripts': [
