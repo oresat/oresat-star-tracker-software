@@ -13,14 +13,22 @@ from prucam import Camera, PRUCam
 # Class definition
 class Snapper:
 
-    # Initialization -- set up variables
+    # Initialization
     def __init__(self, logger):
+
+        # Set up variables
         self.logger = logger
         self.pru = PRUCam()
         self.camera = None
         self.save_snaps = "/usr/share/oresat-star-tracker/data/snaps/"
         self.save_solves = "/usr/share/oresat-star-tracker/data/solves/"
         self.running = False
+
+        # Stop the PRUs, just in case
+        try:
+            self.pru.stop()
+        except:
+            self.logger.info("PRUs already stopped.")
 
     # Start the camera / PRU
     def start(self):
