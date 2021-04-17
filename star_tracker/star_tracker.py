@@ -100,12 +100,11 @@ class StarTracker:
         self.set_state(State.STANDBY)
 
         # Start up camera
-        self.camera = Snapper(logger)
+        self.snapper = Snapper(logger)
 
         # Start up solver
         self.solver = Solver(logger)
         self.solver.startup(median_path, config_path, db_path)
-        time.sleep(30)
 
         # Start solver thread
         self.s_thread.start()
