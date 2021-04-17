@@ -8,7 +8,7 @@ import os
 import logging
 import numpy as np
 import cv2
-from prucam import Camera, PRU
+from prucam import Camera, PRUCam
 
 # Class definition
 class Snapper:
@@ -16,7 +16,7 @@ class Snapper:
     # Initialization -- set up variables
     def __init__(self, logger):
         self.logger = logger
-        self.pru = PRU()
+        self.pru = PRUCam()
         self.camera = None
         self.save_snaps = "/usr/share/oresat-star-tracker/data/snaps/"
         self.save_solves = "/usr/share/oresat-star-tracker/data/solves/"
