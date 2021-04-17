@@ -87,11 +87,15 @@ class StarTracker:
         ns = State(new_state)
         if (ns == self.state) or not (ns == State.STANDBY or ns == State.SOLVE):
             self.s_lock.release()
+            logger.info("New state is either invalid or matches current state.")
             return
 
         # Change state and release lock
         self.state = ns
         self.s_lock.release()
+
+        # Log the new state
+        logger.info(f"State set to {self.state}.")
 
     # Startup sequence
     def start(self, median_path, config_path, db_path):
