@@ -63,7 +63,7 @@ class Snapper:
         os.rename(raw_path, new_path)
 
         # If necessary, delete an older photo to compensate
-        if curr_num > 50:
+        if curr_num >= 50:
             os.remove(self.save_snaps + f"{curr_num - 50}.png")
 
         # Turn off the camera and return path
@@ -83,7 +83,7 @@ class Snapper:
         os.rename(raw_path, new_path)
 
         # If necessary, delete an older photo to compensate
-        if curr_num > 50:
+        if curr_num >= 50:
             os.remove(self.save_solves + f"{curr_num - 50}.png")
 
         # Resize the photo to 640x480
