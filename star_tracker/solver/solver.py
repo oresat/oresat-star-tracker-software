@@ -146,7 +146,7 @@ class Solver:
             ori = match.winner.get_ori()
         else:
             self.logger.info(f"Solution failed for {img_path}.")
-            return 0.0, 0.0, 0.0, 0.0
+            return 0.0, 0.0, 0.0, time.time()
 
         # Calculate how long it took to process
         runtime = time.time() - t0
