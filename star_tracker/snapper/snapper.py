@@ -30,11 +30,18 @@ class Snapper:
         except:
             self.logger.info("PRUs already stopped.")
 
+    # Enable autoexposure via sysfs settings
+    def enable_ae(self):
+        Camera._set_camera_setting(_AE_ENABLE, 1)
+        Camera._set_camera_setting(_AE_AG_EN, 1)
+        Camera._set_camera_setting(_AE_DG_EN, 1)
+
     # Start the camera / PRU
     def start(self):
         if not self.running:
             self.pru.start()
             self.camera = Camera()
+            self.enable_ae()
             self.running = True
             self.logger.info("Started camera.")
         else:
