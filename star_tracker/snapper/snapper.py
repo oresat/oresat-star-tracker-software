@@ -32,9 +32,9 @@ class Snapper:
 
     # Enable autoexposure via sysfs settings
     def enable_ae(self):
-        Camera._set_camera_setting(_AE_ENABLE, 1)
-        Camera._set_camera_setting(_AE_AG_EN, 1)
-        Camera._set_camera_setting(_AE_DG_EN, 1)
+        self.camera.ae_enable = 1
+        self.camera.ae_ag_en = 1
+        self.camera.ae_dg_en = 1
 
     # Start the camera / PRU
     def start(self):
