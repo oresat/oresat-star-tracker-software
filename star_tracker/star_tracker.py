@@ -38,6 +38,7 @@ class StarTracker:
     dbus = """
     <node>
         <interface name='org.OreSat.StarTracker'>
+            <property name='CurrentState' type='i' access='read' />
             <property name='CapturePath' type='s' access='read' />
             <property name='SolvePath' type='s' access='read' />
             <property name='Coor' type='(dddd)' access='read' />
@@ -177,6 +178,16 @@ class StarTracker:
     # Change the state from outside (D-Bus method)
     def ChangeState(self, NewState):
         self.set_state(NewState)
+
+    # Current daemon state
+    @property
+    def CurrentState(self):
+        if self.state == State.STANDBY:
+            return 0
+        elif self.state == State.SOLVE:
+            return 1
+        else:
+            return -1
 
     # Filepath of last captured snap
     @property
