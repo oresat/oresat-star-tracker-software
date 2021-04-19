@@ -40,6 +40,7 @@ sudo systemctl stop oresat-star-trackerd
 
 The star tracker runs as a daemon, which sends runtime details to `/var/log/syslog` and exposes the following methods and properties via D-Bus. Note that states are encoded as integers, where `0` represents the standby state and `1` represents the solving state.
 
+- `CurrentState` -- Current state.
 - `CapturePath` -- Filepath of last image manually captured.
 - `SolvePath` -- Filepath of last image for which a solution was attempted.
 - `Coor` -- The results of the last solution attempt, represented as (declination, right ascension, orientation, Unix timestamp). If the first three numbers are all 0, it means the solution attempt failed.
