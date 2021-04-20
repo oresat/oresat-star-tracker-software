@@ -17,10 +17,19 @@ In addition, this software depends on [python3-prucam](https://github.com/oresat
 ### Building
 
 ```
+# Build everything (source + two packages)
 $ dpkg-buildpackage -us -uc
+
+# Build just oresat-star-tracker
+$ dpkg-buildpackage -us -uc -B
+
+# Build just oresat-star-tracker-data
+$ dpkg-buildpackage -us -uc -A
 ```
 
-Running this from the root of the repository will create a `.deb` file (along with a bunch of other things) in the directory one level above.
+This repository can build two separate packages, `oresat-star-tracker` and `oresat-star-tracker-data`. The former contains the daemon and the latter contains the data (star catalog, calibration parameters, etc.) that the daemon requires to run. Splitting up the packages means we can update the daemon without having to put megabytes of redundant information in the package.
+
+Note that `oresat-star-tracker` formally depends on `oresat-star-tracker-data`. You won't be able to install it until you have the data in place.
 
 ### Installing
 
