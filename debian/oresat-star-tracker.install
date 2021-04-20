@@ -1,3 +1,2 @@
 oresat-star-trackerd.service /lib/systemd/system/
 org.OreSat.StarTracker.conf /usr/share/dbus-1/system.d/
-data /usr/share/oresat-star-tracker/
