@@ -85,10 +85,6 @@ class Snapper:
             file_to_remove = glob.glob(self.save_snaps + f"{curr_num - 50}_*.png")[0]
             os.remove(file_to_remove)
 
-        # Add some compression
-        img = cv2.imread(new_path)
-        cv2.imwrite(new_path, img, [cv2.IMWRITE_PNG_COMPRESSION, 5])
-
         # Turn off the camera and return path
         self.stop()
         self.logger.info(f"Saved snap to {new_path}.")
@@ -114,7 +110,7 @@ class Snapper:
         # Resize the photo to 640x480 and add some compression
         img = cv2.imread(new_path)
         resized = cv2.resize(img, (640, 480))
-        cv2.imwrite(new_path, resized, [cv2.IMWRITE_PNG_COMPRESSION, 5])
+        cv2.imwrite(new_path, resized)
 
         # Turn off the camera and return path
         self.stop()
