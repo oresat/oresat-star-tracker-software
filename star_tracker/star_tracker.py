@@ -74,9 +74,13 @@ class StarTracker:
         self.s_thread = threading.Thread(target = self.solver_thread)
         self.s_lock = threading.Lock()
 
-        # Set up counting variables
-        self.snap_count = 0
-        self.solve_count = 0
+        # Read latest counts from data
+        self.snap_count_loc = "/usr/share/oresat-star-tracker/data/snaps/latest.txt"
+        self.solve_count_loc = "/usr/share/oresat-star-tracker/data/solves/latest.txt"
+        with open(self.snap_count_loc, "r") as f:
+            self.snap_count = int(f.read())
+        with open(self.solve_count_loc, "r") as f:
+            self.solve_count = int(f.read())
 
     # Change states
     def set_state(self, new_state):
@@ -145,10 +149,12 @@ class StarTracker:
                 # Acquire lock
                 self.s_lock.acquire()
 
-                # Capture an image and set property
+                # Capture an image, set property, increment count
                 cap_path = self.snapper.capture_solve(self.solve_count)
-                self.solve_count += 1
                 self.solve_path = cap_path
+                self.solve_count += 1
+                with open(self.solve_count_loc, "w") as f:
+                    f.write(str(self.solve_count))
 
                 # Solve the image and set properties
                 self.dec, self.ra, self.ori, self.solve_time = self.solver.solve(cap_path)
@@ -170,10 +176,12 @@ class StarTracker:
         if self.state != State.STANDBY:
             return
 
-        # Take a photo and set properties
+        # Take a photo, set property, increment count
         cap_path = self.snapper.capture_snap(self.snap_count)
-        self.snap_count += 1
         self.capture_path = cap_path
+        self.snap_count += 1
+        with open(self.snap_count_loc, "w") as f:
+            f.write(str(self.snap_count))
 
     # Change the state from outside (D-Bus method)
     def ChangeState(self, NewState):
