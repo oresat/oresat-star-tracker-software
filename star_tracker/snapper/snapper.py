@@ -5,6 +5,8 @@
 
 # Imports
 import os
+import time
+import glob
 import logging
 import numpy as np
 import cv2
@@ -74,12 +76,14 @@ class Snapper:
 
         # Take the photo and rename it
         raw_path = self.camera.capture(dir_path = self.save_snaps, ext = ".png")
-        new_path = self.save_snaps + f"{curr_num}.png"
+        date_and_time = time.strftime("%d-%m-%Y_%H-%M-%S", time.gmtime())
+        new_path = self.save_snaps + f"{curr_num}_{date_and_time}.png"
         os.rename(raw_path, new_path)
 
         # If necessary, delete an older photo to compensate
         if curr_num >= 50:
-            os.remove(self.save_snaps + f"{curr_num - 50}.png")
+            file_to_remove = glob.glob(self.save_snaps + f"{curr_num - 50}_*.png")[0]
+            os.remove(file_to_remove)
 
         # Add some compression
         img = cv2.imread(new_path)
@@ -98,12 +102,14 @@ class Snapper:
 
         # Take the photo and rename it
         raw_path = self.camera.capture(dir_path = self.save_solves, ext = ".png")
-        new_path = self.save_solves + f"{curr_num}.png"
+        date_and_time = time.strftime("%d-%m-%Y_%H-%M-%S", time.gmtime())
+        new_path = self.save_solves + f"{curr_num}_{date_and_time}.png"
         os.rename(raw_path, new_path)
 
         # If necessary, delete an older photo to compensate
         if curr_num >= 50:
-            os.remove(self.save_solves + f"{curr_num - 50}.png")
+            file_to_remove = glob.glob(self.save_solves + f"{curr_num - 50}_*.png")[0]
+            os.remove(file_to_remove)
 
         # Resize the photo to 640x480 and add some compression
         img = cv2.imread(new_path)
