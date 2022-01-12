@@ -1,5 +1,0 @@
-#!/bin/sh
-
-rm -rf /usr/share/oresat-star-tracker 2> /dev/null
-
-exit 0
