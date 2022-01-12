@@ -1,1 +1,1 @@
-beast.py
+from .beast import *
