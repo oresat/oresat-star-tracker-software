@@ -1,9 +1,9 @@
 #!/bin/sh
 
 systemctl daemon-reload
-sed -i '12s/^/#/' /usr/lib/python3.7/dist-packages/star_tracker/beast/__init__.py
-sed -i '13s/^/#/' /usr/lib/python3.7/dist-packages/star_tracker/beast/__init__.py
-sed -i '14s/^/#/' /usr/lib/python3.7/dist-packages/star_tracker/beast/__init__.py
-sed -i '15s/^    import _beast/import _beast/' /usr/lib/python3.7/dist-packages/star_tracker/beast/__init__.py
+sed -i '12s/^/#/' /usr/lib/python3.9/dist-packages/star_tracker/beast/__init__.py
+sed -i '13s/^/#/' /usr/lib/python3.9/dist-packages/star_tracker/beast/__init__.py
+sed -i '14s/^/#/' /usr/lib/python3.9/dist-packages/star_tracker/beast/__init__.py
+sed -i '15s/^    import _beast/import _beast/' /usr/lib/python3.9/dist-packages/star_tracker/beast/__init__.py
 
 exit 0

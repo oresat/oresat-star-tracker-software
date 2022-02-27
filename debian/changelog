@@ -1,3 +1,9 @@
+oresat-star-tracker (0.1.1-0) unstable; urgency=low
+
+  * fix for python3.9
+
+ -- PSAS <oresat@pdx.edu>  Sat, 26 Feb 2022 22:15:21 -0700
+
 oresat-star-tracker (0.1.0-0) unstable; urgency=low
 
   * inital package
