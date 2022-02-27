@@ -27,32 +27,30 @@ class BuildPy(build_py):
 
 setup(
     name='star-tracker',
-    description='A star tracker daemon with a SWIG backend',
+    description='The OreSat Star Tracker app',
     version='0.1.0',
     license='GPLv3',
     author='PSAS',
     author_email='oresat@pdx.edu',
     url='https://github.com/oresat/oresat-star-tracker-software',
     keywords=['SWIG', 'oresat', 'star tracker'],
-
     packages=find_packages('.'),
     ext_modules=[BEAST_EXT],
     cmdclass={
         'build_py': BuildPy,
     },
     install_requires=[
-        "pydbus",
-        "numpy",
+        'numpy',
+        'opencv-python-headless',
     ],
     entry_points={
         'console_scripts': [
-            'oresat-star-tracker = star_tracker.main:main',
+            'oresat-star-tracker = oresat_star_tracker.__main__:main',
         ],
     },
     classifiers=[
-        "Programming Language :: Python :: 3",
-        "License :: OSI Approved :: GNU General Public License v3 (GPLv3)",
+        'Programming Language :: Python :: 3',
+        'License :: OSI Approved :: GNU General Public License v3 (GPLv3)',
     ],
-
     python_requires='>=3.7',
 )
