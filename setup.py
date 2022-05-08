@@ -6,10 +6,10 @@ BEAST_EXT = Extension(
     name='_beast',
     swig_opts=['-py3', '-c++'],
     sources=[
-        'star_tracker/beast/beast.i',
+        'oresat_star_tracker/beast/beast.i',
     ],
     include_dirs=[
-        'star_tracker',
+        'oresat_star_tracker',
     ],
     extra_compile_args=[
         '-std=c++11',
@@ -26,7 +26,7 @@ class BuildPy(build_py):
 
 
 setup(
-    name='star-tracker',
+    name='oresat-star-tracker',
     description='The OreSat Star Tracker app',
     version='0.1.0',
     license='GPLv3',
@@ -34,13 +34,24 @@ setup(
     author_email='oresat@pdx.edu',
     url='https://github.com/oresat/oresat-star-tracker-software',
     keywords=['SWIG', 'oresat', 'star tracker'],
-    packages=find_packages('.'),
+    packages=['oresat_star_tracker'],
+    package_data={
+        'oresat_star_tracker': [
+            'beast/*.cpp',
+            'beast/*.cxx',
+            'beast/*.h',
+            'beast/*.i',
+            'beast/*.o',
+            'beast/*.so',
+            'data/*',
+        ]
+    },
     ext_modules=[BEAST_EXT],
     cmdclass={
         'build_py': BuildPy,
     },
     install_requires=[
-        'numpy',
+        'oresat-olaf',
         'opencv-python-headless',
     ],
     entry_points={
