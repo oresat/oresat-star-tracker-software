@@ -4,7 +4,7 @@ from argparse import ArgumentParser
 from enum import IntEnum
 
 import cv2
-from oresat_app import Resource, PRU, PRUError, logger, new_oresat_file
+from olaf import Resource, PRU, PRUError, logger, new_oresat_file
 
 from .camera import Camera, CameraError
 from .solver import Solver, SolverError
