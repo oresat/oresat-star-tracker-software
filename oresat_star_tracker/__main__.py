@@ -4,7 +4,7 @@ from os.path import dirname, abspath
 from enum import IntEnum
 from argparse import ArgumentParser
 
-from oresat_app import app_args_parser, parse_app_args, App
+from olaf import app_args_parser, parse_app_args, App
 
 from .star_tracker_resource import StarTrackerResource
 
