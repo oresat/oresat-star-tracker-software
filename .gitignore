@@ -131,5 +131,4 @@ dmypy.json
 # beast files
 _beast.so
 beast.py
-beast_wrap.cxx
-beast_wrap.o
+beast_wrap.*
