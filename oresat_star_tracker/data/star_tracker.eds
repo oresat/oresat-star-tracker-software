@@ -4685,7 +4685,7 @@ PDOMapping=0
 ParameterName=Star tracker status
 ObjectType=0x7
 DataType=0x0005
-AccessType=ro
+AccessType=rw
 DefaultValue=0xFF
 PDOMapping=1
 
