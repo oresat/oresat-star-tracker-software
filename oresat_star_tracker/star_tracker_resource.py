@@ -3,9 +3,10 @@
 import random
 from argparse import ArgumentParser
 from enum import IntEnum
+from time import time
 
 import cv2
-from olaf import Resource, PRU, PRUError, logger, new_oresat_file
+from olaf import Resource, PRU, PRUError, logger, new_oresat_file, scet_int_from_time
 
 from .camera import Camera, CameraError
 from .solver import Solver, SolverError
@@ -15,6 +16,7 @@ class DataSubindex(IntEnum):
     RIGHT_ANGLE = 0x1
     DECLINATION = 0x2
     ORIENTATION = 0x3
+    TIME_STAMP = 0x4
 
 
 class State(IntEnum):
@@ -49,6 +51,7 @@ class StarTrackerResource(Resource):
         self.right_angle_obj = data_record[DataSubindex.RIGHT_ANGLE.value]
         self.declination_obj = data_record[DataSubindex.DECLINATION.value]
         self.orientation_obj = data_record[DataSubindex.ORIENTATION.value]
+        self.time_stamp_obj = data_record[DataSubindex.TIME_STAMP.value]
 
     def on_start(self):
 
@@ -89,11 +92,13 @@ class StarTrackerResource(Resource):
     def _star_track(self):
         try:
             data = self._camera.capture()
+            scet = scet_int_from_time(time())
             ra, dec, ori = self._solver.solve(data)
 
             self.right_angle_obj.value = int(ra)
             self.declination_obj.value = int(dec)
             self.orientation_obj.value = int(ori)
+            self.time_stamp_obj.value = scet
         except CameraError as exc:
             logger.critial(exc)
             self._state = State.HW_ERROR
