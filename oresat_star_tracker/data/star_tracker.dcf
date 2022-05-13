@@ -1,5 +1,5 @@
 [FileInfo]
-FileName=star_tracker.eds
+FileName=star_tracker.dcf
 FileVersion=1
 FileRevision=1
 LastEDS=
@@ -8,8 +8,8 @@ Description=OreSat Star Tracker
 CreationTime=12:57PM
 CreationDate=03-09-2021
 CreatedBy=PSAS
-ModificationTime=12:50PM
-ModificationDate=11-26-2021
+ModificationTime=07:18PM
+ModificationDate=05-12-2022
 ModifiedBy=PSAS
 
 [DeviceInfo]
@@ -35,6 +35,15 @@ GroupMessaging=0
 NrOfRXPDO=16
 NrOfTXPDO=16
 LSS_Supported=0
+
+[DeviceComissioning]
+NodeID=44
+NodeName=Star Tracker
+Baudrate=1000
+NetNumber=0
+NetworkName=
+CANopenManager=0
+LSS_SerialNumber=0
 
 [DummyUsage]
 Dummy0001=0

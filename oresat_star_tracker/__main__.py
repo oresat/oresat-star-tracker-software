@@ -15,7 +15,7 @@ def main():
     args = parser.parse_args()
     parse_app_args(args)  # parse the standard app args
 
-    eds_file = dirname(abspath(__file__)) + '/data/star_tracker.eds'
+    eds_file = dirname(abspath(__file__)) + '/data/star_tracker.dcf'
 
     app = App(eds_file, args.bus, args.node_id)
 
