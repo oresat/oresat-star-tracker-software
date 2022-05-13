@@ -92,18 +92,15 @@ class Solver:
         fov_db = None
 
         # Process the image for solving
-        img = np.clip(orig_img.astype(np.int16) - self.MEDIAN_IMAGE,
-                      a_min=0,
-                      a_max=255).astype(np.uint8)
+        tmp = orig_img.astype(np.int16) - self.MEDIAN_IMAGE
+        img = np.clip(tmp, a_min=0, a_max=255).astype(np.uint8)
         img_grey = cv2.cvtColor(img, cv2.COLOR_RGB2GRAY)
 
         # Remove areas of the image that don't meet our brightness threshold and then extract
         # contours
-        ret, thresh = cv2.threshold(img_grey,
-                                    beast.cvar.THRESH_FACTOR * beast.cvar.IMAGE_VARIANCE,
-                                    255,
-                                    cv2.THRESH_BINARY)
-        thresh_contours, contours, hierarchy = cv2.findContours(thresh, 1, 2)
+        ret, thresh = cv2.threshold(img_grey, beast.cvar.THRESH_FACTOR * beast.cvar.IMAGE_VARIANCE,
+                                    255, cv2.THRESH_BINARY)
+        contours, hierarchy = cv2.findContours(thresh, cv2.RETR_EXTERNAL, cv2.CHAIN_APPROX_SIMPLE)
 
         # Process the contours
         for c in contours:
@@ -132,8 +129,7 @@ class Solver:
         img_stars_n_brightest = img_stars.copy_n_brightest(
             beast.cvar.MAX_FALSE_STARS + beast.cvar.REQUIRED_STARS)
         img_const_n_brightest = beast.constellation_db(img_stars_n_brightest,
-                                                       beast.cvar.MAX_FALSE_STARS + 2,
-                                                       1)
+                                                       beast.cvar.MAX_FALSE_STARS + 2, 1)
         lis = beast.db_match(self.C_DB, img_const_n_brightest)
 
         # Generate the match
