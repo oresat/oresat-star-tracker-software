@@ -6,7 +6,7 @@ from enum import IntEnum
 from time import time
 
 import cv2
-from olaf import Resource, PRU, PRUError, logger, new_oresat_file, scet_int_from_time
+from olaf import Resource, logger, new_oresat_file, scet_int_from_time
 
 from .camera import Camera, CameraError
 from .solver import Solver, SolverError
@@ -31,16 +31,13 @@ class State(IntEnum):
 
 class StarTrackerResource(Resource):
 
-    # these files are provide by the prucam-dkms debian package
-    PRU0_FW = '/lib/firmware/pru0.bin'
-    PRU1_FW = '/lib/firmware/pru1.bin'
-
     def __init__(self, node, fread_cache):
 
         super().__init__(node, 'Star Tracker', 1.0)
 
         self.fread_cache = fread_cache
         self._mock = True  # TODO args
+        logger.debug('mocking camera')
         self._state = State.BOOT
 
         self.state_index = 0x6000
@@ -53,22 +50,15 @@ class StarTrackerResource(Resource):
         self.orientation_obj = data_record[DataSubindex.ORIENTATION.value]
         self.time_stamp_obj = data_record[DataSubindex.TIME_STAMP.value]
 
-    def on_start(self):
-
-        if not self._mock:
-            try:
-                self._prus = [PRU(0, self.PRU0_FW), PRU(1, self.PRU1_FW)]
-                self._prus[0].start()
-                self._prus[1].start()
-            except PRUError as exc:
-                logger.error(exc)
-                self._state = State.HW_ERROR
-                return
-
         self._camera = Camera(self._mock)
         self._solver = Solver()
-        self._solver.startup()  # DB takes awhile to initialize
 
+    def on_start(self):
+
+        self._camera.power_on()
+        logger.info('camera is powered on')
+
+        self._solver.startup()  # DB takes awhile to initialize
         self._state = State.STANDBY
 
     def _capture(self):
@@ -118,13 +108,13 @@ class StarTrackerResource(Resource):
 
     def on_end(self):
 
-        if not self._mock:
-            try:
-                self._prus[0].stop()
-                self._prus[1].stop()
-            except PRUError as exc:
-                logger.error(exc)
-                self._state = State.HW_ERROR
+        try:
+            self._camera.power_off()
+        except CameraError as exc:
+            logger.error(exc)
+            self._state = State.HW_ERROR
+
+        logger.info('camera is powered off')
 
         self.right_angle_obj.value = 0
         self.declination_obj.value = 0
