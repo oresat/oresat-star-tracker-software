@@ -5,6 +5,8 @@ from os.path import abspath, dirname
 import numpy as np
 import cv2
 
+from olaf import PRU, PRUError
+
 
 class CameraError(Exception):
     '''An error has occured with camera'''
@@ -13,27 +15,53 @@ class CameraError(Exception):
 class Camera:
     '''Star tracker AR013x camera'''
 
+    # these files are provide by the prucam-dkms debian package
+    PRU0_FW = '/lib/firmware/pru0.bin'
+    PRU1_FW = '/lib/firmware/pru1.bin'
+
     def __init__(self, mock: bool = False):
 
         self._mock = mock
 
         if self._mock:
             self._capture_path = f'{dirname(abspath(__file__))}/data/mock.bmp'
-            self.image_size = self.capture().shape
         else:
             self._capture_path = '/dev/prucam'
+            self._prus = [PRU(0, self.PRU0_FW), PRU(1, self.PRU1_FW)]
 
+    def power_on(self) -> None:
+        '''Turn on the camera'''
+
+        if self._mock:
+            return
+
+        try:
+            self._prus[0].start()
+            self._prus[1].start()
+        except PRUError as exc:
+            raise CameraError(exc)
+
+        try:
+            with open('/sys/class/pru/prucam/context_settings/x_size', 'r') as f:
+                x_size = int(f.read())
+            with open('/sys/class/pru/prucam/context_settings/y_size', 'r') as f:
+                y_size = int(f.read())
+        except FileNotFoundError:
+            raise CameraError('no sysfs attributes for camera')
+
+        self.image_size = (y_size, x_size)
+
+    def power_off(self) -> None:
+        '''Turn off the camera'''
+
+        if not self._mock:
             try:
-                with open('/sys/class/pru/prucam/context_settings/x_size', 'r') as f:
-                    x_size = int(f.read())
-                with open('/sys/class/pru/prucam/context_settings/y_size', 'r') as f:
-                    y_size = int(f.read())
-            except FileNotFoundError:
-                raise CameraError('no sysfs attributes for camera')
+                self._prus[0].stop()
+                self._prus[1].stop()
+            except PRUError as exc:
+                raise CameraError(exc)
 
-            self.image_size = (y_size, x_size)
-
-    def capture(self, color=True):
+    def capture(self, color=True) -> np.ndarray:
         '''Capture an image
 
         Parameters
@@ -48,8 +76,8 @@ class Camera:
 
         Returns
         -------
-        bytes
-            image data
+        numpy.ndarray
+            image data in numpy array
         '''
 
         if self._mock:
@@ -75,7 +103,7 @@ class Camera:
 
         return img
 
-    def capture_and_save(self, file_path: str, color=True, ext='.bmp'):
+    def capture_and_save(self, file_path: str, color=True, ext='.bmp') -> None:
         '''Capture an image and save it to disk
 
         Parameters
