@@ -31,13 +31,13 @@ class State(IntEnum):
 
 class StarTrackerResource(Resource):
 
-    def __init__(self, node, fread_cache):
+    def __init__(self, node, fread_cache, mock_hw):
 
         super().__init__(node, 'Star Tracker', 1.0)
 
         self.fread_cache = fread_cache
-        self._mock = True  # TODO args
-        logger.debug('mocking camera')
+        self._mock_hw = mock_hw
+        logger.debug('mock_hwing camera')
         self._state = State.BOOT
 
         self.state_index = 0x6000
@@ -50,7 +50,7 @@ class StarTrackerResource(Resource):
         self.orientation_obj = data_record[DataSubindex.ORIENTATION.value]
         self.time_stamp_obj = data_record[DataSubindex.TIME_STAMP.value]
 
-        self._camera = Camera(self._mock)
+        self._camera = Camera(self._mock_hw)
         self._solver = Solver()
 
     def on_start(self):
