@@ -31,9 +31,11 @@ class State(IntEnum):
 
 class StarTrackerResource(Resource):
 
-    def __init__(self, node, fread_cache, mock_hw):
+    def __init__(self, node, fread_cache, mock_hw, send_tpdo):
 
         super().__init__(node, 'Star Tracker', 1.0)
+
+        self.send_tpdo = send_tpdo
 
         self.fread_cache = fread_cache
         self._mock_hw = mock_hw
@@ -89,6 +91,8 @@ class StarTrackerResource(Resource):
             self.declination_obj.value = int(dec)
             self.orientation_obj.value = int(ori)
             self.time_stamp_obj.value = scet
+            self.send_tpdo(2)
+            self.send_tpdo(3)
         except CameraError as exc:
             logger.critial(exc)
             self._state = State.HW_ERROR

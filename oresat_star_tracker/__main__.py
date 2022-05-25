@@ -20,7 +20,7 @@ def main():
 
     app = App(eds_file, args.bus, args.node_id)
 
-    resource = StarTrackerResource(app.node, app.fread_cache, args.mock_hw)
+    resource = StarTrackerResource(app.node, app.fread_cache, args.mock_hw, app.send_tpdo)
 
     app.add_resource(resource)
 

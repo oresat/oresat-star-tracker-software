@@ -2646,7 +2646,7 @@ ParameterName=Event timer
 ObjectType=0x7
 DataType=0x0006
 AccessType=rw
-DefaultValue=1000
+DefaultValue=0
 PDOMapping=0
 
 [1802sub6]
@@ -2707,7 +2707,7 @@ ParameterName=Event timer
 ObjectType=0x7
 DataType=0x0006
 AccessType=rw
-DefaultValue=1000
+DefaultValue=0
 PDOMapping=0
 
 [1803sub6]
