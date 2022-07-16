@@ -31,28 +31,27 @@ class State(IntEnum):
 
 class StarTrackerResource(Resource):
 
-    def __init__(self, node, fread_cache, mock_hw, send_tpdo):
+    def __init__(self, *args, **kwargs):
+        super().__init__(*args, **kwargs)
 
-        super().__init__(node, 'Star Tracker', 1.0)
+        if self.mock_hw:
+            logger.debug('mocking camera')
+        else:
+            logger.debug('not mocking camera')
 
-        self.send_tpdo = send_tpdo
-
-        self.fread_cache = fread_cache
-        self._mock_hw = mock_hw
-        logger.debug('mock_hwing camera')
         self._state = State.BOOT
 
         self.state_index = 0x6000
-        self.state_obj = self.node.object_dictionary[self.state_index]
+        self.state_obj = self.od[self.state_index]
 
         self.data_index = 0x6001
-        data_record = self.node.object_dictionary[self.data_index]
+        data_record = self.od[self.data_index]
         self.right_angle_obj = data_record[DataSubindex.RIGHT_ANGLE.value]
         self.declination_obj = data_record[DataSubindex.DECLINATION.value]
         self.orientation_obj = data_record[DataSubindex.ORIENTATION.value]
         self.time_stamp_obj = data_record[DataSubindex.TIME_STAMP.value]
 
-        self._camera = Camera(self._mock_hw)
+        self._camera = Camera(self.mock_hw)
         self._solver = Solver()
 
     def on_start(self):
@@ -139,4 +138,3 @@ class StarTrackerResource(Resource):
                 logger.info(f'start tracker now in state: {self._state.name}')
             except ValueError:
                 logger.error(f'new state value of {new_state} is invalid')
-
