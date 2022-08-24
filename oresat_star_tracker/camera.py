@@ -4,6 +4,7 @@ from os.path import abspath, dirname
 
 import numpy as np
 import cv2
+from datetime import datetime
 
 from olaf import PRU, PRUError
 
@@ -16,12 +17,13 @@ class Camera:
     '''Star tracker AR013x camera'''
 
     # these files are provide by the prucam-dkms debian package
-    PRU0_FW = '/lib/firmware/pru0.bin'
-    PRU1_FW = '/lib/firmware/pru1.bin'
+    PRU0_FW = '/lib/firmware/prucam_pru0_fw.out'
+    PRU1_FW = '/lib/firmware/prucam_pru1_fw.out'
 
-    def __init__(self, mock: bool = False):
+    def __init__(self, mock: bool = False, debug: bool = True):
 
         self._mock = mock
+        self._debug = debug
 
         if self._mock:
             self._capture_path = f'{dirname(abspath(__file__))}/data/mock.bmp'
@@ -50,6 +52,13 @@ class Camera:
             raise CameraError('no sysfs attributes for camera')
 
         self.image_size = (y_size, x_size)
+
+        try:
+            with open('/sys/class/pru/prucam/auto_exposure_settings/ae_enable', 'w') as f:
+                f.write('1')
+        except FileNotFoundError:
+            raise CameraError('no sysfs attribute for camera auto-exposure')
+
 
     def power_off(self) -> None:
         '''Turn off the camera'''
@@ -100,6 +109,11 @@ class Camera:
             # Convert to color
             if color is True:
                 img = cv2.cvtColor(img, cv2.COLOR_BayerBG2BGR)
+
+            if self._debug is True:
+                color_img = cv2.cvtColor(img, cv2.COLOR_BGR2RGB)
+                time_now = datetime.now().strftime("%Y_%m_%d-%I_%M_%S_%p")
+                cv2.imwrite('/tmp/debug_capture_%s.jpg' % time_now, color_img)
 
         return img
 
