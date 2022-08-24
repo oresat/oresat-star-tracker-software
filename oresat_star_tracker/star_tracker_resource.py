@@ -63,6 +63,7 @@ class StarTrackerResource(Resource):
         self._state = State.STANDBY
 
     def _capture(self):
+        logger.debug('ENTRY: catpure')
         try:
             data = self._camera.capture()
             ok, encoded = cv2.imencode('.bmp', data)
@@ -79,6 +80,7 @@ class StarTrackerResource(Resource):
         except CameraError as exc:
             logger.critial(exc)
             self._state = State.HW_ERROR
+        logger.debug('EXIT: capture')
 
     def _star_track(self):
         try:
@@ -125,11 +127,11 @@ class StarTrackerResource(Resource):
         self._state = State.OFF
 
     def on_read(self, index, subindex, od):
-
         if index == self.state_index:
             return self._state.value
 
     def on_write(self, index, subindex, od, data):
+        logger.debug('ENTRY: on_write', index, ' ', subindex, ' ' , data)
 
         if index == self.state_index:
             new_state = self.state_obj.decode_raw(data)
@@ -138,3 +140,7 @@ class StarTrackerResource(Resource):
                 logger.info(f'start tracker now in state: {self._state.name}')
             except ValueError:
                 logger.error(f'new state value of {new_state} is invalid')
+        elif index == 0x6002:
+            self._capture()
+        logger.debug('EXIT: on_write')
+        return None
