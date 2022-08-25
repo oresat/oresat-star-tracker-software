@@ -63,7 +63,7 @@ class StarTrackerResource(Resource):
         self._state = State.STANDBY
 
     def _capture(self):
-        logger.debug('ENTRY: catpure')
+        logger.info('ENTRY: catpure')
         try:
             data = self._camera.capture()
             ok, encoded = cv2.imencode('.bmp', data)
@@ -74,13 +74,14 @@ class StarTrackerResource(Resource):
             name = '/tmp/' + new_oresat_file('capture', ext='.bmp')
             with open(name, "wb") as f:
                 f.write(encoded)
-
+            logger.info('_capture: wrote to file:' + name)
             # add capture to fread cache
             self.fread_cache.add(name, consume=True)
+
         except CameraError as exc:
             logger.critial(exc)
             self._state = State.HW_ERROR
-        logger.debug('EXIT: capture')
+        logger.info('EXIT: capture')
 
     def _star_track(self):
         try:
@@ -131,7 +132,7 @@ class StarTrackerResource(Resource):
             return self._state.value
 
     def on_write(self, index, subindex, od, data):
-        logger.debug('ENTRY: on_write', index, ' ', subindex, ' ' , data)
+        logger.info('ENTRY: on_write', index, ' ', subindex, ' ' , data)
 
         if index == self.state_index:
             new_state = self.state_obj.decode_raw(data)
@@ -142,5 +143,5 @@ class StarTrackerResource(Resource):
                 logger.error(f'new state value of {new_state} is invalid')
         elif index == 0x6002:
             self._capture()
-        logger.debug('EXIT: on_write')
+        logger.info('EXIT: on_write')
         return None
