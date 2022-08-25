@@ -92,7 +92,7 @@ def can_decode_value(value, co_type):
 
 def can_encode_value(value, co_type):
     """
-    Takes the value and a can open type end encodes 
+    Takes the value and a CAN open type end encodes 
     it for writing.
     """
     if co_type == CANopenTypes.b:
@@ -129,10 +129,11 @@ def can_encode_value(value, co_type):
 
 def capture_image(node):
     """
-    Send the capture Command 
+    Send the capture command 
     """
     try:
-        node.sdo.download(INDEX_MAP['Capture'], 0, can_encode_value(1, CANopenTypes.i8))
+        payload =can_encode_value(1, CANopenTypes.i8) 
+        node.sdo.download(INDEX_MAP['Capture'], 0, payload)
     except Exception as exc: 
         print(exc) 
         traceback.print_exc()
@@ -149,7 +150,7 @@ def connect(bus_id = DEFAULT_BUS_ID, node_id = DEFAULT_NODE_ID):
  
 if __name__ =="__main__":
     node, network = connect()
-    diagnostics(node) 
+    # diagnostics(node) 
     capture_image(node)
     network.disconnect()
 
