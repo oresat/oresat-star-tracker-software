@@ -17,9 +17,9 @@ import cv2
 import traceback
 from olaf import Resource, logger, new_oresat_file, scet_int_from_time
 
-DEFAULT_BUS_ID='vcan0'
-DEFAULT_NODE_ID='0x2C'
-INDEX_MAP={ 'Capture' : 0x6002 } 
+DEFAULT_BUS_ID = 'vcan0'
+STARTRACKER_NODE_ID = '0x2C'
+INDEX_MAP = { 'capture' : 0x6002 }
 
 class CANopenTypes(Enum):
     '''All valid canopen types supported'''
@@ -50,7 +50,7 @@ DECODE_KEYS = {
     CANopenTypes.f64: 'd',
 }
 
-def can_decode_value(value, co_type):
+def decode_value(value, co_type):
     """
     Decode can open value
     """
@@ -89,10 +89,9 @@ def can_decode_value(value, co_type):
         sys.exit(0)
     return data;
 
-
-def can_encode_value(value, co_type):
+def encode_value(value, co_type):
     """
-    Takes the value and a CAN open type end encodes 
+    Takes the value and a CAN open type end encodes
     it for writing.
     """
     if co_type == CANopenTypes.b:
@@ -125,32 +124,55 @@ def can_encode_value(value, co_type):
         raise RuntimeError('invalid data type')
     return raw_data
 
-# def download_sdo(index, sub_index, 
-
-def capture_image(node):
+def capture_image(sdo_client):
     """
-    Send the capture command 
+    Send the capture command.
     """
     try:
-        payload =can_encode_value(1, CANopenTypes.i8) 
-        node.sdo.download(INDEX_MAP['Capture'], 0, payload)
-    except Exception as exc: 
-        print(exc) 
+        payload = encode_value(1, CANopenTypes.i8)
+        sdo_client.download(INDEX_MAP['capture'], 0, payload)
+    except Exception as exc:
+        print(exc)
         traceback.print_exc()
+
+def read_file(sdo_client):
+    """
+    Read the captured file from the fread cache.
+    """
+    pass
+
+def describe_dictionary(node):
+    # Something wront with dictionary discriptions.
+    print("Object Dictionary Values: ", node.object_dictionary.values())
+    for obj in node.object_dictionary.values():
+        print(" inside object_dictionary_values: ")
+        print('0x%X: %s' % (obj.index, obj.name))
+        if isinstance(obj, canopen.objectdictionary.Record):
+            for subobj in obj.values():
+                print('  %d: %s' % (subobj.subindex, subobj.name))
 
 def diagnostics(node):
     print("Running diagnostics")
 
-def connect(bus_id = DEFAULT_BUS_ID, node_id = DEFAULT_NODE_ID):
+def connect(bus_id = DEFAULT_BUS_ID, node_id = STARTRACKER_NODE_ID):
+    """
+    Connect to to the startracker node
+    """
     network = canopen.Network()
     node = canopen.RemoteNode(int(node_id, 16), canopen.ObjectDictionary())
     network.add_node(node)
     network.connect(bustype='socketcan', channel=bus_id)
     return node, network
- 
+
 if __name__ =="__main__":
     node, network = connect()
-    # diagnostics(node) 
-    capture_image(node)
+
+    sdo_client = node.sdo
+    sdo_client.RESPONSE_TIMEOUT = 5.0
+
+    capture_image(sdo_client)
+
+    describe_dictionary(node)
+    # diagnostics(node)
     network.disconnect()
 
