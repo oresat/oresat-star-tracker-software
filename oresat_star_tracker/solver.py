@@ -12,8 +12,13 @@ import numpy as np
 import cv2
 from os.path import abspath, dirname
 
+import datetime
+from  datetime import datetime
+
+
 from .beast import beast
 
+def now(): return datetime.now()
 
 class SolverError(Exception):
     '''An erro has occur for the :py:class:`solver`'''
@@ -32,6 +37,7 @@ class Solver:
         self.SQ_RESULTS = None
         self.S_FILTERED = None
         self.C_DB = None
+
 
     def startup(self):
         '''Start up sequence. Loads median image, loads config file, and setups database.
@@ -57,17 +63,29 @@ class Solver:
             beast.load_config(config_path)
 
             # Load star database
-            self.S_DB = beast.star_db()
-            self.S_DB.load_catalog(db_path, self.YEAR)
+
+            print(now().strftime("%Y-%m-%d %H:%M:%S")+" entry beast.star_db()")
+            self.S_DB = beast.star_db() # 0 seconds
+            print(now().strftime("%Y-%m-%d %H:%M:%S")+" entry load_catalog()")
+            self.S_DB.load_catalog(db_path, self.YEAR) # 7 seconds
+            print(now().strftime("%Y-%m-%d %H:%M:%S")+" exit load_catalog()")
 
             # Filter stars
-            self.SQ_RESULTS = beast.star_query(self.S_DB)
-            self.SQ_RESULTS.kdmask_filter_catalog()
-            self.SQ_RESULTS.kdmask_uniform_density(beast.cvar.REQUIRED_STARS)
+            print(now().strftime("%Y-%m-%d %H:%M:%S")+" entry star_query()")
+            self.SQ_RESULTS = beast.star_query(self.S_DB) # 1 sec
+            print(now().strftime("%Y-%m-%d %H:%M:%S")+" exit star_query()")
+            self.SQ_RESULTS.kdmask_filter_catalog() # 8 secons
+
+            print(now().strftime("%Y-%m-%d %H:%M:%S")+" entry kdmask_uniform_density()")
+            self.SQ_RESULTS.kdmask_uniform_density(beast.cvar.REQUIRED_STARS) # 23 seconds!
+            print(now().strftime("%Y-%m-%d %H:%M:%S")+" exit kdmask_uniform_density()")
             self.S_FILTERED = self.SQ_RESULTS.from_kdmask()
 
             # Set up constellation database
-            self.C_DB = beast.constellation_db(self.S_FILTERED, 2 + beast.cvar.DB_REDUNDANCY, 0)
+            print (now().strftime("%Y-%m-%d %H:%M:%S")+" entry constallation_db()")
+            self.C_DB = beast.constellation_db(self.S_FILTERED, 2 + beast.cvar.DB_REDUNDANCY, 0) # 1 second
+            print (now().strftime("%Y-%m-%d %H:%M:%S")+" exit constallation_db()")
+
         except Exception as exc:
             raise SolverError(f'Startup sequence failed with {exc}')
 
