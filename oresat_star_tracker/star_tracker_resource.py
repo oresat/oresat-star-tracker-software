@@ -46,6 +46,8 @@ class StarTrackerResource(Resource):
 
         self.data_index = 0x6001
         data_record = self.od[self.data_index]
+
+        # Save references to camera
         self.right_angle_obj = data_record[DataSubindex.RIGHT_ANGLE.value]
         self.declination_obj = data_record[DataSubindex.DECLINATION.value]
         self.orientation_obj = data_record[DataSubindex.ORIENTATION.value]
@@ -63,7 +65,7 @@ class StarTrackerResource(Resource):
         self._state = State.STANDBY
 
     def _capture(self):
-        logger.info('ENTRY: catpure')
+        logger.info('ENTRY: capture')
         try:
             data = self._camera.capture()
             ok, encoded = cv2.imencode('.bmp', data)
@@ -85,16 +87,22 @@ class StarTrackerResource(Resource):
 
     def _star_track(self):
         try:
-            data = self._camera.capture()
-            scet = scet_int_from_time(time())
-            ra, dec, ori = self._solver.solve(data)
+            data = self._camera.capture() # Take the image
+            scet = scet_int_from_time(time()) # Record the timestamp
+
+            # solver takes a single shot image and returns an orientation
+            ra, dec, ori = self._solver.solve(data) # run the solver
 
             self.right_angle_obj.value = int(ra)
             self.declination_obj.value = int(dec)
             self.orientation_obj.value = int(ori)
+
             self.time_stamp_obj.value = scet
+
+            # the tpdo will be sent out by the application
             self.send_tpdo(2)
             self.send_tpdo(3)
+
         except CameraError as exc:
             logger.critial(exc)
             self._state = State.HW_ERROR
@@ -113,7 +121,6 @@ class StarTrackerResource(Resource):
             self._star_track()
 
     def on_end(self):
-
         try:
             self._camera.power_off()
         except CameraError as exc:
