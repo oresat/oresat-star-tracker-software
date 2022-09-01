@@ -176,6 +176,31 @@ def is_valid_star_tracker_state(state):
     result = np.where(valid_states == state)
     return np.shape(result) ==  (1,1)
 
+
+def fetch_files_fread(sdo, keyword='capture'):
+    '''
+    Fetch all the tracker files from the fread cache.
+    '''
+    cache = 'fread'
+    FCACHE_INDEX = 0x3002
+    sdo[FCACHE_INDEX][3].phys = 0 # on_write:file_cahce
+
+    # 2. Clear any preset filters. # on_write_filter
+    sdo[FCACHE_INDEX][4].raw = keyword.encode() #b'capture'  # Clear filter
+
+    #b'\00'  # Clear filter
+
+    # QOD: Why is list files returning 0 ?
+
+    capture_files = []
+    for i in range(sdo[FCACHE_INDEX][5].phys):
+        # 4. Set the read index.
+        sdo[FCACHE_INDEX][6].phys = i
+        # 5. Print the file name at the index.
+        file_name = sdo[FCACHE_INDEX][7].phys
+        capture_files.append(file_name)
+    return capture_files
+
 class TestStarTrackerCanInterface(unittest.TestCase):
 
     def setUp(self):
@@ -247,25 +272,16 @@ class TestStarTrackerCanInterface(unittest.TestCase):
 
     def test_list_files_fread_cache(self):
         '''
-        Test listing fread cache
+        Test listing fread cache.
         '''
-        cache = 'fread'
-        FCACHE_INDEX = 0x3002
+        capture_files = fetch_files_fread(self.sdo, 'capture')
+        self.assertTrue( len(capture_files) > 0 )
 
-        self.sdo[FCACHE_INDEX][3].phys = 0
-        # 2. Clear any preset filters.
-        self.sdo[FCACHE_INDEX][4].raw = b'\00'  # clear filter
-
-        # Question of the Day: Why is list files returning 0.
-        self.assertTrue(self.sdo[FCACHE_INDEX][5].phys > 0)
-
-        for i in range(self.sdo[FCACHE_INDEX][5].phys):
-            # 4. Set the read index.
-            self.sdo[FCACHE_INDEX][6].phys = i
-            # 5. Print the file name at the index.
-            print(self.sdo[FCACHE_INDEX][7].phys)
+    def test_read_from_fread_cache(self):
+        capture_files = fetch_files_fread(self.sdo, 'capture')
 
 
+        pass
 
 if __name__ == "__main__":
     unittest.main()
