@@ -24,6 +24,7 @@ from .star_tracker_resource import State as StarTrackerState
 
 DEFAULT_BUS_ID = 'vcan0'
 STARTRACKER_NODE_ID = 0x2C
+EDS_FILE = dirname(abspath(__file__)) + '/data/star_tracker.eds'
 
 class CANopenTypes(Enum):
     '''All valid canopen types supported'''
@@ -132,8 +133,9 @@ def connect(bus_id = DEFAULT_BUS_ID, node_id = STARTRACKER_NODE_ID):
     '''
     Connect to to the startracker node
     '''
+
     network = canopen.Network()
-    node = canopen.RemoteNode(node_id, canopen.ObjectDictionary())
+    node = canopen.RemoteNode(node_id, EDS_FILE)
     network.add_node(node)
     network.connect(bustype='socketcan', channel=bus_id)
     return node, network
@@ -243,11 +245,27 @@ class TestStarTrackerCanInterface(unittest.TestCase):
         logger.info("EXIT:test_invoke_capture")
 
 
-    def test_fetch_from_fread_cache(self):
+    def test_list_files_fread_cache(self):
         '''
         Test listing fread cache
         '''
-        pass
+        cache = 'fread'
+        FCACHE_INDEX = 0x3002
+
+        self.sdo[FCACHE_INDEX][3].phys = 0
+        # 2. Clear any preset filters.
+        self.sdo[FCACHE_INDEX][4].raw = b'\00'  # clear filter
+
+        # Question of the Day: Why is list files returning 0.
+        self.assertTrue(self.sdo[FCACHE_INDEX][5].phys > 0)
+
+        for i in range(self.sdo[FCACHE_INDEX][5].phys):
+            # 4. Set the read index.
+            self.sdo[FCACHE_INDEX][6].phys = i
+            # 5. Print the file name at the index.
+            print(self.sdo[FCACHE_INDEX][7].phys)
+
+
 
 if __name__ == "__main__":
     unittest.main()
