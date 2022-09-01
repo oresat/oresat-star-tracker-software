@@ -12,20 +12,18 @@ import cv2
 import traceback
 from olaf import Resource, logger, new_oresat_file, scet_int_from_time
 
-
 import unittest
 import sys
-
+import numpy as np
 from os.path import abspath, dirname
 
 import datetime
 from  datetime import datetime
 
-def now(): return datetime.now()
+from .star_tracker_resource import State as StarTrackerState
 
 DEFAULT_BUS_ID = 'vcan0'
-STARTRACKER_NODE_ID = '0x2C'
-INDEX_MAP = { 'capture' : 0x6002 }
+STARTRACKER_NODE_ID = 0x2C
 
 class CANopenTypes(Enum):
     '''All valid canopen types supported'''
@@ -57,9 +55,9 @@ DECODE_KEYS = {
 }
 
 def decode_value(raw_data, co_type):
-    """
+    '''
     Decode can open value
-    """
+    '''
     data = None
     if co_type == CANopenTypes.b:
         data = unpack('?', raw_data)
@@ -96,10 +94,10 @@ def decode_value(raw_data, co_type):
     return data;
 
 def encode_value(value, co_type):
-    """
+    '''
     Takes the value and a CAN open type end encodes
     it for writing.
-    """
+    '''
     if co_type == CANopenTypes.b:
         raw_data = pack('?', int(value))
     elif co_type == CANopenTypes.i8:
@@ -130,72 +128,135 @@ def encode_value(value, co_type):
         raise RuntimeError('invalid data type')
     return raw_data
 
-def capture_image(sdo_client):
-    """
-    Send the capture command.
-    """
-    try:
-        payload = encode_value(1, CANopenTypes.i8)
-        sdo_client.download(INDEX_MAP['capture'], 0, payload)
-    except Exception as exc:
-        print(exc)
-        traceback.print_exc()
-
 def connect(bus_id = DEFAULT_BUS_ID, node_id = STARTRACKER_NODE_ID):
-    """
+    '''
     Connect to to the startracker node
-    """
+    '''
     network = canopen.Network()
-    node = canopen.RemoteNode(int(node_id, 16), canopen.ObjectDictionary())
+    node = canopen.RemoteNode(node_id, canopen.ObjectDictionary())
     network.add_node(node)
     network.connect(bustype='socketcan', channel=bus_id)
     return node, network
 
+def trigger_capture_star_tracker(sdo):
+    '''
+    Send the capture command.
+    '''
+    try:
+        payload = encode_value(1, CANopenTypes.i8)
+        sdo.download(0x6002, 0, payload)
+    except Exception as exc:
+        print(exc)
+        traceback.print_exc()
+        raise exc
+
+def get_star_tracker_state(sdo):
+    '''
+    Retreive tracker state.
+    '''
+    returned_value = sdo.upload(0x6000, 0)
+    decoded_state  = decode_value(returned_value, CANopenTypes.i8)[0]
+    return decoded_state
+
+def set_star_tracker_state(sdo, state):
+    '''
+    Set the tracker state.
+    '''
+    payload = encode_value(state, CANopenTypes.i8)
+    sdo.download(0x6000, 0, payload)
+    return True
+
+def is_valid_star_tracker_state(state):
+    '''
+    Check that tracker is in valid state.
+    '''
+    valid_states = np.array(sorted(StarTrackerState), dtype=np.int8)
+    result = np.where(valid_states == state)
+    return np.shape(result) ==  (1,1)
+
 class TestStarTrackerCanInterface(unittest.TestCase):
 
     def setUp(self):
-        """ setUp """
+        '''Connect to remote can node  for Star Tracker'''
         print("ENTRY::setUp")
         self.node, self.network = connect()
-
-        self.sdo_client = self.node.sdo
-        self.sdo_client.RESPONSE_TIMEOUT = 5.0
-
+        self.sdo = self.node.sdo
+        # long timeout, due to connection and startup issues.
+        self.sdo.RESPONSE_TIMEOUT = 5.0
         print("EXIT::setUp")
 
     def tearDown(self):
+        '''
+        Disconnect from rmeote can node.
+        '''
         print("ENTRY::tearDown")
         self.network.disconnect()
         print("EXIT::tearDown")
 
-
     def test_get_state(self):
-        """
-        Test that we can retreive the current tracker state.
-        """
+        '''
+        Test that we can retreive the current tracker stat,  and that the tate is one of the
+        valid star tracker states.
+        '''
         print("ENTRY:test_get_state")
         try:
-            returned_value = self.sdo_client.upload(0x6000, 0)
-            print("returned value", decode_value(returned_value, CANopenTypes.i8)[0])
-
+            decoded_state = get_star_tracker_state(self.sdo)
+            self.assertTrue(is_valid_star_tracker_state(decoded_state))
         except Exception as exc:
             print(exc)
             traceback.print_exc()
 
         print("EXIT:test_get_state")
 
+
+    def test_switch_states_standby_capture(self):
+        '''
+        Switch state Unknown -> Capture -> Standby -> Unknown
+        '''
+        print("ENTRY:test_switch_states_standby_capture")
+        try:
+            # payload = encode_value(StarTrackerState.CAPTURE, CANopenTypes.i8)
+            # self.sdo.download(0x6000, 0, payload)
+            returned_value = self.sdo.upload(0x6000, 0)
+            decoded_state  = decode_value(returned_value, CANopenTypes.i8)[0]
+            valid_states = np.array(sorted(StarTrackerState), dtype=np.int8)
+            result = np.where(valid_states == decoded_state)
+
+            save_original_state = decoded_state
+
+            payload = encode_value(StarTrackerState.CAPTURE, CANopenTypes.i8)
+            self.sdo.download(0x6000, 0, payload)
+
+            returned_value = self.sdo.upload(0x6000, 0)
+            decoded_state  = decode_value(returned_value, CANopenTypes.i8)[0]
+
+            self.assertEqual(decoded_state, StarTrackerState.CAPTURE)
+
+            payload = encode_value(save_original_state, CANopenTypes.i8)
+            self.sdo.download(0x6000, 0, payload)
+
+
+            print("Num results", np.shape(result))
+            print("Found at index: ", result[0])
+        except Exception as exc:
+            print(exc)
+            traceback.print_exc()
+
+
+        print("EXIT:test_switch_states_standby_capture")
+
     def test_invoke_capture(self):
-        """
-        Test
-        """
+        '''
+        Test invoke capture
+        '''
         print("ENTRY:test_invoke_capture")
         try:
-            payload = encode_value(1, CANopenTypes.i8)
-            self.sdo_client.download(INDEX_MAP['capture'], 0, payload)
+            trigger_capture_star_tracker(self.sdo)
         except Exception as exc:
             print(exc)
             traceback.print_exc()
         print("EXIT:test_invoke_capture")
 
-if __name__ == """__main__""":
+
+if __name__ == "__main__":
     unittest.main()
