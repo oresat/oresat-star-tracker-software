@@ -83,13 +83,13 @@ def decode_value(raw_data, co_type):
         data = unpack('d', raw_data)
     elif co_type == CANopenTypes.s:
         data = raw_data.decode('utf-8')
-        print(data)
+        logger.info(data)
         sys.exit(0)
     elif co_type == CANopenTypes.d:
-        print(raw_data)
+        logger.info(raw_data)
         sys.exit(0)
     else:
-        print('invalid data type')
+        logger.info('invalid data type')
         sys.exit(0)
     return data;
 
@@ -178,85 +178,76 @@ class TestStarTrackerCanInterface(unittest.TestCase):
 
     def setUp(self):
         '''Connect to remote can node  for Star Tracker'''
-        print("ENTRY::setUp")
+        logger.info("ENTRY::setUp")
         self.node, self.network = connect()
         self.sdo = self.node.sdo
         # long timeout, due to connection and startup issues.
         self.sdo.RESPONSE_TIMEOUT = 5.0
-        print("EXIT::setUp")
+        logger.info("EXIT::setUp")
 
     def tearDown(self):
         '''
         Disconnect from rmeote can node.
         '''
-        print("ENTRY::tearDown")
+        logger.info("ENTRY::tearDown")
         self.network.disconnect()
-        print("EXIT::tearDown")
+        logger.info("EXIT::tearDown")
 
     def test_get_state(self):
         '''
         Test that we can retreive the current tracker stat,  and that the tate is one of the
         valid star tracker states.
         '''
-        print("ENTRY:test_get_state")
+        logger.info("ENTRY:test_get_state")
         try:
-            decoded_state = get_star_tracker_state(self.sdo)
-            self.assertTrue(is_valid_star_tracker_state(decoded_state))
+            state = get_star_tracker_state(self.sdo)
+            self.assertTrue(is_valid_star_tracker_state(state))
         except Exception as exc:
             print(exc)
             traceback.print_exc()
-
-        print("EXIT:test_get_state")
+            raise exc
+        logger.info("EXIT:test_get_state")
 
 
     def test_switch_states_standby_capture(self):
         '''
         Switch state Unknown -> Capture -> Standby -> Unknown
         '''
-        print("ENTRY:test_switch_states_standby_capture")
+        logger.info("ENTRY:test_switch_states_standby_capture")
         try:
-            # payload = encode_value(StarTrackerState.CAPTURE, CANopenTypes.i8)
-            # self.sdo.download(0x6000, 0, payload)
-            returned_value = self.sdo.upload(0x6000, 0)
-            decoded_state  = decode_value(returned_value, CANopenTypes.i8)[0]
-            valid_states = np.array(sorted(StarTrackerState), dtype=np.int8)
-            result = np.where(valid_states == decoded_state)
+            # 1. Retreive the original state
+            save_original_state = get_star_tracker_state(self.sdo)
+            self.assertTrue(is_valid_star_tracker_state(save_original_state))
 
-            save_original_state = decoded_state
-
-            payload = encode_value(StarTrackerState.CAPTURE, CANopenTypes.i8)
-            self.sdo.download(0x6000, 0, payload)
-
-            returned_value = self.sdo.upload(0x6000, 0)
-            decoded_state  = decode_value(returned_value, CANopenTypes.i8)[0]
-
+            # 2. Ensure can set to CAPTURE state
+            set_star_tracker_state(self.sdo, StarTrackerState.CAPTURE)
+            decoded_state = get_star_tracker_state(self.sdo)
             self.assertEqual(decoded_state, StarTrackerState.CAPTURE)
 
-            payload = encode_value(save_original_state, CANopenTypes.i8)
-            self.sdo.download(0x6000, 0, payload)
+            # 3. Revert to original state.
+            set_star_tracker_state(self.sdo, save_original_state)
 
-
-            print("Num results", np.shape(result))
-            print("Found at index: ", result[0])
         except Exception as exc:
             print(exc)
             traceback.print_exc()
+            raise exc
 
-
-        print("EXIT:test_switch_states_standby_capture")
+        logger.info("EXIT:test_switch_states_standby_capture")
 
     def test_invoke_capture(self):
         '''
         Test invoke capture
         '''
-        print("ENTRY:test_invoke_capture")
-        try:
-            trigger_capture_star_tracker(self.sdo)
-        except Exception as exc:
-            print(exc)
-            traceback.print_exc()
-        print("EXIT:test_invoke_capture")
+        logger.info("ENTRY:test_invoke_capture")
+        trigger_capture_star_tracker(self.sdo)
+        logger.info("EXIT:test_invoke_capture")
 
+
+    def test_fetch_from_fread_cache(self):
+        '''
+        Test listing fread cache
+        '''
+        pass
 
 if __name__ == "__main__":
     unittest.main()
