@@ -201,6 +201,35 @@ def fetch_files_fread(sdo, keyword='capture'):
         capture_files.append(file_name)
     return capture_files
 
+"""
+TOO SLOW UNUSABLE
+"""
+def read_image_file(sdo, file_name: str):
+    sdo[0x3003][1].raw = file_name.encode('utf-8')
+    total_size = 3686454
+    infile = sdo[0x3003][2].open('rb', encoding='ascii', buffering=1024 , size=3686454) # , size=3686454,  block_transfer=True)
+    print("begin::reading.")
+
+    file_bytes = np.asarray(bytearray(infile.read()), dtype=np.uint8)
+
+    """
+    total_read = 0
+    block_size = 1024
+    num_blocks = total_size % block_size
+    for  _ in range(num_blocks):
+        contents = infile.read(block_size)
+        if not contents:
+            break;
+        total_read+=block_size
+        print('Read bytes ', total_read)
+    print("after::reading.")
+    """
+
+    # retval = cv2.imdecode(contents, cv2.IMREAD_GRAYSCALE)
+    infile.close()
+    # print("read-shape: ", np.shape(retval))
+    return retval
+
 class TestStarTrackerCanInterface(unittest.TestCase):
 
     def setUp(self):
@@ -277,11 +306,14 @@ class TestStarTrackerCanInterface(unittest.TestCase):
         capture_files = fetch_files_fread(self.sdo, 'capture')
         self.assertTrue( len(capture_files) > 0 )
 
+    """
     def test_read_from_fread_cache(self):
         capture_files = fetch_files_fread(self.sdo, 'capture')
-
-
-        pass
+        first_file = capture_files[0]
+        print("first file", first_file)
+        read_image_file(self.sdo, first_file)
+        # pass
+    """
 
 if __name__ == "__main__":
     unittest.main()
