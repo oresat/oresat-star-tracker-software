@@ -207,7 +207,12 @@ TOO SLOW UNUSABLE
 def read_image_file(sdo, file_name: str):
     sdo[0x3003][1].raw = file_name.encode('utf-8')
     total_size = 3686454
-    infile = sdo[0x3003][2].open('rb', encoding='ascii', buffering=1024 , size=3686454) # , size=3686454,  block_transfer=True)
+
+    node, network = connect()
+    sdo = node.sdo
+    sdo.RESPONSE_TIMEOUT = 5.0
+
+    infile = sdo[0x3003][2].open('rb', encoding='ascii', buffering=1024 , size=3686454, block_transfer=True)
     print("begin::reading.")
 
     file_bytes = np.asarray(bytearray(infile.read()), dtype=np.uint8)
@@ -228,6 +233,7 @@ def read_image_file(sdo, file_name: str):
     # retval = cv2.imdecode(contents, cv2.IMREAD_GRAYSCALE)
     infile.close()
     # print("read-shape: ", np.shape(retval))
+    network.disconnect()
     return retval
 
 class TestStarTrackerCanInterface(unittest.TestCase):
@@ -298,7 +304,6 @@ class TestStarTrackerCanInterface(unittest.TestCase):
         trigger_capture_star_tracker(self.sdo)
         logger.info("EXIT:test_invoke_capture")
 
-
     def test_list_files_fread_cache(self):
         '''
         Test listing fread cache.
@@ -308,12 +313,33 @@ class TestStarTrackerCanInterface(unittest.TestCase):
 
     """
     def test_read_from_fread_cache(self):
-        capture_files = fetch_files_fread(self.sdo, 'capture')
-        first_file = capture_files[0]
-        print("first file", first_file)
-        read_image_file(self.sdo, first_file)
+        pass
+        #capture_files = fetch_files_fread(self.sdo, 'capture')
+        # first_file = capture_files[0]
+        # print("first file", first_file)
+        # read_image_file(self.sdo, first_file)
         # pass
-    """
+    def test_pdo(self):
 
+        print("TPDO", self.node.tpdo.read())
+        print("RPDO", self.node.rpdo.read())
+
+        set_star_tracker_state(self.sdo, StarTrackerState.STAR_TRACKING)
+
+        for  _ in range(1000):
+            def print_speed(message):
+                print('%s received' % message.name)
+                for var in message:
+                    print('%s = %d' % (var.name, var.raw))
+
+            self.node.tpdo[4].add_callback(print_speed)
+            self.node.tpdo[3].add_callback(print_speed)
+            self.node.tpdo[2].add_callback(print_speed)
+            self.node.tpdo[1].add_callback(print_speed)
+
+            import time
+            time.sleep(100)
+        set_star_tracker_state(self.sdo, StarTrackerState.STANDBY)
+    """
 if __name__ == "__main__":
     unittest.main()
