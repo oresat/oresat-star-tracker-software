@@ -8,8 +8,8 @@ Description=OreSat Star Tracker
 CreationTime=12:57PM
 CreationDate=03-09-2021
 CreatedBy=PSAS
-ModificationTime=07:18PM
-ModificationDate=05-12-2022
+ModificationTime=12:01PM
+ModificationDate=09-03-2022
 ModifiedBy=PSAS
 
 [DeviceInfo]
@@ -125,7 +125,7 @@ DefaultValue=0x00000000
 PDOMapping=0
 
 [OptionalObjects]
-SupportedObjects=88
+SupportedObjects=86
 1=0x1002
 2=0x1003
 3=0x1005
@@ -212,8 +212,6 @@ SupportedObjects=88
 84=0x6000
 85=0x6001
 86=0x6002
-87=0x6003
-88=0x6004
 
 [1002]
 ParameterName=Manufacturer status register
@@ -4690,6 +4688,21 @@ AccessType=rw
 DefaultValue=0x00000008
 PDOMapping=0
 
+;Status. read for current state, write commands
+;
+;States:
+;  0x00: Off
+;  0x00: Booting
+;  0x02: Standby
+;  0x03: Capturing image in a loop
+;  0x04: Star tracking
+;  0x05: Software error (star tracker algorithm errored)
+;  0x06: Hardware error (most likely camera is not working correctly)
+;
+;Commands:
+;  0: Goto to standby state
+;  1: Start star tracking
+;  2: start capture looping
 [6000]
 ParameterName=Star tracker status
 ObjectType=0x7
@@ -4698,6 +4711,7 @@ AccessType=rw
 DefaultValue=0xFF
 PDOMapping=1
 
+;Orienation data from last solve
 [6001]
 ParameterName=Orienation
 ObjectType=0x9
@@ -4711,6 +4725,7 @@ AccessType=ro
 DefaultValue=0x04
 PDOMapping=0
 
+;The right ascension (in deg?) calculated by last solve
 [6001sub1]
 ParameterName=Right Ascension
 ObjectType=0x7
@@ -4719,6 +4734,7 @@ AccessType=ro
 DefaultValue=0
 PDOMapping=1
 
+;The declination (in deg?) calculated by last solve
 [6001sub2]
 ParameterName=Declination
 ObjectType=0x7
@@ -4727,6 +4743,7 @@ AccessType=ro
 DefaultValue=0
 PDOMapping=1
 
+;The roll (in deg?) calculated by last solve
 [6001sub3]
 ParameterName=Roll
 ObjectType=0x7
@@ -4735,6 +4752,7 @@ AccessType=ro
 DefaultValue=0
 PDOMapping=1
 
+;The SCET value for the last capture that was solved
 [6001sub4]
 ParameterName=Timestamp
 ObjectType=0x7
@@ -4743,24 +4761,9 @@ AccessType=ro
 DefaultValue=0
 PDOMapping=1
 
+;Take an image and place it in the fread cache
 [6002]
 ParameterName=Capture
-ObjectType=0x7
-DataType=0x0001
-AccessType=wo
-DefaultValue=0
-PDOMapping=0
-
-[6003]
-ParameterName=Change state
-ObjectType=0x7
-DataType=0x0005
-AccessType=wo
-DefaultValue=0xFF
-PDOMapping=0
-
-[6004]
-ParameterName=Get last solve image
 ObjectType=0x7
 DataType=0x0001
 AccessType=wo
@@ -4782,6 +4785,7 @@ SupportedObjects=12
 11=0x3006
 12=0x3100
 
+;CAN Bus redundancy management as defined in ECSS-E-ST-50-15C
 [2000]
 ParameterName=BUS management
 ObjectType=0x9
@@ -4795,6 +4799,7 @@ AccessType=ro
 DefaultValue=0x04
 PDOMapping=0
 
+;Bdefault specifies the bus to be considered active after a node power-on, node hardware reset.
 [2000sub1]
 ParameterName=Bdefault
 ObjectType=0x7
@@ -4803,6 +4808,7 @@ AccessType=rw
 DefaultValue=0
 PDOMapping=0
 
+;Ttoggle specifies the number of Consumer Heartbeat times during which the node is required to be listeningfor an NMT HB message on a particular bus before switching to the other bus.
 [2000sub2]
 ParameterName=Ttoggle
 ObjectType=0x7
@@ -4811,6 +4817,7 @@ AccessType=rw
 DefaultValue=0
 PDOMapping=0
 
+;Ntoggle specifies the number of toggles between the Nominal and Redundant bus in case of no HB message being detected. If an even number is used the last toggle puts the system into Bdefault.
 [2000sub3]
 ParameterName=Ntoggle
 ObjectType=0x7
@@ -4819,6 +4826,7 @@ AccessType=rw
 DefaultValue=0
 PDOMapping=0
 
+;The counter of Ntoggles (bus toggles) shows the count of the number of toggles that have already been performed by the device.
 [2000sub4]
 ParameterName=Ctoggle
 ObjectType=0x7
@@ -4827,6 +4835,7 @@ AccessType=rw
 DefaultValue=0
 PDOMapping=0
 
+;CCSDS Unsegmented Time Code (CUC) object for Spacecraft Elapsed Time (SCET) get/set methods
 [2010]
 ParameterName=SCET
 ObjectType=0x7
@@ -4835,6 +4844,7 @@ AccessType=rw
 DefaultValue=0
 PDOMapping=1
 
+;CCSDS Day Segmented Time Code (CDS) object for UTC time get/set methods
 [2011]
 ParameterName=UTC
 ObjectType=0x7
@@ -4843,6 +4853,72 @@ AccessType=rw
 DefaultValue=0
 PDOMapping=1
 
+;Error Status Bits indicates error conditions inside stack or inside application. 
+;
+;Default error status bits are:
+;
+;Communication or protocol errors from driver (informative):
+;00 - ERROR_NO_ERROR - Error Reset or No Error.
+;01 - ERROR_CAN_BUS_WARNING - CAN bus warning.
+;02 - ERROR_RXMSG_WRONG_LENGTH - Wrong data length of received CAN message.
+;03 - ERROR_RXMSG_OVERFLOW - Previous received CAN message wasn't processed yet.
+;04 - ERROR_RPDO_WRONG_LENGTH - Wrong data length of received PDO.
+;05 - ERROR_RPDO_OVERFLOW - Previous received PDO wasn't processed yet.
+;06 - ERROR_CAN_RX_BUS_PASSIVE - CAN receive bus is passive.
+;07 - ERROR_CAN_TX_BUS_PASSIVE - CAN transmit bus is passive.
+;
+;Communication or protocol errors from driver (critical):
+;08 - ERROR_08_reserved - (reserved)
+;09 - ERROR_09_reserved - (reserved)
+;0A - ERROR_CAN_TX_BUS_OFF - CAN transmit bus is off.
+;0B - ERROR_CAN_RXB_OVERFLOW - CAN module receive buffer has overflowed.
+;0C - ERROR_CAN_TX_OVERFLOW - CAN transmit buffer has overflowed.
+;0D - ERROR_TPDO_OUTSIDE_WINDOW - TPDO is outside SYNC window.
+;0E - ERROR_CAN_CONFIGURATION_FAILED - Configuration of CAN module CAN failed (Rx or Tx).
+;0F - ERROR_0F_reserved - (reserved)
+;
+;Communication or protocol errors (informative):
+;10 - ERROR_NMT_WRONG_COMMAND - Wrong NMT command received.
+;11 - ERROR_SYNC_EARLY - SYNC message was too early.
+;12 - ERROR_12_reserved - (reserved)
+;13 - ERROR_13_reserved - (reserved)
+;14 - ERROR_14_reserved - (reserved)
+;15 - ERROR_15_reserved - (reserved)
+;16 - ERROR_16_reserved - (reserved)
+;17 - ERROR_17_reserved - (reserved)
+;
+;Communication or protocol errors (critical):
+;18 - ERROR_SYNC_TIME_OUT - SYNC message timeout.
+;19 - ERROR_SYNC_LENGTH - Unexpected SYNC data length
+;1A - ERROR_PDO_WRONG_MAPPING - Error with PDO mapping.
+;1B - ERROR_HEARTBEAT_CONSUMER - Heartbeat consumer timeout.
+;1C - ERROR_HEARTBEAT_CONSUMER_REMOTE_RESET - Heartbeat consumer detected remote node reset.
+;1D - ERROR_1D_reserved - (reserved)
+;1E - ERROR_1E_reserved - (reserved)
+;1F - ERROR_1F_reserved - (reserved)
+;
+;Generic errors (informative):
+;20 - ERROR_20_reserved - (reserved)
+;21 - ERROR_21_reserved - (reserved)
+;22 - ERROR_22_reserved - (reserved)
+;23 - ERROR_23_reserved - (reserved)
+;24 - ERROR_24_reserved - (reserved)
+;25 - ERROR_25_reserved - (reserved)
+;26 - ERROR_26_reserved - (reserved)
+;27 - ERROR_27_reserved - (reserved)
+;
+;Generic errors (critical):
+;28 - ERROR_WRONG_ERROR_REPORT - Wrong parameters to <CO_errorReport()> function.
+;29 - ERROR_ISR_TIMER_OVERFLOW - Timer task has overflowed.
+;2A - ERROR_MEMORY_ALLOCATION_ERROR - Unable to allocate memory for objects.
+;2B - ERROR_GENERIC_ERROR - Generic error, test usage.
+;2C - ERROR_MAIN_TIMER_OVERFLOW - Mainline function exceeded maximum execution time.
+;2D - ERROR_INTERNAL_STATE_APPL - Error in application software internal state.
+;2E - ERROR_2E_reserved - (reserved)
+;2F - ERROR_2F_reserved - (reserved)
+;
+;Manufacturer specific errors:
+;Manufacturer may define its own constants up to index 0xFF. Of course, they must then define large enough buffer for error status bits (up to 32 bytes).
 [2100]
 ParameterName=Error status bits
 ObjectType=0x7
@@ -4852,7 +4928,7 @@ DefaultValue=00000000000000000000
 PDOMapping=0
 
 [3000]
-ParameterName=OLM control
+ParameterName=OLAF app control
 ObjectType=0x9
 SubNumber=0x5
 
@@ -4864,6 +4940,7 @@ AccessType=ro
 DefaultValue=0x04
 PDOMapping=0
 
+;Write true to restart the board
 [3000sub1]
 ParameterName=Reboot Board
 ObjectType=0x7
@@ -4872,6 +4949,7 @@ AccessType=wo
 DefaultValue=0
 PDOMapping=0
 
+;Write true to poweroff the board
 [3000sub2]
 ParameterName=Poweroff Board
 ObjectType=0x7
@@ -4880,6 +4958,7 @@ AccessType=wo
 DefaultValue=0
 PDOMapping=0
 
+;Write true to have the OLAF app exit
 [3000sub3]
 ParameterName=Quit
 ObjectType=0x7
@@ -4888,6 +4967,7 @@ AccessType=wo
 DefaultValue=0
 PDOMapping=0
 
+;Allow OLAF to control the board CPU frequency
 [3000sub4]
 ParameterName=CPU frequency
 ObjectType=0x7
@@ -4909,6 +4989,7 @@ AccessType=ro
 DefaultValue=0x1C
 PDOMapping=0
 
+;Get the name of the OS running on the board
 [3001sub1]
 ParameterName=OS name
 ObjectType=0x7
@@ -4917,6 +4998,7 @@ AccessType=ro
 DefaultValue=x
 PDOMapping=0
 
+;Get the name of the OS distro running on the board
 [3001sub2]
 ParameterName=OS distro
 ObjectType=0x7
@@ -4925,6 +5007,7 @@ AccessType=ro
 DefaultValue=x
 PDOMapping=0
 
+;Get the version of the OS running on the board
 [3001sub3]
 ParameterName=OS kernel version
 ObjectType=0x7
@@ -4933,6 +5016,7 @@ AccessType=ro
 DefaultValue=x
 PDOMapping=0
 
+;Get the board hostname
 [3001sub4]
 ParameterName=hostname
 ObjectType=0x7
@@ -4941,6 +5025,7 @@ AccessType=ro
 DefaultValue=x
 PDOMapping=0
 
+;Get the uptime
 [3001sub5]
 ParameterName=Uptime
 ObjectType=0x7
@@ -4949,6 +5034,7 @@ AccessType=ro
 DefaultValue=0
 PDOMapping=0
 
+;Get the number of CPUs on board
 [3001sub6]
 ParameterName=Number of CPUs
 ObjectType=0x7
@@ -4957,6 +5043,7 @@ AccessType=ro
 DefaultValue=0
 PDOMapping=0
 
+;Get the architecture of CPUs on board
 [3001sub7]
 ParameterName=CPU architecture
 ObjectType=0x7
@@ -4965,14 +5052,16 @@ AccessType=ro
 DefaultValue=x
 PDOMapping=0
 
+;Get the CPU power governor of the board
 [3001sub8]
 ParameterName=CPU governor
 ObjectType=0x7
-DataType=0x0005
+DataType=0x0009
 AccessType=ro
-DefaultValue=0
+DefaultValue=x
 PDOMapping=0
 
+;Get the CPU frequency of the board
 [3001sub9]
 ParameterName=CPU frequency
 ObjectType=0x7
@@ -4981,6 +5070,7 @@ AccessType=ro
 DefaultValue=0
 PDOMapping=0
 
+;Get the number of remote processors on the board
 [3001subA]
 ParameterName=Number of remoteprocs
 ObjectType=0x7
@@ -4989,6 +5079,12 @@ AccessType=ro
 DefaultValue=0
 PDOMapping=0
 
+;Allow the ability to iterate thru the remote processors.
+;
+;Write the id of remoteproc to select.
+;  * Write 0 to get the remoteproc0
+;  * Write 1 to get the remoteproc1
+;  * etc
 [3001subB]
 ParameterName=RemoteprocX selector
 ObjectType=0x7
@@ -4997,6 +5093,7 @@ AccessType=rw
 DefaultValue=0
 PDOMapping=0
 
+;Get the name of selected remoteproc
 [3001subC]
 ParameterName=RemoteprocX name
 ObjectType=0x7
@@ -5005,6 +5102,7 @@ AccessType=ro
 DefaultValue=x
 PDOMapping=0
 
+;Get the state of selected remoteproc
 [3001subD]
 ParameterName=RemoteprocX state
 ObjectType=0x7
@@ -5013,6 +5111,7 @@ AccessType=ro
 DefaultValue=x
 PDOMapping=0
 
+;Get the 1 minute load average
 [3001subE]
 ParameterName=Load average 1min
 ObjectType=0x7
@@ -5021,6 +5120,7 @@ AccessType=ro
 DefaultValue=0
 PDOMapping=0
 
+;Get the 5 minute load average
 [3001subF]
 ParameterName=Load average 5min
 ObjectType=0x7
@@ -5029,6 +5129,7 @@ AccessType=ro
 DefaultValue=0
 PDOMapping=0
 
+;Get the 15 minute load average
 [3001sub10]
 ParameterName=Load average 15min
 ObjectType=0x7
@@ -5037,6 +5138,7 @@ AccessType=ro
 DefaultValue=0
 PDOMapping=0
 
+;Get the total amount of RAM in MB
 [3001sub11]
 ParameterName=Ram total
 ObjectType=0x7
@@ -5045,6 +5147,7 @@ AccessType=ro
 DefaultValue=0
 PDOMapping=0
 
+;Get the amount of RAM freed in MB
 [3001sub12]
 ParameterName=Ram free
 ObjectType=0x7
@@ -5053,6 +5156,7 @@ AccessType=ro
 DefaultValue=0
 PDOMapping=0
 
+;Get the amount of RAM being shared in MB
 [3001sub13]
 ParameterName=Ram shared
 ObjectType=0x7
@@ -5061,6 +5165,7 @@ AccessType=ro
 DefaultValue=0
 PDOMapping=0
 
+;Get the amount of RAM being buffered in MB
 [3001sub14]
 ParameterName=Ram buffered
 ObjectType=0x7
@@ -5069,6 +5174,7 @@ AccessType=ro
 DefaultValue=0
 PDOMapping=0
 
+;Get the percent of RAM being used. 0-100%
 [3001sub15]
 ParameterName=Ram percent
 ObjectType=0x7
@@ -5077,6 +5183,7 @@ AccessType=ro
 DefaultValue=0
 PDOMapping=1
 
+;Get the total amount of SWAP in MB
 [3001sub16]
 ParameterName=Swap total
 ObjectType=0x7
@@ -5085,6 +5192,7 @@ AccessType=ro
 DefaultValue=0
 PDOMapping=0
 
+;Get the amount of SWAP freed in MB
 [3001sub17]
 ParameterName=Swap free
 ObjectType=0x7
@@ -5093,6 +5201,7 @@ AccessType=ro
 DefaultValue=0
 PDOMapping=0
 
+;Get the percent of the SWAP being used. 0-100%
 [3001sub18]
 ParameterName=Swap percent
 ObjectType=0x7
@@ -5101,6 +5210,7 @@ AccessType=ro
 DefaultValue=0
 PDOMapping=1
 
+;Get the number of processes currently running
 [3001sub19]
 ParameterName=Procs
 ObjectType=0x7
@@ -5109,30 +5219,37 @@ AccessType=ro
 DefaultValue=0
 PDOMapping=0
 
+;Get the total amount of root partition in MB
 [3001sub1A]
-ParameterName=Root parition total
+ParameterName=Root partition total
 ObjectType=0x7
 DataType=0x0007
 AccessType=ro
 DefaultValue=0
 PDOMapping=0
 
+;Get the amount of root partition free in MB
 [3001sub1B]
-ParameterName=Root parition free
+ParameterName=Root partition free
 ObjectType=0x7
 DataType=0x0007
 AccessType=ro
 DefaultValue=0
 PDOMapping=0
 
+;Get the percent of the root partition being used. 0-100%
 [3001sub1C]
-ParameterName=Root parition percent
+ParameterName=Root partition percent
 ObjectType=0x7
 DataType=0x0005
 AccessType=ro
 DefaultValue=0
 PDOMapping=1
 
+;Interact with the fread and fwrite caches
+;
+;The fread cache holds the files that can be read over CAN
+;The fwrite cache holds the files that were written over CAN
 [3002]
 ParameterName=File caches
 ObjectType=0x9
@@ -5146,6 +5263,7 @@ AccessType=ro
 DefaultValue=0x09
 PDOMapping=0
 
+;Number of files in fread cache
 [3002sub1]
 ParameterName=Fread cache len
 ObjectType=0x7
@@ -5154,6 +5272,7 @@ AccessType=ro
 DefaultValue=0
 PDOMapping=1
 
+;Number of files in fwrite cache
 [3002sub2]
 ParameterName=Fwrite cache len
 ObjectType=0x7
@@ -5162,6 +5281,10 @@ AccessType=ro
 DefaultValue=0
 PDOMapping=1
 
+;Select which cache to use for rest of subindexes
+;
+;0: fread cache
+;1: fwrite cache
 [3002sub3]
 ParameterName=Cache selector
 ObjectType=0x7
@@ -5170,6 +5293,9 @@ AccessType=rw
 DefaultValue=0
 PDOMapping=0
 
+;An optional keyword filter for file names.
+;
+;Write an empty string or '\n' to have no filter.
 [3002sub4]
 ParameterName=Filter
 ObjectType=0x7
@@ -5178,6 +5304,7 @@ AccessType=rw
 DefaultValue=x
 PDOMapping=0
 
+;Length of the current cache selected with keyword filter
 [3002sub5]
 ParameterName=Cache len
 ObjectType=0x7
@@ -5186,6 +5313,11 @@ AccessType=ro
 DefaultValue=0
 PDOMapping=0
 
+;Allow for iteration in the list of file for selected cache.
+;
+;Write 0 to select the first file in the file list
+;Write 1 to select the file at index 1 in the file list
+;etc
 [3002sub6]
 ParameterName=Iterator
 ObjectType=0x7
@@ -5194,6 +5326,7 @@ AccessType=rw
 DefaultValue=0
 PDOMapping=0
 
+;File name for the selected place in the selected cache
 [3002sub7]
 ParameterName=File name
 ObjectType=0x7
@@ -5202,6 +5335,7 @@ AccessType=ro
 DefaultValue=x
 PDOMapping=0
 
+;File size for the selected place in the selected cache
 [3002sub8]
 ParameterName=File size
 ObjectType=0x7
@@ -5210,6 +5344,7 @@ AccessType=ro
 DefaultValue=0
 PDOMapping=0
 
+;Delete the selected file in the selected cache
 [3002sub9]
 ParameterName=Delete file
 ObjectType=0x7
@@ -5231,6 +5366,7 @@ AccessType=ro
 DefaultValue=0x04
 PDOMapping=0
 
+;Name of the file to read. Uses Index 3002 to find file names.
 [3003sub1]
 ParameterName=File name
 ObjectType=0x7
@@ -5239,6 +5375,7 @@ AccessType=rw
 DefaultValue=x
 PDOMapping=0
 
+;Data of the file selected in subindex 1
 [3003sub2]
 ParameterName=File data
 ObjectType=0x7
@@ -5247,6 +5384,7 @@ AccessType=ro
 DefaultValue=
 PDOMapping=0
 
+;Clear subindexes 1 and 2
 [3003sub3]
 ParameterName=Reset
 ObjectType=0x7
@@ -5255,6 +5393,7 @@ AccessType=wo
 DefaultValue=0
 PDOMapping=0
 
+;Delete the file selected in subindex 1
 [3003sub4]
 ParameterName=Delete file
 ObjectType=0x7
@@ -5276,6 +5415,7 @@ AccessType=ro
 DefaultValue=0x03
 PDOMapping=0
 
+;Name of the file to be written. Must be set before index 2.
 [3004sub1]
 ParameterName=File name
 ObjectType=0x7
@@ -5284,6 +5424,7 @@ AccessType=rw
 DefaultValue=x
 PDOMapping=0
 
+;File data for the new file written. Must set subindex 1 before writing to this subindex.
 [3004sub2]
 ParameterName=File data
 ObjectType=0x7
@@ -5292,6 +5433,7 @@ AccessType=wo
 DefaultValue=
 PDOMapping=0
 
+;Clear subindexes 1 and 2
 [3004sub3]
 ParameterName=Reset
 ObjectType=0x7
@@ -5361,6 +5503,7 @@ AccessType=rw
 DefaultValue=0
 PDOMapping=0
 
+;Write any non-zero number to get system logs. Log will be place in fread cache.
 [3006]
 ParameterName=Get log
 ObjectType=0x7
@@ -5382,6 +5525,13 @@ AccessType=ro
 DefaultValue=0x05
 PDOMapping=0
 
+;Get the status of updater
+;
+;States:
+; * update-succesful: 0x00
+; * pre-update-failed: 0x01
+; * update-failed: 0x02
+; * updating: 0xFF
 [3100sub1]
 ParameterName=Status
 ObjectType=0x7
@@ -5390,6 +5540,7 @@ AccessType=ro
 DefaultValue=0xFF
 PDOMapping=1
 
+;Number of updates cached
 [3100sub2]
 ParameterName=Updates available
 ObjectType=0x7
@@ -5398,6 +5549,7 @@ AccessType=ro
 DefaultValue=0
 PDOMapping=1
 
+;List the updates cached
 [3100sub3]
 ParameterName=List updates
 ObjectType=0x7
@@ -5406,6 +5558,7 @@ AccessType=ro
 DefaultValue=x
 PDOMapping=0
 
+;Write a non-zero value to start an update
 [3100sub4]
 ParameterName=Update
 ObjectType=0x7
@@ -5414,6 +5567,7 @@ AccessType=wo
 DefaultValue=0
 PDOMapping=0
 
+;Write a non-zero value to make a updater status file
 [3100sub5]
 ParameterName=Make status file
 ObjectType=0x7
