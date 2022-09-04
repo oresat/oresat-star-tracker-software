@@ -170,6 +170,27 @@ def set_star_tracker_state(sdo, state):
     sdo.download(0x6000, 0, payload)
     return True
 
+def set_star_tracker_standby(sdo):
+    '''
+    '''
+    payload = encode_value(0, CANopenTypes.i8)
+    sdo.download(0x6000, 0, payload)
+    return True
+
+def set_star_tracker_star_tracking(sdo):
+    '''
+    '''
+    payload = encode_value(1, CANopenTypes.i8)
+    sdo.download(0x6000, 0, payload)
+    return True
+
+def set_star_tracker_capture(sdo):
+    '''
+    '''
+    payload = encode_value(2, CANopenTypes.i8)
+    sdo.download(0x6000, 0, payload)
+    return True
+
 def is_valid_star_tracker_state(state):
     '''
     Check that tracker is in valid state.
@@ -253,7 +274,7 @@ class TestStarTrackerCanInterface(unittest.TestCase):
         '''
         self.network.disconnect()
 
-
+    """
     def test_get_state(self):
         '''
         Given a star tracker in active state which we are connected to,
@@ -269,7 +290,7 @@ class TestStarTrackerCanInterface(unittest.TestCase):
             traceback.print_exc()
             raise exc
         logger.info("exit:test_get_state")
-
+    """
 
     def test_switch_states_standby_capture(self):
         '''
@@ -285,17 +306,20 @@ class TestStarTrackerCanInterface(unittest.TestCase):
 
             # 2. Ensure can set to CAPTURE state
             logger.info('switching to CAPTURE state')
-            set_star_tracker_state(self.sdo, StarTrackerState.CAPTURE)
+
+            set_star_tracker_capture(self.sdo)
+            #set_star_tracker_state(self.sdo, StarTrackerState.CAPTURE)
             decoded_state = get_star_tracker_state(self.sdo)
             self.assertEqual(decoded_state, StarTrackerState.CAPTURE)
             time.sleep(5)
 
+
             # 3. Ensure can set to STAR_TRACKING state
             logger.info('switching to STAR_TRACKING state')
-            set_star_tracker_state(self.sdo, StarTrackerState.STAR_TRACKING)
+            set_star_tracker_star_tracking(self.sdo)
             decoded_state = get_star_tracker_state(self.sdo)
             self.assertEqual(decoded_state, StarTrackerState.STAR_TRACKING)
-            time.sleep(10)
+            time.sleep(5)
 
              # 4. Ensure can set to STANDBY state
             logger.info('switching to STANDBY state')
@@ -306,14 +330,14 @@ class TestStarTrackerCanInterface(unittest.TestCase):
 
 
             # 5. Revert to original state.
-            set_star_tracker_state(self.sdo, save_original_state)
+            #set_star_tracker_state(self.sdo, save_original_state)
 
         except Exception as exc:
             traceback.print_exc()
             raise exc
         logger.info("exit:test_switch_states_standby_capture")
 
-
+    """
     def test_list_files_fread_cache(self):
         '''
         Test listing fread cache.
@@ -392,7 +416,7 @@ class TestStarTrackerCanInterface(unittest.TestCase):
 
         set_star_tracker_state(self.sdo, StarTrackerState.STANDBY)
         logger.info("exit:test_pdo")
-
+    """
 
 """
 """
