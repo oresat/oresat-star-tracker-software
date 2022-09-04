@@ -91,15 +91,11 @@ class StarTrackerResource(Resource):
         logger.info("ENTRY: _star_track")
         try:
             data = self._camera.capture() # Take the image
-            logger.info('IMAGE CAPTURE SUCCESSFULL')
+            logger.info('image capture successfull')
             scet = scet_int_from_time(time()) # Record the timestamp
 
             # Solver takes a single shot image and returns an orientation
             logger.info('start solving')
-            IMG_WIDTH = 640
-            IMG_HEIGHT = 480
-            resized_img = cv2.resize(img, (IMG_WIDTH, IMG_HEIGHT))
-
             ra, dec, ori = self._solver.solve(data) # run the solver
             logger.info(f'finish solving: ra:{ra}, dec:{dec}, ori:{ori}')
 

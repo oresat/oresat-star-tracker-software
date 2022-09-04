@@ -21,6 +21,7 @@ class TestSolver(unittest.TestCase):
         logger.debug("entry::setup")
         logger.debug("creating solver")
         self.test_data_folder = '/home/debian/oresat-star-tracker-software/misc/test-data'
+
         config_path = f'{self.test_data_folder}/exp1000/calibration.txt'
         median_path = f'{self.test_data_folder}/exp1000/median_image.png'
 
@@ -42,8 +43,6 @@ class TestSolver(unittest.TestCase):
         x_size = 1280
         y_size = 960
 
-        expected_x_size = 640 # 1280 # 640
-        expected_y_size = 480 # 960  # 480
         #
         # TODO: Find root cause as to why the expected solutions are not being
         #       produced by solver.
@@ -77,7 +76,7 @@ class TestSolver(unittest.TestCase):
 
         for image_path in image_paths:
             logger.info(f'image_path: {image_path}')
-            img_data = read_preprocess_image(image_path, y_size, x_size, expected_y_size, expected_x_size)
+            img_data = read_preprocess_image(image_path, y_size, x_size)
 
             solution = None
             if image_path in solutions:
@@ -94,8 +93,8 @@ class TestSolver(unittest.TestCase):
                     if solution:
                         expected_dec, expected_ra, expected_ori = solution
                         self.assertTrue(np.isclose(ra, expected_ra), f'ra: {ra} is not close')
-                        self.assertTrue(np.isclose(dec,expected_dec), f'dec is not close')
-                        self.assertTrue(np.isclose(ori, expected_ori), f'ori is not close')
+                        self.assertTrue(np.isclose(dec,expected_dec), f'dec {dec} is not close')
+                        self.assertTrue(np.isclose(ori, expected_ori), f'ori {ori} is not close')
                         logger.info(f'Successful solution {image_path}')
 
                 stop = timer()

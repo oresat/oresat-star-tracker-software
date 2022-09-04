@@ -29,10 +29,7 @@ def read_image_file_to_numpy_buffer(file_path, y_size, x_size):
 
     return img
 
-def read_preprocess_image(image_path,
-                            y_size, x_size,
-                            expected_y_size, expected_x_size,
-                    color=True):
+def read_preprocess_image(image_path, y_size, x_size, color=True):
       ''' Read the image
       '''
       print("read_preprocess_image:y_size * x_size", y_size * x_size)
@@ -42,8 +39,6 @@ def read_preprocess_image(image_path,
       if color is True:
           img = cv2.cvtColor(img, cv2.COLOR_BayerBG2BGR)
 
-      resized_img = cv2.resize(img, (expected_x_size, expected_y_size ))
-
-      return resized_img
+      return img
 
 
