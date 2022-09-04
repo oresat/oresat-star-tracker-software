@@ -19,11 +19,13 @@ from os.path import abspath, dirname
 
 import datetime
 from  datetime import datetime
+import time
 
 from .star_tracker_resource import State as StarTrackerState
 
 DEFAULT_BUS_ID = 'vcan0'
 STARTRACKER_NODE_ID = 0x2C
+
 EDS_FILE = dirname(abspath(__file__)) + '/data/star_tracker.eds'
 
 class CANopenTypes(Enum):
@@ -240,28 +242,25 @@ class TestStarTrackerCanInterface(unittest.TestCase):
 
     def setUp(self):
         '''Connect to remote can node  for Star Tracker'''
-        logger.info("ENTRY::setUp")
         self.node, self.network = connect()
         self.sdo = self.node.sdo
         # long timeout, due to connection and startup issues.
         self.sdo.RESPONSE_TIMEOUT = 5.0
-        logger.info("EXIT::setUp")
 
     def tearDown(self):
         '''
         Disconnect from rmeote can node.
         '''
-        logger.info("ENTRY::tearDown")
         self.network.disconnect()
-        logger.info("EXIT::tearDown")
 
-    """
+
     def test_get_state(self):
         '''
-        Test that we can retreive the current tracker stat,  and that the tate is one of the
-        valid star tracker states.
+        Given a star tracker in active state which we are connected to,
+        Then we can retreive its current state with an SDO and the
+        state is one of the valid states
         '''
-        logger.info("ENTRY:test_get_state")
+        logger.info("entry:test_get_state")
         try:
             state = get_star_tracker_state(self.sdo)
             self.assertTrue(is_valid_star_tracker_state(state))
@@ -269,41 +268,63 @@ class TestStarTrackerCanInterface(unittest.TestCase):
             print(exc)
             traceback.print_exc()
             raise exc
-        logger.info("EXIT:test_get_state")
+        logger.info("exit:test_get_state")
 
 
     def test_switch_states_standby_capture(self):
         '''
-        Switch state Unknown -> Capture -> Standby -> Unknown
+        Given a star tracker in active state which we are connected to,
+        Then we can switch beteween states as follows:
+            Original State -> Capture  -> Star Tracking -> Standby -> Original State
         '''
-        logger.info("ENTRY:test_switch_states_standby_capture")
+        logger.info("entry:test_switch_states_standby_capture")
         try:
             # 1. Retreive the original state
             save_original_state = get_star_tracker_state(self.sdo)
             self.assertTrue(is_valid_star_tracker_state(save_original_state))
 
             # 2. Ensure can set to CAPTURE state
+            logger.info('switching to CAPTURE state')
             set_star_tracker_state(self.sdo, StarTrackerState.CAPTURE)
             decoded_state = get_star_tracker_state(self.sdo)
             self.assertEqual(decoded_state, StarTrackerState.CAPTURE)
+            time.sleep(5)
 
-            # 3. Revert to original state.
+            # 3. Ensure can set to STAR_TRACKING state
+            logger.info('switching to STAR_TRACKING state')
+            set_star_tracker_state(self.sdo, StarTrackerState.STAR_TRACKING)
+            decoded_state = get_star_tracker_state(self.sdo)
+            self.assertEqual(decoded_state, StarTrackerState.STAR_TRACKING)
+            time.sleep(10)
+
+             # 4. Ensure can set to STANDBY state
+            logger.info('switching to STANDBY state')
+            set_star_tracker_state(self.sdo, StarTrackerState.STANDBY)
+            decoded_state = get_star_tracker_state(self.sdo)
+            self.assertEqual(decoded_state, StarTrackerState.STANDBY)
+            time.sleep(5)
+
+
+            # 5. Revert to original state.
             set_star_tracker_state(self.sdo, save_original_state)
 
         except Exception as exc:
-            print(exc)
             traceback.print_exc()
             raise exc
-
-        logger.info("EXIT:test_switch_states_standby_capture")
+        logger.info("exit:test_switch_states_standby_capture")
 
 
     def test_list_files_fread_cache(self):
         '''
         Test listing fread cache.
         '''
+        logger.info("entry:test_list_files_fread_cache")
         capture_files = fetch_files_fread(self.sdo, 'capture')
         self.assertTrue( len(capture_files) > 0 )
+        for capture_file in capture_files:
+            self.assertTrue(capture_file.startswith('oresat-dev_capture'))
+            self.assertTrue(capture_file.endswith('bmp'))
+        logger.info("exit:test_list_files_fread_cache")
 
     def test_read_from_fread_cache(self):
         pass
@@ -312,17 +333,18 @@ class TestStarTrackerCanInterface(unittest.TestCase):
         # print("first file", first_file)
         # read_image_file(self.sdo, first_file)
         # pass
-    """
+
 
     def test_invoke_capture(self):
         '''
         Test invoke capture
         '''
-        logger.info("ENTRY:test_invoke_capture")
+        logger.info("entry:test_invoke_capture")
         trigger_capture_star_tracker(self.sdo)
-        logger.info("EXIT:test_invoke_capture")
+        logger.info("exit:test_invoke_capture")
 
-    def test_pdo(self):
+"""
+   def test_pdo(self):
 
         print("TPDO", self.node.tpdo.read())
         print("RPDO", self.node.rpdo.read())
@@ -340,9 +362,9 @@ class TestStarTrackerCanInterface(unittest.TestCase):
             self.node.tpdo[2].add_callback(print_speed)
             self.node.tpdo[1].add_callback(print_speed)
 
-            import time
             time.sleep(100)
-        set_star_tracker_state(self.sdo, StarTrackerState.STANDBY)
 
+        set_star_tracker_state(self.sdo, StarTrackerState.STANDBY)
+"""
 if __name__ == "__main__":
     unittest.main()

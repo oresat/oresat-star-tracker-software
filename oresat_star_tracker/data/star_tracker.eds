@@ -4692,7 +4692,7 @@ PDOMapping=0
 ;Commands:
 ;  0: Goto to standby state
 ;  1: Start star tracking
-;  2: start capture looping
+;  2: Start capture looping
 [6000]
 ParameterName=Star tracker status
 ObjectType=0x7
