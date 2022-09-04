@@ -4715,7 +4715,7 @@ AccessType=ro
 DefaultValue=0x04
 PDOMapping=0
 
-;The right ascension (in deg?) calculated by last solve
+;The right ascension in deg calculated by last solve
 [6001sub1]
 ParameterName=Right Ascension
 ObjectType=0x7
@@ -4724,7 +4724,7 @@ AccessType=ro
 DefaultValue=0
 PDOMapping=1
 
-;The declination (in deg?) calculated by last solve
+;The declination in deg calculated by last solve
 [6001sub2]
 ParameterName=Declination
 ObjectType=0x7
@@ -4733,7 +4733,7 @@ AccessType=ro
 DefaultValue=0
 PDOMapping=1
 
-;The roll (in deg?) calculated by last solve
+;The roll in deg calculated by last solve
 [6001sub3]
 ParameterName=Roll
 ObjectType=0x7
