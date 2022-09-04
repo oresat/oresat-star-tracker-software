@@ -110,7 +110,10 @@ class Solver:
         SolverError
             start up failed
         '''
-        logger.info(" ENTRY: solve()")
+        logger.info(f'ENTRY: solve() : {beast.cvar.IMG_X}, {beast.cvar.IMG_Y}')
+
+        # Ensure images are always processed on calibration size.
+        orig_img = cv2.resize(orig_img, (beast.cvar.IMG_X, beast.cvar.IMG_Y))
 
         # Create and initialize variables
         img_stars = beast.star_db()

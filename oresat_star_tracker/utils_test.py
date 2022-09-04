@@ -43,8 +43,8 @@ class TestUtils(unittest.TestCase):
         expected_x_size = 640
         expected_y_size = 480
 
-        image = read_preprocess_image('./oresat_star_tracker/data/mock.bmp', y_size, x_size, expected_y_size, expected_x_size)
-        self.assertEqual((640, 480, 3), image.shape)
+        image = read_preprocess_image('./oresat_star_tracker/data/mock.bmp', y_size, x_size)
+        self.assertEqual((y_size, x_size, 3), image.shape)
 
 if __name__ == """__main__""":
     unittest.main()
