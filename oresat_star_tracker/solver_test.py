@@ -18,16 +18,17 @@ class TestSolver(unittest.TestCase):
         '''
         Create and startup a solver.
         '''
-        logger.debug("ENTRY::setUp")
-        logger.debug("Creating Solver")
-        config_path = '/home/debian/oresat-star-tracker-software/misc/test-data/exp1000/calibration.txt'
-        median_path = '/home/debian/oresat-star-tracker-software/misc/test-data/exp1000/median_image.png'
+        logger.debug("entry::setup")
+        logger.debug("creating solver")
+        test_data_folder = '/home/debian/oresat-star-tracker-software/misc/test-data'
+        config_path = f'{test_data_folder}/exp1000/calibration.txt'
+        median_path = f'{test_data_folder}/exp1000/median_image.png'
 
-        self._solver = Solver(config_path=config_path, median_path=median_path)
-        logger.debug("Startup Solver")
+        self._solver = Solver() #config_path=config_path, median_path=median_path)
+        logger.debug("startup solver")
         self._solver.startup()
-        logger.debug("Startup Complete")
-        logger.info("EXIT::setUp")
+        logger.debug("startup complete")
+        logger.info("exit::setUp")
 
 
     def test_run(self):
@@ -42,44 +43,26 @@ class TestSolver(unittest.TestCase):
         x_size = 1280
         y_size = 960
 
-        expected_x_size = 1280 # 640
-        expected_y_size = 960  # 480
+        expected_x_size = 640 # 1280 # 640
+        expected_y_size = 480 # 960  # 480
 
-        """
+        #
+        # TODO: Find root cause as to why the expected solutions are not being
+        #       produced by solver.
+        #
+        # dec, ra, ori
+        expected_solutions = [
+            [ 74.798045847, 271.257311164, 84.470568   ],
+            [ 26.4559966942, 246.783421908, 131.84151  ],
+            [ -10.929918586, 226.95598348, 161.47508   ],
+            [ -1.89170292451, 176.127248319, -157.29154],
+            [ 52.1052996922, 122.156847972, -118.22782 ],
+            [ 49.3122891085, 270.202436708, 112.54466  ],
+            [ 1.44809534992, 237.50518643, 151.45222   ],
+            [ -14.4507215149, 200.764441589, -177.89854]]
 
-
-                1. [271.257311164, 74.798045847, 84.470568]
-                2. [246.783421908, 26.4559966942, 131.84151]
-
-
-                3.solved:RA_CENTER=226.95598348
-                3.solved:DEC_CENTER=-10.929918586
-                3.solved:ORIENTATION_CENTER=161.47508
-
-                4.solved:RA_CENTER=176.127248319
-                4.solved:DEC_CENTER=-1.89170292451
-                4.solved:ORIENTATION_CENTER=-157.29154
-
-                5.solved:RA_CENTER=122.156847972
-                5.solved:DEC_CENTER=52.1052996922
-                5.solved:ORIENTATION_CENTER=-118.22782
-
-                6.solved:RA_CENTER=270.202436708
-                6.solved:DEC_CENTER=49.3122891085
-                6.solved:ORIENTATION_CENTER=112.54466
-
-                7.solved:RA_CENTER=237.50518643
-                7.solved:DEC_CENTER=1.44809534992
-                7.solved:ORIENTATION_CENTER=151.45222
-
-                8.solved:RA_CENTER=200.764441589
-                8.solved:DEC_CENTER=-14.4507215149
-                8.solved:ORIENTATION_CENTER=-177.89854
-        """
         solutions = {
-            # 1.bpm : incorrect expected [271.25, 74.781, 79.51]
             f'{test_data_folder}/exp1000/samples/1.bmp' : [ 339.28, 327.29, -141.00749 ],
-            # 2.bmp : incorrect expected [246.783421908, 26.4559966942,131.84151 ]
             f'{test_data_folder}/exp1000/samples/8.bmp' : [ 35.0021, 232.023, 92.3595  ],
         }
 
@@ -109,12 +92,12 @@ class TestSolver(unittest.TestCase):
                     self.assertRaises(SolverError, self._solver.solve, img_data)
                     logger.info(f'Unsuccessful solution {image_path}')
                 else:
-                    ra, dec, ori = self._solver.solve(img_data)
+                    dec, ra, ori = self._solver.solve(img_data)
                     if solution:
-                        expected_ra, expected_dec, expected_ori = solution
-                        self.assertTrue(np.isclose(ra, expected_ra), "ra is not close")
-                        self.assertTrue(np.isclose(dec,expected_dec), "dec is not close")
-                        self.assertTrue(np.isclose(ori, expected_ori), "ori is not close")
+                        expected_dec, expected_ra, expected_ori = solution
+                        self.assertTrue(np.isclose(ra, expected_ra), f'ra: {ra} is not close')
+                        self.assertTrue(np.isclose(dec,expected_dec), f'dec is not close')
+                        self.assertTrue(np.isclose(ori, expected_ori), f'ori is not close')
                         logger.info(f'Successful solution {image_path}')
 
                 stop = timer()
