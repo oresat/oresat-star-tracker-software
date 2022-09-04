@@ -343,28 +343,58 @@ class TestStarTrackerCanInterface(unittest.TestCase):
         trigger_capture_star_tracker(self.sdo)
         logger.info("exit:test_invoke_capture")
 
-"""
-   def test_pdo(self):
 
-        print("TPDO", self.node.tpdo.read())
-        print("RPDO", self.node.rpdo.read())
+    def test_orientation_tpdo(self):
+        '''
+        Given that the star tracker is put into star tracking mode.
+        Then, we can subscribe to and receive callbacks for tpdo, for
+        orientation updates
+        '''
+        logger.info("entry:test_orientation_tpdo")
 
+        # Initialize the tpdo
+        self.node.tpdo.read()
+        # Put startracker in tracking state
         set_star_tracker_state(self.sdo, StarTrackerState.STAR_TRACKING)
 
-        for  _ in range(1000):
-            def print_speed(message):
-                print('%s received' % message.name)
+        num_updates_to_check = 3
+        for  _ in range(num_updates_to_check):
+            received_orientation = dict()
+
+            def orientation_callback(message):
                 for var in message:
-                    print('%s = %d' % (var.name, var.raw))
+                    received_orientation[var.name] = var.raw
 
-            self.node.tpdo[4].add_callback(print_speed)
-            self.node.tpdo[3].add_callback(print_speed)
-            self.node.tpdo[2].add_callback(print_speed)
-            self.node.tpdo[1].add_callback(print_speed)
+            received_timestamp = dict()
 
-            time.sleep(100)
+            def timestamp_callback(message):
+                for var in message:
+                    received_timestamp[var.name] = var.raw
+
+            # Star Tracker Status: :)
+            # This is the one hich contains star tracker paremeters as tpdo
+            self.node.tpdo[3].add_callback(orientation_callback)
+
+            # Orientation.Timestamp
+            # This contains timestamp: Orientation.Timestamp
+            self.node.tpdo[4].add_callback(timestamp_callback)
+
+            #
+            time.sleep(3)
+            # Validate the parameters received from tpdo
+            logger.info(f'received_oreintation: {received_orientation}')
+            self.assertTrue('Star tracker status' in received_orientation)
+            self.assertTrue('Orienation.Right Ascension' in received_orientation)
+            self.assertTrue('Orienation.Declination' in received_orientation)
+
+            logger.info(f'received_timestamp: {received_timestamp}')
+            self.assertTrue('Orienation.Timestamp' in received_timestamp)
 
         set_star_tracker_state(self.sdo, StarTrackerState.STANDBY)
+        logger.info("exit:test_pdo")
+
+
+"""
 """
 if __name__ == "__main__":
     unittest.main()
