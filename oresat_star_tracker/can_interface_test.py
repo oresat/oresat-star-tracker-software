@@ -255,6 +255,7 @@ class TestStarTrackerCanInterface(unittest.TestCase):
         self.network.disconnect()
         logger.info("EXIT::tearDown")
 
+    """
     def test_get_state(self):
         '''
         Test that we can retreive the current tracker stat,  and that the tate is one of the
@@ -296,13 +297,6 @@ class TestStarTrackerCanInterface(unittest.TestCase):
 
         logger.info("EXIT:test_switch_states_standby_capture")
 
-    def test_invoke_capture(self):
-        '''
-        Test invoke capture
-        '''
-        logger.info("ENTRY:test_invoke_capture")
-        trigger_capture_star_tracker(self.sdo)
-        logger.info("EXIT:test_invoke_capture")
 
     def test_list_files_fread_cache(self):
         '''
@@ -311,7 +305,6 @@ class TestStarTrackerCanInterface(unittest.TestCase):
         capture_files = fetch_files_fread(self.sdo, 'capture')
         self.assertTrue( len(capture_files) > 0 )
 
-    """
     def test_read_from_fread_cache(self):
         pass
         #capture_files = fetch_files_fread(self.sdo, 'capture')
@@ -319,6 +312,16 @@ class TestStarTrackerCanInterface(unittest.TestCase):
         # print("first file", first_file)
         # read_image_file(self.sdo, first_file)
         # pass
+    """
+
+    def test_invoke_capture(self):
+        '''
+        Test invoke capture
+        '''
+        logger.info("ENTRY:test_invoke_capture")
+        trigger_capture_star_tracker(self.sdo)
+        logger.info("EXIT:test_invoke_capture")
+
     def test_pdo(self):
 
         print("TPDO", self.node.tpdo.read())
@@ -340,6 +343,6 @@ class TestStarTrackerCanInterface(unittest.TestCase):
             import time
             time.sleep(100)
         set_star_tracker_state(self.sdo, StarTrackerState.STANDBY)
-    """
+
 if __name__ == "__main__":
     unittest.main()
