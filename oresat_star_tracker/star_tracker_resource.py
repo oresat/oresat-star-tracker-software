@@ -96,7 +96,7 @@ class StarTrackerResource(Resource):
 
             # Solver takes a single shot image and returns an orientation
             logger.info('start solving')
-            ra, dec, ori = self._solver.solve(data) # run the solver
+            dec, ra, ori = self._solver.solve(data) # run the solver
             logger.info(f'finish solving: ra:{ra}, dec:{dec}, ori:{ori}')
 
             self.right_angle_obj.value = int(ra)
