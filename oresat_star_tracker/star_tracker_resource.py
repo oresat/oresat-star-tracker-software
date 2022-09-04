@@ -117,7 +117,8 @@ class StarTrackerResource(Resource):
             self._state = State.HW_ERROR
         except SolverError as exc:
             logger.error(exc)
-            self._state = State.SW_ERROR
+            # TODO: Do we want to disable star tracking if solver fails to resolve and image ?
+            # self._state = State.SW_ERROR
         logger.info("EXIT: _star_track")
 
     def on_loop(self):
