@@ -20,9 +20,9 @@ class TestSolver(unittest.TestCase):
         '''
         logger.debug("entry::setup")
         logger.debug("creating solver")
-        test_data_folder = '/home/debian/oresat-star-tracker-software/misc/test-data'
-        config_path = f'{test_data_folder}/exp1000/calibration.txt'
-        median_path = f'{test_data_folder}/exp1000/median_image.png'
+        self.test_data_folder = '/home/debian/oresat-star-tracker-software/misc/test-data'
+        config_path = f'{self.test_data_folder}/exp1000/calibration.txt'
+        median_path = f'{self.test_data_folder}/exp1000/median_image.png'
 
         self._solver = Solver() #config_path=config_path, median_path=median_path)
         logger.debug("startup solver")
@@ -35,9 +35,8 @@ class TestSolver(unittest.TestCase):
         '''
         Test solution of images are solved to close approximate of last known solution.
         '''
-        test_data_folder = '/home/debian/oresat-star-tracker-software/misc/test-data'
         exposures = ['exp1000', 'exp2500']
-        paths = [ f'{test_data_folder}/exp1000/samples' ]
+        paths = [ f'{self.test_data_folder}/exp1000/samples' ]
         duration = -1
 
         x_size = 1280
@@ -45,7 +44,6 @@ class TestSolver(unittest.TestCase):
 
         expected_x_size = 640 # 1280 # 640
         expected_y_size = 480 # 960  # 480
-
         #
         # TODO: Find root cause as to why the expected solutions are not being
         #       produced by solver.
@@ -62,19 +60,19 @@ class TestSolver(unittest.TestCase):
             [ -14.4507215149, 200.764441589, -177.89854]]
 
         solutions = {
-            f'{test_data_folder}/exp1000/samples/1.bmp' : [ 339.28, 327.29, -141.00749 ],
-            f'{test_data_folder}/exp1000/samples/8.bmp' : [ 35.0021, 232.023, 92.3595  ],
+            f'{self.test_data_folder}/exp1000/samples/1.bmp' : [ 339.28, 327.29, -141.00749 ],
+            f'{self.test_data_folder}/exp1000/samples/8.bmp' : [ 35.0021, 232.023, 92.3595  ],
         }
 
         image_paths = [
-            f'{test_data_folder}/exp1000/samples/1.bmp',
-            f'{test_data_folder}/exp1000/samples/2.bmp',
-            f'{test_data_folder}/exp1000/samples/3.bmp',
-            f'{test_data_folder}/exp1000/samples/4.bmp',
-            f'{test_data_folder}/exp1000/samples/5.bmp',
-            f'{test_data_folder}/exp1000/samples/6.bmp',
-            f'{test_data_folder}/exp1000/samples/7.bmp',
-            f'{test_data_folder}/exp1000/samples/8.bmp'
+            f'{self.test_data_folder}/exp1000/samples/1.bmp',
+            f'{self.test_data_folder}/exp1000/samples/2.bmp',
+            f'{self.test_data_folder}/exp1000/samples/3.bmp',
+            f'{self.test_data_folder}/exp1000/samples/4.bmp',
+            f'{self.test_data_folder}/exp1000/samples/5.bmp',
+            f'{self.test_data_folder}/exp1000/samples/6.bmp',
+            f'{self.test_data_folder}/exp1000/samples/7.bmp',
+            f'{self.test_data_folder}/exp1000/samples/8.bmp'
         ]
 
         for image_path in image_paths:
