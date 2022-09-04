@@ -188,9 +188,9 @@ class Solver:
             ra = match.winner.get_ra()
             ori = match.winner.get_ori()
         else:
-            logger.info(" SOLVING FAIL!!! ")
+            logger.info("Unable to find orientation for image!")
             raise SolverError('Solution failed for image')
 
-        logger.info(f'EXIT: solve() result - {dec} {ra}, {ori}')
+        logger.info(f'EXIT: solve(): {dec} {ra}, {ori}')
 
         return dec, ra, ori

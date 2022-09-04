@@ -4,7 +4,7 @@ import random
 from argparse import ArgumentParser
 from enum import IntEnum
 from time import time
-
+import numpy as np
 import cv2
 from olaf import Resource, logger, new_oresat_file, scet_int_from_time
 
@@ -40,12 +40,14 @@ class StarTrackerResource(Resource):
             logger.debug('not mocking camera')
 
         self._state = State.BOOT
-
         self.state_index = 0x6000
         self.state_obj = self.od[self.state_index]
 
         self.data_index = 0x6001
         data_record = self.od[self.data_index]
+
+        # delay - currently set to arbirary frequency.
+        self.delay = 1
 
         # Save references to camera
         self.right_angle_obj = data_record[DataSubindex.RIGHT_ANGLE.value]
@@ -86,12 +88,20 @@ class StarTrackerResource(Resource):
         logger.info('EXIT: capture')
 
     def _star_track(self):
+        logger.info("ENTRY: _star_track")
         try:
             data = self._camera.capture() # Take the image
+            logger.info('IMAGE CAPTURE SUCCESSFULL')
             scet = scet_int_from_time(time()) # Record the timestamp
 
-            # solver takes a single shot image and returns an orientation
+            # Solver takes a single shot image and returns an orientation
+            logger.info('start solving')
+            IMG_WIDTH = 640
+            IMG_HEIGHT = 480
+            resized_img = cv2.resize(img, (IMG_WIDTH, IMG_HEIGHT))
+
             ra, dec, ori = self._solver.solve(data) # run the solver
+            logger.info(f'finish solving: ra:{ra}, dec:{dec}, ori:{ori}')
 
             self.right_angle_obj.value = int(ra)
             self.declination_obj.value = int(dec)
@@ -100,25 +110,30 @@ class StarTrackerResource(Resource):
             self.time_stamp_obj.value = scet
 
             # the tpdo will be sent out by the application
+            logger.info("_star_track, Send TPDO 2")
             self.send_tpdo(2)
+            logger.info("_star_track, Send TPDO 3")
             self.send_tpdo(3)
 
         except CameraError as exc:
             logger.critial(exc)
+            print(exc)
             self._state = State.HW_ERROR
         except SolverError as exc:
             logger.error(exc)
             self._state = State.SW_ERROR
+        logger.info("EXIT: _star_track")
 
     def on_loop(self):
-
+        logger.info("ENTRY: on_loop")
         if self._state not in [State.STANDBY, State.CAPTURE, State.STAR_TRACKING]:
             raise ValueError(f'in invalid state for loop: {self._state.name}')
-
         if self._state == State.CAPTURE:
             self._capture()
         elif self._state == State.STAR_TRACKING:
+            print("on_loop: STAR_TRACKING STATE")
             self._star_track()
+        logger.info("EXIT: on_loop")
 
     def on_end(self):
         try:
@@ -135,11 +150,13 @@ class StarTrackerResource(Resource):
         self._state = State.OFF
 
     def on_read(self, index, subindex, od):
+        logger.info('ENTRY: on_read '+ hex(index)+str(' ') + str(subindex)+ ' ' )
         if index == self.state_index:
+            logger.info('ENTRY[startracker]: on_read '+ hex(index)+str(' ') + str(subindex)+ ' ' +' returning' + str(self._state.value))
             return self._state.value
 
     def on_write(self, index, subindex, od, data):
-        logger.info('ENTRY: on_write', index, ' ', subindex, ' ' , data)
+        logger.info('ENTRY: on_write '+ hex(index)+str(' ') + str(subindex)+ ' ' + str(data))
 
         if index == self.state_index:
             new_state = self.state_obj.decode_raw(data)
@@ -150,5 +167,6 @@ class StarTrackerResource(Resource):
                 logger.error(f'new state value of {new_state} is invalid')
         elif index == 0x6002:
             self._capture()
+
         logger.info('EXIT: on_write')
         return None
