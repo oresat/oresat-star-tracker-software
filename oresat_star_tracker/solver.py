@@ -15,10 +15,13 @@ from os.path import abspath, dirname
 import datetime
 from  datetime import datetime
 
+from olaf import logger
 
 from .beast import beast
 
-def now(): return datetime.now()
+import sys
+
+#logger.add(sys.stdout, level="DEBUG")
 
 class SolverError(Exception):
     '''An erro has occur for the :py:class:`solver`'''
@@ -27,8 +30,8 @@ class SolverError(Exception):
 class Solver:
     '''Solve star trackr images'''
 
-    def __init__(self):
-
+    def __init__(self, db_path=None, config_path=None, median_path=None):
+        logger.debug("__init__:Solver")
         # Prepare constants
         self.P_MATCH_THRESH = 0.99
         self.YEAR = 1991.25
@@ -37,6 +40,13 @@ class Solver:
         self.SQ_RESULTS = None
         self.S_FILTERED = None
         self.C_DB = None
+
+        self.data_dir = dirname(abspath(__file__)) + '/data'
+        self.median_path = median_path if median_path else f'{self.data_dir}/median-image.png'
+        self.config_path = config_path if config_path else f'{self.data_dir}/configuration.txt'
+        self.db_path = db_path if db_path else f'{self.data_dir}/hipparcos.dat'
+
+        logger.debug(f'__init__:Solver \n Median Path: {self.median_path}\n DB Path:{self.db_path}\n Config Path:{self.config_path}')
 
 
     def startup(self):
@@ -51,40 +61,37 @@ class Solver:
         '''
 
         data_dir = dirname(abspath(__file__)) + '/data'
-        median_path = f'{data_dir}/median-image.png'
-        config_path = f'{data_dir}/configuration.txt'
-        db_path = f'{data_dir}/hipparcos.dat'
 
         try:
             # Load median image
-            self.MEDIAN_IMAGE = cv2.imread(median_path)
+            self.MEDIAN_IMAGE = cv2.imread(self.median_path)
 
             # Load configuration
-            beast.load_config(config_path)
+            beast.load_config(self.config_path)
 
             # Load star database
 
-            print(now().strftime("%Y-%m-%d %H:%M:%S")+" entry beast.star_db()")
+            logger.info(" Entry beast.star_db()")
             self.S_DB = beast.star_db() # 0 seconds
-            print(now().strftime("%Y-%m-%d %H:%M:%S")+" entry load_catalog()")
-            self.S_DB.load_catalog(db_path, self.YEAR) # 7 seconds
-            print(now().strftime("%Y-%m-%d %H:%M:%S")+" exit load_catalog()")
+            logger.info(" Entry load_catalog()")
+            self.S_DB.load_catalog(self.db_path, self.YEAR) # 7 seconds
+            logger.info(" Exit load_catalog()")
 
             # Filter stars
-            print(now().strftime("%Y-%m-%d %H:%M:%S")+" entry star_query()")
+            logger.info(" Entry star_query()")
             self.SQ_RESULTS = beast.star_query(self.S_DB) # 1 sec
-            print(now().strftime("%Y-%m-%d %H:%M:%S")+" exit star_query()")
+            logger.info(" Exit star_query()")
             self.SQ_RESULTS.kdmask_filter_catalog() # 8 secons
 
-            print(now().strftime("%Y-%m-%d %H:%M:%S")+" entry kdmask_uniform_density()")
+            logger.info(" Entry kdmask_uniform_density()")
             self.SQ_RESULTS.kdmask_uniform_density(beast.cvar.REQUIRED_STARS) # 23 seconds!
-            print(now().strftime("%Y-%m-%d %H:%M:%S")+" exit kdmask_uniform_density()")
+            logger.info(" Exit kdmask_uniform_density()")
             self.S_FILTERED = self.SQ_RESULTS.from_kdmask()
 
             # Set up constellation database
-            print (now().strftime("%Y-%m-%d %H:%M:%S")+" entry constallation_db()")
+            logger.info(" Entry constallation_db()")
             self.C_DB = beast.constellation_db(self.S_FILTERED, 2 + beast.cvar.DB_REDUNDANCY, 0) # 1 second
-            print (now().strftime("%Y-%m-%d %H:%M:%S")+" exit constallation_db()")
+            logger.info(" Exit constallation_db()")
 
         except Exception as exc:
             raise SolverError(f'Startup sequence failed with {exc}')
@@ -103,6 +110,7 @@ class Solver:
         SolverError
             start up failed
         '''
+        logger.info(" ENTRY: solve()")
 
         # Create and initialize variables
         img_stars = beast.star_db()
@@ -110,6 +118,7 @@ class Solver:
         fov_db = None
 
         # Process the image for solving
+        logger.info("Start image pre-processing")
         tmp = orig_img.astype(np.int16) - self.MEDIAN_IMAGE
         img = np.clip(tmp, a_min=0, a_max=255).astype(np.uint8)
         img_grey = cv2.cvtColor(img, cv2.COLOR_RGB2GRAY)
@@ -118,11 +127,11 @@ class Solver:
         # contours
         ret, thresh = cv2.threshold(img_grey, beast.cvar.THRESH_FACTOR * beast.cvar.IMAGE_VARIANCE,
                                     255, cv2.THRESH_BINARY)
+        logger.info("Finished image pre-processing")
         contours, hierarchy = cv2.findContours(thresh, cv2.RETR_EXTERNAL, cv2.CHAIN_APPROX_SIMPLE)
 
         # Process the contours
         for c in contours:
-
             M = cv2.moments(c)
 
             if M['m00'] > 0:
@@ -179,6 +188,9 @@ class Solver:
             ra = match.winner.get_ra()
             ori = match.winner.get_ori()
         else:
+            logger.info(" SOLVING FAIL!!! ")
             raise SolverError('Solution failed for image')
+
+        logger.info(f'EXIT: solve() result - {dec} {ra}, {ori}')
 
         return dec, ra, ori
