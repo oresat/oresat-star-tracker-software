@@ -174,4 +174,3 @@ class StarTrackerResource(Resource):
             except ValueError:
                 logger.error(f'new state value of {new_state} is invalid')
         logger.info('exit: on_write')
-        return None
