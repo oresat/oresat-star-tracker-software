@@ -1,32 +1,28 @@
+import datetime
 import random
-from argparse import ArgumentParser
-from enum import IntEnum
-from time import time
 import sys
+import time
+import traceback
+import unittest
+from  datetime import datetime
+
 from argparse import ArgumentParser
+from enum import IntEnum, Enum, auto
+from os.path import abspath, dirname
 from struct import pack, unpack
-from enum import Enum, auto
+from time import time
 
 import canopen
 import cv2
-import traceback
-from olaf import Resource, logger, new_oresat_file, scet_int_from_time
-
-import unittest
-import sys
 import numpy as np
-from os.path import abspath, dirname
 
-import datetime
-from  datetime import datetime
-import time
-
+from olaf import Resource, new_oresat_file, scet_int_from_time, logger
 from oresat_star_tracker.star_tracker_resource import State as StarTrackerState
 
 DEFAULT_BUS_ID = 'vcan0'
 STARTRACKER_NODE_ID = 0x2C
 
-EDS_FILE = dirname(abspath(__file__)) + '/data/star_tracker.eds'
+EDS_FILE = dirname(abspath(__file__)) + '/../../oresat_star_tracker/data/star_tracker.eds'
 
 class CANopenTypes(Enum):
     '''All valid canopen types supported'''
@@ -224,9 +220,9 @@ def fetch_files_fread(sdo, keyword='capture'):
         capture_files.append(file_name)
     return capture_files
 
-"""
+'''
 TOO SLOW UNUSABLE
-"""
+'''
 def read_image_file(sdo, file_name: str):
     sdo[0x3003][1].raw = file_name.encode('utf-8')
     total_size = 3686454
@@ -240,7 +236,7 @@ def read_image_file(sdo, file_name: str):
 
     file_bytes = np.asarray(bytearray(infile.read()), dtype=np.uint8)
 
-    """
+    '''
     total_read = 0
     block_size = 1024
     num_blocks = total_size % block_size
@@ -251,7 +247,7 @@ def read_image_file(sdo, file_name: str):
         total_read+=block_size
         print('Read bytes ', total_read)
     print("after::reading.")
-    """
+    '''
 
     # retval = cv2.imdecode(contents, cv2.IMREAD_GRAYSCALE)
     infile.close()
