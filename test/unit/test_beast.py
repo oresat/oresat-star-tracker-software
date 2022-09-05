@@ -1,9 +1,9 @@
-
 import unittest
 import sys
-from os.path import abspath, dirname
 import datetime
-from  datetime import datetime
+
+from datetime import datetime
+from os.path import abspath, dirname
 
 from oresat_star_tracker.beast import beast
 from oresat_star_tracker.solver import Solver, SolverError
@@ -58,5 +58,4 @@ class TestBeast(unittest.TestCase):
 
     def test_star_db_successfully_constructed(self):
         self.assertTrue(TestBeast.S_DB is not None, 'star database was not constructed.')
-
 
