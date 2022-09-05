@@ -5,8 +5,6 @@ import io
 import cv2
 import numpy as np
 from timeit import default_timer as timer
-from olaf import logger
-from .solver import Solver, SolverError
 
 def read_file_to_buffer(file_path, buf_size):
     '''Read the file into a buffer of given size.
