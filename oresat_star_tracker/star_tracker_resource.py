@@ -32,18 +32,18 @@ class StateCommand(IntEnum):
     STAR_TRACKING=1,
     CAPTURE=2
 
-    def target_state(self, command):
+    def target_state(self):
         '''
         Translated the command received to target state.
         '''
-        if command == StateCommand.STANDBY:
+        if self == StateCommand.STANDBY:
             return State.STANDBY
-        elif command == StateCommand.STAR_TRACKING:
+        elif self == StateCommand.STAR_TRACKING:
             return State.STAR_TRACKING
-        elif command == StateCommand.CAPTURE:
+        elif self == StateCommand.CAPTURE:
             return State.CAPTURE
         else:
-            raise ValueError('Unrecognized command : %d' % command)
+            raise ValueError('No target value: %d' % self)
 
 class StarTrackerResource(Resource):
 
