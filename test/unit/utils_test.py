@@ -1,19 +1,17 @@
 import unittest
+import tempfile
 import sys
 import os
 import io
+
+from timeit import default_timer as timer
+
 import cv2
 import numpy as np
-from timeit import default_timer as timer
-from olaf import logger
-from .solver import Solver, SolverError
 
 from .utils import read_file_to_buffer
-from .utils import read_image_file_to_numpy_buffer, read_preprocess_image
-import tempfile
-
-logger.add(sys.stdout, level="DEBUG")
-
+from .utils import read_image_file_to_numpy_buffer
+from .utils import read_preprocess_image
 
 class TestUtils(unittest.TestCase):
 
@@ -35,7 +33,6 @@ class TestUtils(unittest.TestCase):
         # Remove the test file
         os.remove(test_file.name)
 
-
     def test_read_preprocess_image(self):
         x_size = 1280
         y_size = 960
@@ -45,6 +42,3 @@ class TestUtils(unittest.TestCase):
 
         image = read_preprocess_image('./oresat_star_tracker/data/mock.bmp', y_size, x_size)
         self.assertEqual((y_size, x_size, 3), image.shape)
-
-if __name__ == """__main__""":
-    unittest.main()
