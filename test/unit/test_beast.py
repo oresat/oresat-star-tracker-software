@@ -53,9 +53,6 @@ class TestBeast(unittest.TestCase):
         '''  '''
         cls.beast_setup()
 
-    def setUp(self):
-        pass
-
     def test_constellation_db_successfully_constructed(self):
         self.assertTrue(TestBeast.C_DB is not None, 'constellation database was not constructed.')
 
