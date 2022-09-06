@@ -32,6 +32,20 @@ class StateCommand(IntEnum):
     STAR_TRACKING=1,
     CAPTURE=2
 
+    @classmethod
+    def command(cls, target_state):
+        '''
+        Get command to enter a state.
+        '''
+        if target_state == State.STANDBY:
+            return StateCommand.STANDBY
+        elif target_state == State.STAR_TRACKING:
+            return StateCommand.STAR_TRACKING
+        elif target_state == State.CAPTURE:
+            return StateCommand.CAPTURE
+        else:
+            raise ValueError('No command to enter state: %d' % target_state)
+
     def target_state(self):
         '''
         Translated the command received to target state.
@@ -108,13 +122,12 @@ class StarTrackerResource(Resource):
         logger.info("entry: _star_track")
         try:
             data = self._camera.capture() # Take the image
-            logger.info('image capture successfull')
             scet = scet_int_from_time(time()) # Record the timestamp
 
             # Solver takes a single shot image and returns an orientation
             logger.info('start solving')
             dec, ra, ori = self._solver.solve(data) # run the solver
-            logger.info(f'finish solving: ra:{ra}, dec:{dec}, ori:{ori}')
+            logger.info(f'finished solving: ra:{ra}, dec:{dec}, ori:{ori}')
 
             self.right_angle_obj.value = int(ra)
             self.declination_obj.value = int(dec)
@@ -158,14 +171,13 @@ class StarTrackerResource(Resource):
         self._state = State.OFF
 
     def on_read(self, index, subindex, od):
-        logger.info('entry: on_read '+ hex(index)+str(' ') + str(subindex)+ ' ' )
         if index == self.state_index:
-            logger.info('entry[startracker]: on_read '+ hex(index)+str(' ') + str(subindex)+ ' ' +' returning' + str(self._state.value))
+            logger.info(f'entry: on_read {hex(index)} {subindex}  returning :{self._state.value}')
             return self._state.value
 
     def on_write(self, index, subindex, od, data):
-        logger.info('entry: on_write '+ hex(index)+str(' ') + str(subindex)+ ' ' + str(data))
         if index == self.state_index:
+            logger.info(f'entry: on_write {hex(index)} {subindex} {data}')
             try:
                 raw_command     =  self.state_obj.decode_raw(data)
                 command         =  StateCommand(raw_command)
@@ -173,4 +185,4 @@ class StarTrackerResource(Resource):
                 logger.info(f'start tracker now in state: {self._state.name}')
             except ValueError:
                 logger.error(f'new state value of {new_state} is invalid')
-        logger.info('exit: on_write')
+            logger.info('exit: on_write')
