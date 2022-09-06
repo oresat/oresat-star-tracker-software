@@ -156,37 +156,9 @@ def get_star_tracker_state(sdo):
     decoded_state  = decode_value(returned_value, CANopenTypes.i8)[0]
     return decoded_state
 
-def set_star_tracker_state(sdo, state):
-    '''
-    Set the tracker state.
-    '''
-    payload = encode_value(state, CANopenTypes.i8)
-    sdo.download(0x6000, 0, payload)
-    return True
-
-def set_star_tracker_standby(sdo):
-    '''
-    '''
-    payload = encode_value(0, CANopenTypes.i8)
-    sdo.download(0x6000, 0, payload)
-    return True
 
 def set_star_tracker_state(sdo, state_command):
     payload = encode_value(state_command.value, CANopenTypes.i8)
-    sdo.download(0x6000, 0, payload)
-    return True
-
-def set_star_tracker_star_tracking(sdo):
-    '''
-    '''
-    payload = encode_value(1, CANopenTypes.i8)
-    sdo.download(0x6000, 0, payload)
-    return True
-
-def set_star_tracker_capture(sdo):
-    '''
-    '''
-    payload = encode_value(2, CANopenTypes.i8)
     sdo.download(0x6000, 0, payload)
     return True
 
@@ -412,6 +384,3 @@ class TestStarTrackerCanInterface(unittest.TestCase):
             # self.assertTrue('Orienation.Timestamp' in received_timestamp)
 
         set_star_tracker_state(self.sdo, StateCommand.STANDBY)
-
-
-
