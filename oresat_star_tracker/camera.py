@@ -20,10 +20,9 @@ class Camera:
     PRU0_FW = '/lib/firmware/prucam_pru0_fw.out'
     PRU1_FW = '/lib/firmware/prucam_pru1_fw.out'
 
-    def __init__(self, mock: bool = False, debug: bool = True):
+    def __init__(self, mock: bool = False):
 
         self._mock = mock
-        self._debug = debug
 
         if self._mock:
             self._capture_path = f'{dirname(abspath(__file__))}/data/mock.bmp'
@@ -109,11 +108,6 @@ class Camera:
             # Convert to color
             if color is True:
                 img = cv2.cvtColor(img, cv2.COLOR_BayerBG2BGR)
-
-            if self._debug is True:
-                color_img = cv2.cvtColor(img, cv2.COLOR_BGR2RGB)
-                time_now = datetime.now().strftime("%Y_%m_%d-%I_%M_%S_%p")
-                cv2.imwrite('/tmp/debug_capture_%s.jpg' % time_now, color_img)
 
         return img
 
