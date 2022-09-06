@@ -15,7 +15,7 @@ import canopen
 import cv2
 import numpy as np
 
-from olaf import Resource, new_oresat_file, scet_int_from_time, logger
+from olaf import Resource, new_oresat_file, scet_int_from_time
 from oresat_star_tracker.star_tracker_resource import State as StarTrackerState
 from oresat_star_tracker.star_tracker_resource import StateCommand
 
@@ -82,14 +82,11 @@ def decode_value(raw_data, co_type):
         data = unpack('d', raw_data)
     elif co_type == CANopenTypes.s:
         data = raw_data.decode('utf-8')
-        logger.info(data)
-        sys.exit(0)
+        raise ValueError(data)
     elif co_type == CANopenTypes.d:
-        logger.info(raw_data)
-        sys.exit(0)
+        raise ValueError(raw_data)
     else:
-        logger.info('invalid data type')
-        sys.exit(0)
+        raise ValueError(f'invalid data type:{co_type}')
     return data;
 
 def encode_value(value, co_type):
@@ -146,7 +143,6 @@ def trigger_capture_star_tracker(sdo):
         payload = encode_value(1, CANopenTypes.i8)
         sdo.download(0x6002, 0, payload)
     except Exception as exc:
-        print(exc)
         traceback.print_exc()
         raise exc
 
@@ -210,7 +206,6 @@ def read_image_file(sdo, file_name: str):
     sdo.RESPONSE_TIMEOUT = 5.0
 
     infile = sdo[0x3003][2].open('rb', encoding='ascii', buffering=1024 , size=3686454, block_transfer=True)
-    print("begin::reading.")
 
     file_bytes = np.asarray(bytearray(infile.read()), dtype=np.uint8)
 
@@ -259,7 +254,6 @@ class TestStarTrackerCanInterface(unittest.TestCase):
             state = get_star_tracker_state(self.sdo)
             self.assertTrue(is_valid_star_tracker_state(state))
         except Exception as exc:
-            print(exc)
             traceback.print_exc()
             raise exc
 
@@ -276,7 +270,6 @@ class TestStarTrackerCanInterface(unittest.TestCase):
             self.assertTrue(is_valid_star_tracker_state(save_original_state))
 
             # 2. Ensure can set to CAPTURE state
-            logger.info('switching to CAPTURE state')
             set_star_tracker_state(self.sdo, StateCommand.CAPTURE)
             #set_star_tracker_capture(self.sdo)
             #set_star_tracker_state(self.sdo, StarTrackerState.CAPTURE)
@@ -286,7 +279,6 @@ class TestStarTrackerCanInterface(unittest.TestCase):
 
 
             # 3. Ensure can set to STAR_TRACKING state
-            logger.info('switching to STAR_TRACKING state')
             set_star_tracker_state(self.sdo, StateCommand.STAR_TRACKING)
             # set_star_tracker_star_tracking(self.sdo)
             decoded_state = get_star_tracker_state(self.sdo)
@@ -294,7 +286,6 @@ class TestStarTrackerCanInterface(unittest.TestCase):
             time.sleep(5)
 
              # 4. Ensure can set to STANDBY state
-            logger.info('switching to STANDBY state')
             set_star_tracker_state(self.sdo, StateCommand.STANDBY)
             # set_star_tracker_standby(self.sdo)
 
@@ -364,8 +355,8 @@ class TestStarTrackerCanInterface(unittest.TestCase):
                 for var in message:
                     received_timestamp[var.name] = var.raw
 
-            # Star Tracker Status: :)
-            # This is the one hich contains star tracker paremeters as tpdo
+            # Star Tracker Status:
+            # This is the one which contains star tracker paremeters as tpdo
             self.node.tpdo[3].add_callback(orientation_callback)
 
             # Orientation.Timestamp
@@ -375,12 +366,12 @@ class TestStarTrackerCanInterface(unittest.TestCase):
             # Sleep for 5 sec
             time.sleep(5)
             # Validate the parameters received from tpdo
-            logger.info(f'received_oreintation: {received_orientation}')
+            # This fails when the star tracker is not pointing to a solvable region
+            self.assertTrue(len(received_orientation) > 0, f'Empty oreintation received: {received_orientation}')
             self.assertTrue('Star tracker status' in received_orientation)
             self.assertTrue('Orienation.Right Ascension' in received_orientation)
             self.assertTrue('Orienation.Declination' in received_orientation)
 
-            # logger.info(f'received_timestamp: {received_timestamp}')
             # self.assertTrue('Orienation.Timestamp' in received_timestamp)
 
         set_star_tracker_state(self.sdo, StateCommand.STANDBY)
