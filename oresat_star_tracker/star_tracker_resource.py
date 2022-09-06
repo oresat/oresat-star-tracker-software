@@ -76,6 +76,8 @@ class StarTrackerResource(Resource):
         self.data_index = 0x6001
         data_record = self.od[self.data_index]
 
+        self.capture_index = 0x6002
+
         # 0.5s delay, so the on_loop function loops every 1s to 1.4s then,
         # solves should take between 0.5-1s
         self.delay = 0.5
@@ -177,7 +179,7 @@ class StarTrackerResource(Resource):
 
     def on_write(self, index, subindex, od, data):
         if index == self.state_index:
-            logger.info(f'entry: on_write {hex(index)} {subindex} {data}')
+            logger.info(f'entry: on_write(state) {hex(index)} {subindex} {data}')
             try:
                 raw_command     =  self.state_obj.decode_raw(data)
                 command         =  StateCommand(raw_command)
@@ -185,4 +187,8 @@ class StarTrackerResource(Resource):
                 logger.info(f'start tracker now in state: {self._state.name}')
             except ValueError:
                 logger.error(f'new state value of {new_state} is invalid')
-            logger.info('exit: on_write')
+        elif index == self.capture_index:
+            logger.info(f'entry: on_write(capture) {hex(index)} {subindex} {data}')
+            self._capture()
+        logger.info('exit: on_write')
+
