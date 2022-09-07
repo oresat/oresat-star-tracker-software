@@ -149,14 +149,16 @@ class StarTrackerResource(Resource):
         logger.info("exit: _star_track")
 
     def on_loop(self):
-        logger.info(f'entry: on_loop state: {self._state}')
         if self._state not in [State.STANDBY, State.CAPTURE, State.STAR_TRACKING]:
             raise ValueError(f'in invalid state for loop: {self._state.name}')
         if self._state == State.CAPTURE:
+            logger.info(f'entry: on_loop state: {self._state}')
             self._capture()
+            logger.info(f'exit: on_loop')
         elif self._state == State.STAR_TRACKING:
+            logger.info(f'entry: on_loop state: {self._state}')
             self._star_track()
-        logger.info(f'exit: on_loop')
+            logger.info(f'exit: on_loop')
 
     def on_end(self):
         try:
