@@ -4,24 +4,20 @@ by Umair Khan, from the Portland State Aerospace Society
 based on OpenStarTracker from Andrew Tennenbaum at the University of Buffalo
 openstartracker.org
 '''
-
-
+import sys
 import time
+import datetime
+
+from  datetime import datetime
+from os.path import abspath, dirname
 
 import numpy as np
 import cv2
-from os.path import abspath, dirname
-
-import datetime
-from  datetime import datetime
 
 from olaf import logger
 
 from .beast import beast
 
-import sys
-
-#logger.add(sys.stdout, level="DEBUG")
 
 class SolverError(Exception):
     '''An erro has occur for the :py:class:`solver`'''
@@ -31,7 +27,6 @@ class Solver:
     '''Solve star trackr images'''
 
     def __init__(self, db_path=None, config_path=None, median_path=None):
-        logger.debug("__init__:Solver")
         # Prepare constants
         self.P_MATCH_THRESH = 0.99
         self.YEAR = 1991.25
@@ -71,27 +66,19 @@ class Solver:
 
             # Load star database
 
-            logger.info(" Entry beast.star_db()")
+
             self.S_DB = beast.star_db() # 0 seconds
-            logger.info(" Entry load_catalog()")
             self.S_DB.load_catalog(self.db_path, self.YEAR) # 7 seconds
-            logger.info(" Exit load_catalog()")
 
             # Filter stars
-            logger.info(" Entry star_query()")
             self.SQ_RESULTS = beast.star_query(self.S_DB) # 1 sec
-            logger.info(" Exit star_query()")
-            self.SQ_RESULTS.kdmask_filter_catalog() # 8 secons
+            self.SQ_RESULTS.kdmask_filter_catalog() # 8 seconds
 
-            logger.info(" Entry kdmask_uniform_density()")
             self.SQ_RESULTS.kdmask_uniform_density(beast.cvar.REQUIRED_STARS) # 23 seconds!
-            logger.info(" Exit kdmask_uniform_density()")
             self.S_FILTERED = self.SQ_RESULTS.from_kdmask()
 
             # Set up constellation database
-            logger.info(" Entry constallation_db()")
             self.C_DB = beast.constellation_db(self.S_FILTERED, 2 + beast.cvar.DB_REDUNDANCY, 0) # 1 second
-            logger.info(" Exit constallation_db()")
 
         except Exception as exc:
             raise SolverError(f'Startup sequence failed with {exc}')
@@ -110,7 +97,7 @@ class Solver:
         SolverError
             start up failed
         '''
-        logger.info(f'ENTRY: solve() : {beast.cvar.IMG_X}, {beast.cvar.IMG_Y}')
+        logger.info(f'entry: solve():{beast.cvar.IMG_X}, {beast.cvar.IMG_Y}')
 
         # Ensure images are always processed on calibration size.
         orig_img = cv2.resize(orig_img, (beast.cvar.IMG_X, beast.cvar.IMG_Y))
@@ -121,7 +108,7 @@ class Solver:
         fov_db = None
 
         # Process the image for solving
-        logger.info("Start image pre-processing")
+        logger.info("start image pre-processing")
         tmp = orig_img.astype(np.int16) - self.MEDIAN_IMAGE
         img = np.clip(tmp, a_min=0, a_max=255).astype(np.uint8)
         img_grey = cv2.cvtColor(img, cv2.COLOR_RGB2GRAY)
@@ -130,7 +117,7 @@ class Solver:
         # contours
         ret, thresh = cv2.threshold(img_grey, beast.cvar.THRESH_FACTOR * beast.cvar.IMAGE_VARIANCE,
                                     255, cv2.THRESH_BINARY)
-        logger.info("Finished image pre-processing")
+        logger.info("finished image pre-processing")
         contours, hierarchy = cv2.findContours(thresh, cv2.RETR_EXTERNAL, cv2.CHAIN_APPROX_SIMPLE)
 
         # Process the contours
@@ -194,6 +181,6 @@ class Solver:
             logger.info("Unable to find orientation for image!")
             raise SolverError('Solution failed for image')
 
-        logger.info(f'EXIT: solve(): {dec} {ra}, {ori}')
+        logger.info(f'exit: solve(): dec:{dec} ra:{ra}, ori:{ori}')
 
         return dec, ra, ori
