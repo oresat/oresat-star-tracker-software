@@ -133,6 +133,9 @@ class TestStarTrackerCanInterface(unittest.TestCase):
         Given that the star tracker is put into star tracking mode.
         Then, we can subscribe to and receive callbacks for tpdo, for
         orientation updates.
+
+        Note: This test is likely to fail if the star tracker is not
+        pointing to valid star field image.
         '''
         # Put startracker in tracking state
         set_star_tracker_state(self.sdo, StateCommand.STAR_TRACKING)
