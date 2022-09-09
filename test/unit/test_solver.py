@@ -27,6 +27,20 @@ class TestSolver(unittest.TestCase):
         self._solver = Solver() #config_path=config_path, median_path=median_path)
         self._solver.startup()
 
+    def assert_image_matches_solution(self, image_path, y_size, x_size, solution):
+        img_data = read_preprocess_image(image_path, y_size, x_size)
+        if not solution:
+            self.assertRaises(SolverError, self._solver.solve, img_data)
+            return None, None, None
+        else:
+            # Run the solver
+            dec, ra, ori = self._solver.solve(img_data)
+            if solution:
+                expected_dec, expected_ra, expected_ori = solution
+                self.assertTrue(np.isclose(ra, expected_ra), f'ra: {ra} is not close')
+                self.assertTrue(np.isclose(dec,expected_dec), f'dec {dec} is not close')
+                self.assertTrue(np.isclose(ori, expected_ori), f'ori {ori} is not close')
+            return dec, ra, ori
 
     def test_run(self):
         '''
@@ -71,24 +85,11 @@ class TestSolver(unittest.TestCase):
         ]
 
         for image_path in image_paths:
-            img_data = read_preprocess_image(image_path, y_size, x_size)
-
-            solution = None
-            if image_path in solutions:
-                solution = solutions[image_path]
+            solution = solutions[image_path] if image_path in solutions else None
             try:
                 start = timer()
                 # Run the solver
-                if not solution:
-                    self.assertRaises(SolverError, self._solver.solve, img_data)
-                else:
-                    dec, ra, ori = self._solver.solve(img_data)
-                    if solution:
-                        expected_dec, expected_ra, expected_ori = solution
-                        self.assertTrue(np.isclose(ra, expected_ra), f'ra: {ra} is not close')
-                        self.assertTrue(np.isclose(dec,expected_dec), f'dec {dec} is not close')
-                        self.assertTrue(np.isclose(ori, expected_ori), f'ori {ori} is not close')
-
+                self.assert_image_matches_solution(image_path, y_size, x_size, solution)
                 stop = timer()
                 duration = stop - start
             except:
