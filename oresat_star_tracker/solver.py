@@ -65,8 +65,6 @@ class Solver:
             beast.load_config(self.config_path)
 
             # Load star database
-
-
             self.S_DB = beast.star_db() # 0 seconds
             self.S_DB.load_catalog(self.db_path, self.YEAR) # 7 seconds
 
@@ -75,6 +73,7 @@ class Solver:
             self.SQ_RESULTS.kdmask_filter_catalog() # 8 seconds
 
             self.SQ_RESULTS.kdmask_uniform_density(beast.cvar.REQUIRED_STARS) # 23 seconds!
+
             self.S_FILTERED = self.SQ_RESULTS.from_kdmask()
 
             # Set up constellation database
@@ -117,12 +116,16 @@ class Solver:
         # contours
         ret, thresh = cv2.threshold(img_grey, beast.cvar.THRESH_FACTOR * beast.cvar.IMAGE_VARIANCE,
                                     255, cv2.THRESH_BINARY)
+
         logger.info("finished image pre-processing")
         contours, hierarchy = cv2.findContours(thresh, cv2.RETR_EXTERNAL, cv2.CHAIN_APPROX_SIMPLE)
 
         # Process the contours
         for c in contours:
+
             M = cv2.moments(c)
+
+            logger.info(f"found momments: {M}")
 
             if M['m00'] > 0:
 
@@ -130,7 +133,7 @@ class Solver:
                 cx = M['m10'] / M['m00']
                 cy = M['m01'] / M['m00']
 
-                # see https://alyssaq.github.io/2015/computing-the-axes-or-orientation-of-a-blob/
+                # See https://alyssaq.github.io/2015/computing-the-axes-or-orientation-of-a-blob/
                 # for how to convert these into eigenvectors/values
                 u20 = M['m20'] / M['m00'] - cx ** 2
                 u02 = M['m02'] / M['m00'] - cy ** 2
