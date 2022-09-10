@@ -42,7 +42,7 @@ class TestSolver(unittest.TestCase):
                 self.assertTrue(np.isclose(ori, expected_ori), f'ori {ori} is not close')
             return dec, ra, ori
 
-    def test_run(self):
+    def _test_run(self):
         '''
         Test solution of images are solved to close approximate of last known solution.
         '''

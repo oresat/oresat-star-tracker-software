@@ -4,6 +4,7 @@ by Umair Khan, from the Portland State Aerospace Society
 based on OpenStarTracker from Andrew Tennenbaum at the University of Buffalo
 openstartracker.org
 '''
+import uuid
 import sys
 import time
 import datetime
@@ -40,6 +41,11 @@ class Solver:
         self.median_path = median_path if median_path else f'{self.data_dir}/median-image.png'
         self.config_path = config_path if config_path else f'{self.data_dir}/configuration.txt'
         self.db_path = db_path if db_path else f'{self.data_dir}/hipparcos.dat'
+        # Load median image
+        self.MEDIAN_IMAGE = cv2.imread(self.median_path)
+
+        # Load configuration
+        beast.load_config(self.config_path)
 
         logger.debug(f'__init__:Solver \n Median Path: {self.median_path}\n DB Path:{self.db_path}\n Config Path:{self.config_path}')
 
@@ -82,6 +88,70 @@ class Solver:
         except Exception as exc:
             raise SolverError(f'Startup sequence failed with {exc}')
 
+
+    def _preprocess_img(self, orig_img, guid=None):
+        if not guid:
+            guid = str(uuid.uuid4())
+        cv2.imwrite(f'/tmp/solver-original-{guid}.png', orig_img)
+        # Ensure images are always processed on calibration size.
+        orig_img = cv2.resize(orig_img, (beast.cvar.IMG_X, beast.cvar.IMG_Y))
+        cv2.imwrite(f'/tmp/solver-resized-{guid}.png', orig_img)
+        # Process the image for solving
+        logger.info(f"start image pre-processing- {guid}")
+        tmp = orig_img.astype(np.int16) - self.MEDIAN_IMAGE
+        img = np.clip(tmp, a_min=0, a_max=255).astype(np.uint8)
+        img_grey = cv2.cvtColor(img, cv2.COLOR_RGB2GRAY)
+        cv2.imwrite(f'/tmp/solver-grey-{guid}.png', img_grey)
+        return img_grey
+
+    def _find_contours(self, img_grey, guid=None):
+        if not guid: guid = str(uuid.uuid4())
+        logger.info(f'entry: solve():{beast.cvar.IMG_X}, {beast.cvar.IMG_Y}')
+
+        # Remove areas of the image that don't meet our brightness threshold and then extract
+        # contours
+        ret, thresh = cv2.threshold(img_grey, beast.cvar.THRESH_FACTOR * beast.cvar.IMAGE_VARIANCE,
+                                    255, cv2.THRESH_BINARY)
+        cv2.imwrite(f'/tmp/solver-thresh-{guid}.png', thresh)
+        logger.info("finished image pre-processing")
+
+        contours, _ = cv2.findContours(thresh, cv2.RETR_EXTERNAL, cv2.CHAIN_APPROX_SIMPLE)
+
+        # contours_img = cv2.drawContours(img_grey, contours, -1, (0,255,0), 1)
+        # cv2.imwrite(f'/tmp/solver-countours-{guid}.png', contours_img)
+        logger.info(f"Number of  countours: {len(contours)}")
+
+        return contours
+
+    def _find_stars(self, img_grey, contours, guid = None):
+        if not guid:
+            guid = str(uuid.uuid4())
+        i = 0
+        star_list = []
+        for c in contours:
+            M = cv2.moments(c)
+            #logger.info(f"found momments: {M}")
+            if M['m00'] > 0:
+                # this is how the x and y position are defined by cv2
+                cx = M['m10'] / M['m00']
+                cy = M['m01'] / M['m00']
+                flux = float(cv2.getRectSubPix(img_grey, (1, 1), (cx, cy))[0, 0])
+
+                # Add the list to star_list
+                star_list.append([cx, cy,flux])
+
+                # The center pixel is used as the approximation of the brightest pixel
+                logger.info(f'Adding star {i} at cx,cy : ({cx}, {cy})')
+                logger.info(f'Adding star {i} at flux: {flux}')
+                logger.info(f'Adding star {i} at {cx - beast.cvar.IMG_X / 2.0}  , {cy - beast.cvar.IMG_Y / 2.0}, flux: {float(cv2.getRectSubPix(img_grey, (1, 1), (cx, cy))[0, 0])}')
+                i+=1
+
+        return np.array(star_list)
+
+
+    def _foo(self):
+        pass
+
     def solve(self, orig_img) -> (float, float, float):
         '''
         Return
@@ -96,36 +166,46 @@ class Solver:
         SolverError
             start up failed
         '''
+        guid = str(uuid.uuid4())
         logger.info(f'entry: solve():{beast.cvar.IMG_X}, {beast.cvar.IMG_Y}')
 
+        cv2.imwrite(f'/tmp/solver-original-{guid}.png', orig_img)
         # Ensure images are always processed on calibration size.
         orig_img = cv2.resize(orig_img, (beast.cvar.IMG_X, beast.cvar.IMG_Y))
 
+        cv2.imwrite(f'/tmp/solver-resized-{guid}.png', orig_img)
         # Create and initialize variables
         img_stars = beast.star_db()
         match = None
         fov_db = None
 
         # Process the image for solving
-        logger.info("start image pre-processing")
+        logger.info(f"start image pre-processing- {guid}")
         tmp = orig_img.astype(np.int16) - self.MEDIAN_IMAGE
         img = np.clip(tmp, a_min=0, a_max=255).astype(np.uint8)
         img_grey = cv2.cvtColor(img, cv2.COLOR_RGB2GRAY)
 
-        # Remove areas of the image that don't meet our brightness threshold and then extract
-        # contours
+        cv2.imwrite(f'/tmp/solver-grey-{guid}.png', img_grey)
+
+        # Remove areas of the image that don't meet our
+        # brightness threshold and then extract contours.
         ret, thresh = cv2.threshold(img_grey, beast.cvar.THRESH_FACTOR * beast.cvar.IMAGE_VARIANCE,
                                     255, cv2.THRESH_BINARY)
 
+        cv2.imwrite(f'/tmp/solver-thresh-{guid}.png', thresh)
         logger.info("finished image pre-processing")
-        contours, hierarchy = cv2.findContours(thresh, cv2.RETR_EXTERNAL, cv2.CHAIN_APPROX_SIMPLE)
+
+        contours, _ = cv2.findContours(thresh, cv2.RETR_EXTERNAL, cv2.CHAIN_APPROX_SIMPLE)
+
+        #cv2.imwrite(f'/tmp/solver-countours-{guid}.png', contours)
 
         # Process the contours
+        i = 0
         for c in contours:
 
             M = cv2.moments(c)
 
-            logger.info(f"found momments: {M}")
+            #logger.info(f"found momments: {M}")
 
             if M['m00'] > 0:
 
@@ -144,12 +224,23 @@ class Solver:
                                         cy - beast.cvar.IMG_Y / 2.0,
                                         float(cv2.getRectSubPix(img_grey, (1, 1), (cx, cy))[0, 0]),
                                         -1)
+                logger.info(f'Adding star {i} at cx,cy : ({cx}, {cy})')
+                logger.info(f'Adding star {i} at flux: (float(cv2.getRectSubPix(img_grey, (1, 1), (cx, cy))[0, 0]))')
+                logger.info(f'Adding star {i} at {cx - beast.cvar.IMG_X / 2.0}  , {cy - beast.cvar.IMG_Y / 2.0}, flux: {float(cv2.getRectSubPix(img_grey, (1, 1), (cx, cy))[0, 0])}')
+                i+=1
 
         # We only want to use the brightest MAX_FALSE_STARS + REQUIRED_STARS
+        logger.info(f'Copying {beast.cvar.MAX_FALSE_STARS + beast.cvar.REQUIRED_STARS} brightest')
         img_stars_n_brightest = img_stars.copy_n_brightest(
             beast.cvar.MAX_FALSE_STARS + beast.cvar.REQUIRED_STARS)
+
+        logger.info(f"img_stars_n_brightest {img_stars_n_brightest}")
+
         img_const_n_brightest = beast.constellation_db(img_stars_n_brightest,
                                                        beast.cvar.MAX_FALSE_STARS + 2, 1)
+
+        logger.info(f"img_const_n_brightest: {img_const_n_brightest}")
+
         lis = beast.db_match(self.C_DB, img_const_n_brightest)
 
         # Generate the match
