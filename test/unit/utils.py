@@ -33,9 +33,8 @@ def read_preprocess_image(image_path, y_size, x_size, color=True):
       print("read_preprocess_image:y_size * x_size", y_size * x_size)
       img = read_image_file_to_numpy_buffer(image_path, y_size, x_size)
 
-      # Convert to color
-      if color is True:
-          img = cv2.cvtColor(img, cv2.COLOR_BayerBG2BGR)
+      # Convert to color - images in misc directory dont come in bayer format
+      #if color is True: img = cv2.cvtColor(img, cv2.COLOR_BayerBG2BGR)
 
       return img
 
