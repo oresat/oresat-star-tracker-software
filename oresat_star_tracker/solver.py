@@ -126,11 +126,9 @@ class Solver:
     def _find_stars(self, img_grey, contours, guid = None):
         if not guid:
             guid = str(uuid.uuid4())
-        i = 0
         star_list = []
         for c in contours:
             M = cv2.moments(c)
-            #logger.info(f"found momments: {M}")
             if M['m00'] > 0:
                 # this is how the x and y position are defined by cv2
                 cx = M['m10'] / M['m00']
@@ -139,17 +137,10 @@ class Solver:
 
                 # Add the list to star_list
                 star_list.append([cx, cy,flux])
-
-                # The center pixel is used as the approximation of the brightest pixel
-                logger.info(f'Adding star {i} at cx,cy : ({cx}, {cy})')
-                logger.info(f'Adding star {i} at flux: {flux}')
-                logger.info(f'Adding star {i} at {cx - beast.cvar.IMG_X / 2.0}  , {cy - beast.cvar.IMG_Y / 2.0}, flux: {float(cv2.getRectSubPix(img_grey, (1, 1), (cx, cy))[0, 0])}')
-                i+=1
-
         return np.array(star_list)
 
-
-    def _foo(self):
+    def _find_constellation_matches(self):
+        print("sometthing.")
         pass
 
     def solve(self, orig_img) -> (float, float, float):
