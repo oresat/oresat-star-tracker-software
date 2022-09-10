@@ -67,7 +67,7 @@ class TestContours(unittest.TestCase):
                 star_image = cv2.circle(star_image, (cx, cy), radius=int(flux/10), color=(0, 0, 255), thickness=1)
             cv2.imwrite(f'/tmp/solver-stars-{guid}.png', star_image)
 
-    def _test_find_contours(self):
+    def test_find_contours(self):
         '''
         Given a starfiled test that the number of countours
         for the image match the number of stars in the image.
@@ -88,10 +88,11 @@ class TestContours(unittest.TestCase):
         ]
 
         for idx, image_path in enumerate(image_paths):
+            guid = str(uuid.uuid4())
             expected_num_contours = expected_contours[idx]
             img_data = cv2.imread(image_path)
-            img_grey  = self._solver._preprocess_img(orig_img)
-            contours = self._solver._find_contours(img_grey)
+            img_grey  = self._solver._preprocess_img(img_data, guid =guid)
+            contours = self._solver._find_contours(img_grey, guid=guid)
             self.assertEqual(expected_num_contours, len(contours))
 
 
