@@ -67,7 +67,6 @@ class TestSolver(unittest.TestCase):
         #       produced by solver.
         #
         # dec, ra, ori
-
         expected_solutions = [
             [ 74.798045847, 271.257311164, 84.470568   ],
             [ 26.4559966942, 246.783421908, 131.84151  ],
