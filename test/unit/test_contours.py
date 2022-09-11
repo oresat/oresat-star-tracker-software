@@ -42,7 +42,6 @@ class TestContours(unittest.TestCase):
             f'{self.test_data_folder}/exp1000/samples/6.bmp',
             f'{self.test_data_folder}/exp1000/samples/7.bmp',
             f'{self.test_data_folder}/exp1000/samples/8.bmp'
-
         ]
         expected_star_counts = [
             41, 36, 34, 44, 77, 46, 44, 48
