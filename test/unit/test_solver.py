@@ -18,6 +18,7 @@ class TestSolver(unittest.TestCase):
         '''
         self.test_data_folder = '/home/debian/oresat-star-tracker-software/misc/test-data'
 
+
     def assert_image_matches_solution(self, image_path, solution, expect_to_fail=False):
         img_data = cv2.imread(image_path)
 
@@ -49,7 +50,6 @@ class TestSolver(unittest.TestCase):
         '''
         Test solution of images are solved to close approximate of last known solution.
         '''
-
         config_path = f'{self.test_data_folder}/exp1000/calibration.txt'
         median_path = f'{self.test_data_folder}/exp1000/median_image.png'
 
@@ -59,7 +59,6 @@ class TestSolver(unittest.TestCase):
         exposures = ['exp1000', 'exp2500']
         paths = [ f'{self.test_data_folder}/exp1000/samples' ]
         duration = -1
-
 
         # TODO: Find root cause as to why the expected solutions are not being
         #       produced by solver.
@@ -102,7 +101,6 @@ class TestSolver(unittest.TestCase):
                 traceback.print_exc()
                 raise exc
 
-
     def test_run_2500(self):
         '''
         Test solution of images are solved to close approximate of last known solution.
@@ -111,11 +109,8 @@ class TestSolver(unittest.TestCase):
         config_path = f'{self.test_data_folder}/exp2500/calibration.txt'
         median_path = f'{self.test_data_folder}/exp2500/median_image.png'
 
-
         self._solver = Solver(config_path=config_path, median_path=median_path, blur_kernel_size=10)
         self._solver.startup()
-
-
 
         # TODO: Find root cause as to why the expected solutions are not being
         #       produced by solver.
@@ -141,7 +136,6 @@ class TestSolver(unittest.TestCase):
         ]
 
         failing_indexes = []
-
         for idx, image_path in enumerate(image_paths):
             solution = expected_solutions[idx]
             expect_to_fail = idx in failing_indexes
@@ -155,5 +149,4 @@ class TestSolver(unittest.TestCase):
             except Exception as exc:
                 traceback.print_exc()
                 raise exc
-
 
