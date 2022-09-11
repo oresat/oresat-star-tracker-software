@@ -27,7 +27,7 @@ class SolverError(Exception):
 class Solver:
     '''Solve star trackr images'''
 
-    def __init__(self, db_path=None, config_path=None, median_path=None):
+    def __init__(self, db_path=None, config_path=None, median_path=None, blur_kernel_size=None):
         # Prepare constants
         self.P_MATCH_THRESH = 0.99
         self.YEAR = 1991.25
@@ -48,8 +48,8 @@ class Solver:
         beast.load_config(self.config_path)
 
         # Enable blur kernel
-        BLUR_KERNEL_SIZE = 5
-        self.blur_kernel_size = BLUR_KERNEL_SIZE
+        if blur_kernel_size:
+            self.blur_kernel_size = blur_kernel_size
 
         logger.debug(f'__init__:Solver \n Median Path: {self.median_path}\n DB Path:{self.db_path}\n Config Path:{self.config_path}')
 
