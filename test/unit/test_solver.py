@@ -18,7 +18,7 @@ class TestSolver(unittest.TestCase):
         '''
         self.test_data_folder = '/home/debian/oresat-star-tracker-software/misc/test-data'
 
-    def assert_image_matches_solution(self, image_path, y_size, x_size, solution, expect_to_fail=False):
+    def assert_image_matches_solution(self, image_path, solution, expect_to_fail=False):
         img_data = cv2.imread(image_path)
 
         if (not solution) or expect_to_fail:
@@ -60,8 +60,6 @@ class TestSolver(unittest.TestCase):
         paths = [ f'{self.test_data_folder}/exp1000/samples' ]
         duration = -1
 
-        x_size = 1280
-        y_size = 960
 
         # TODO: Find root cause as to why the expected solutions are not being
         #       produced by solver.
@@ -96,14 +94,14 @@ class TestSolver(unittest.TestCase):
             try:
                 start = timer()
                 # Run the solver
-                self.assert_image_matches_solution(image_path, y_size, x_size, solution, expect_to_fail)
+                self.assert_image_matches_solution(image_path,  solution, expect_to_fail)
                 stop = timer()
                 duration = stop - start
-            except exc:
+                self.assertTrue(duration < 5)
+            except Exception as exc:
                 traceback.print_exc()
                 raise exc
 
-            self.assertTrue(duration < 10)
 
     def test_run_2500(self):
         '''
@@ -118,8 +116,6 @@ class TestSolver(unittest.TestCase):
         self._solver.startup()
 
 
-        x_size = 1280
-        y_size = 960
 
         # TODO: Find root cause as to why the expected solutions are not being
         #       produced by solver.
@@ -150,14 +146,14 @@ class TestSolver(unittest.TestCase):
             solution = expected_solutions[idx]
             expect_to_fail = idx in failing_indexes
             try:
-                start = timer()
                 # Run the solver
-                self.assert_image_matches_solution(image_path, y_size, x_size, solution, expect_to_fail)
+                start = timer()
+                self.assert_image_matches_solution(image_path, solution, expect_to_fail)
                 stop = timer()
                 duration = stop - start
-            except exc:
+                self.assertTrue(duration < 5)
+            except Exception as exc:
                 traceback.print_exc()
                 raise exc
 
-            self.assertTrue(duration < 10)
 
