@@ -97,15 +97,23 @@ class Solver:
         if not guid:
             guid = str(uuid.uuid4())
         cv2.imwrite(f'/tmp/solver-original-{guid}.png', orig_img)
+
         # Ensure images are always processed on calibration size.
         orig_img = cv2.resize(orig_img, (beast.cvar.IMG_X, beast.cvar.IMG_Y))
         cv2.imwrite(f'/tmp/solver-resized-{guid}.png', orig_img)
+
+        if self.blur_kernel_size:
+            orig_img = cv2.blur(orig_img,(self.blur_kernel_size, self.blur_kernel_size))
+            cv2.imwrite(f'/tmp/solver-blurred-{guid}.png', orig_img)
+
+
         # Process the image for solving
         logger.info(f"start image pre-processing- {guid}")
         tmp = orig_img.astype(np.int16) - self.MEDIAN_IMAGE
         img = np.clip(tmp, a_min=0, a_max=255).astype(np.uint8)
         img_grey = cv2.cvtColor(img, cv2.COLOR_RGB2GRAY)
         cv2.imwrite(f'/tmp/solver-grey-{guid}.png', img_grey)
+
         return img_grey
 
     def _find_contours(self, img_grey, guid=None):
@@ -143,18 +151,30 @@ class Solver:
                 star_list.append([cx, cy,flux])
         return np.array(star_list)
 
-    def _find_constellation_matches(self, star_list):
-        print("sometthing.")
-
-        # Create and initialize variables
+    def _star_list_to_beast_stars_db(self, star_list):
         img_stars = beast.star_db()
+        image_center = (beast.cvar.IMG_X / 2.0, beast.cvar.IMG_Y / 2.0)
+        number_of_stars = star_list.shape[0]
+
+        for idx in range(number_of_stars):
+            cx, cy, flux = star_list[idx]
+            cx_center, cy_center  = image_center
+            # The center pixel is used as the approximation of the brightest pixel
+            img_stars += beast.star(cx - cx_center, cy - cy_center, flux, -1)
+        return img_stars
+
+    def _find_constellation_matches(self, star_list):
+        '''
+        _find_constellation_matches
+        '''
+        # Create and initialize variables
         match = None
         fov_db = None
 
-        # find the constellation matches
+        img_stars = self._star_list_to_beast_stars_db(star_list)
+        # Find the constellation matches
         img_stars_n_brightest = img_stars.copy_n_brightest(
             beast.cvar.MAX_FALSE_STARS + beast.cvar.REQUIRED_STARS)
-
 
         img_const_n_brightest = beast.constellation_db(img_stars_n_brightest,
                                                        beast.cvar.MAX_FALSE_STARS + 2, 1)
@@ -166,6 +186,7 @@ class Solver:
             x = lis.winner.R11
             y = lis.winner.R21
             z = lis.winner.R31
+
             r = beast.cvar.MAXFOV / 2
             self.SQ_RESULTS.kdsearch(x, y, z, r,
                                      beast.cvar.THRESH_FACTOR * beast.cvar.IMAGE_VARIANCE)
@@ -173,12 +194,15 @@ class Solver:
             # Estimate density for constellation generation
             self.C_DB.results.kdsearch(x, y, z, r,
                                        beast.cvar.THRESH_FACTOR * beast.cvar.IMAGE_VARIANCE)
+
             fov_stars = self.SQ_RESULTS.from_kdresults()
             fov_db = beast.constellation_db(fov_stars, self.C_DB.results.r_size(), 1)
+
             self.C_DB.results.clear_kdresults()
             self.SQ_RESULTS.clear_kdresults()
 
             img_const = beast.constellation_db(img_stars, beast.cvar.MAX_FALSE_STARS + 2, 1)
+
             near = beast.db_match(fov_db, img_const)
 
             if near.p_match > self.P_MATCH_THRESH:
@@ -189,12 +213,13 @@ class Solver:
             dec = match.winner.get_dec()
             ra = match.winner.get_ra()
             ori = match.winner.get_ori()
+            return dec, ra, ori
         else:
             logger.info("Unable to find orientation for image!")
             raise SolverError('Solution failed for image')
 
+        return dec, ra, ori
 
-        pass
 
     def solve(self, orig_img) -> (float, float, float):
         '''
@@ -279,10 +304,8 @@ class Solver:
         img_stars_n_brightest = img_stars.copy_n_brightest(
             beast.cvar.MAX_FALSE_STARS + beast.cvar.REQUIRED_STARS)
 
-
         img_const_n_brightest = beast.constellation_db(img_stars_n_brightest,
                                                        beast.cvar.MAX_FALSE_STARS + 2, 1)
-
 
         lis = beast.db_match(self.C_DB, img_const_n_brightest)
 
