@@ -10,8 +10,6 @@ from timeit import default_timer as timer
 
 from oresat_star_tracker.solver import Solver, SolverError
 
-from .utils import  read_preprocess_image
-
 class TestSolver(unittest.TestCase):
 
     def setUp(self):
