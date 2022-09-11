@@ -43,9 +43,11 @@ class TestContours(unittest.TestCase):
             f'{self.test_data_folder}/exp1000/samples/7.bmp',
             f'{self.test_data_folder}/exp1000/samples/8.bmp'
         ]
+
         expected_star_counts = [
             41, 36, 34, 44, 77, 46, 44, 48
         ]
+
         for idx, image_path in enumerate(image_paths):
             img_data = cv2.imread(image_path)
             img_grey  = self._solver._preprocess_img(img_data)
@@ -62,7 +64,6 @@ class TestContours(unittest.TestCase):
             for idx in range(star_list.shape[0]):
                 star = star_list[idx]
                 cx, cy, flux = int(star[0]), int(star[1]), int(star[2])
-
                 star_image = cv2.circle(star_image, (cx, cy), radius=int(flux/10), color=(0, 0, 255), thickness=1)
             cv2.imwrite(f'/tmp/solver-stars-{guid}.png', star_image)
 
@@ -93,9 +94,4 @@ class TestContours(unittest.TestCase):
             img_grey  = self._solver._preprocess_img(img_data, guid =guid)
             contours = self._solver._find_contours(img_grey, guid=guid)
             self.assertEqual(expected_num_contours, len(contours))
-
-
-
-
-
 
