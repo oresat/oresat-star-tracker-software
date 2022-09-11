@@ -70,7 +70,6 @@ class TestSolver(unittest.TestCase):
         #
         # dec, ra, ori
 
-
         expected_solutions = [
             [ 74.798045847, 271.257311164, 84.470568   ],
             [ 26.4559966942, 246.783421908, 131.84151  ],
@@ -103,8 +102,9 @@ class TestSolver(unittest.TestCase):
                 self.assert_image_matches_solution(image_path, y_size, x_size, solution, expect_to_fail)
                 stop = timer()
                 duration = stop - start
-            except:
+            except exc:
                 traceback.print_exc()
+                raise exc
 
             self.assertTrue(duration < 10)
 
@@ -158,8 +158,9 @@ class TestSolver(unittest.TestCase):
                 self.assert_image_matches_solution(image_path, y_size, x_size, solution, expect_to_fail)
                 stop = timer()
                 duration = stop - start
-            except:
+            except exc:
                 traceback.print_exc()
+                raise exc
 
             self.assertTrue(duration < 10)
 
