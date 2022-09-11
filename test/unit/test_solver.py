@@ -28,8 +28,9 @@ class TestSolver(unittest.TestCase):
         self._solver.startup()
 
     def assert_image_matches_solution(self, image_path, y_size, x_size, solution, expect_to_fail=False):
+
         img_data = cv2.imread(image_path)
-        img_data = cv2.blur(img_data,(5,5))
+
 
         # img_data = read_preprocess_image(image_path, y_size, x_size)
         if (not solution) or expect_to_fail:
@@ -81,11 +82,6 @@ class TestSolver(unittest.TestCase):
             [ 1.44809534992, 237.50518643, 151.45222   ],
             [ -14.4507215149, 200.764441589, -177.89854]]
 
-        solutions = {
-            f'{self.test_data_folder}/exp1000/samples/1.bmp' : [ 339.28, 327.29, -141.00749 ],
-            f'{self.test_data_folder}/exp1000/samples/8.bmp' : [ 35.0021, 232.023, 92.3595  ],
-        }
-
         image_paths = [
             f'{self.test_data_folder}/exp1000/samples/1.bmp',
             f'{self.test_data_folder}/exp1000/samples/2.bmp',
@@ -97,7 +93,8 @@ class TestSolver(unittest.TestCase):
             f'{self.test_data_folder}/exp1000/samples/8.bmp'
         ]
 
-        failing_indexes = [] #[2, 3, 4]
+        failing_indexes = []
+
         for idx, image_path in enumerate(image_paths):
             #solution = solutions[image_path] if image_path in solutions else None
             solution = expected_solutions[idx]
@@ -109,7 +106,6 @@ class TestSolver(unittest.TestCase):
                 stop = timer()
                 duration = stop - start
             except:
-                print("FAILEDINDEX : ", idx)
                 traceback.print_exc()
             # self.assertTrue(duration < 10)
 

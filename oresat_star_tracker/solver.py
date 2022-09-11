@@ -47,6 +47,10 @@ class Solver:
         # Load configuration
         beast.load_config(self.config_path)
 
+        # Enable blur kernel
+        BLUR_KERNEL_SIZE = 5
+        self.blur_kernel_size = BLUR_KERNEL_SIZE
+
         logger.debug(f'__init__:Solver \n Median Path: {self.median_path}\n DB Path:{self.db_path}\n Config Path:{self.config_path}')
 
 
@@ -163,8 +167,13 @@ class Solver:
         cv2.imwrite(f'/tmp/solver-original-{guid}.png', orig_img)
         # Ensure images are always processed on calibration size.
         orig_img = cv2.resize(orig_img, (beast.cvar.IMG_X, beast.cvar.IMG_Y))
-
         cv2.imwrite(f'/tmp/solver-resized-{guid}.png', orig_img)
+
+        # Ensure blur the image for better solving
+        if self.blur_kernel_size:
+            orig_img = cv2.blur(orig_img,(self.blur_kernel_size, self.blur_kernel_size))
+            cv2.imwrite(f'/tmp/solver-blurred-{guid}.png', orig_img)
+
         # Create and initialize variables
         img_stars = beast.star_db()
         match = None
