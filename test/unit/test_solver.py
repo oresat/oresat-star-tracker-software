@@ -18,17 +18,7 @@ class TestSolver(unittest.TestCase):
         '''
         Create and startup a solver.
         '''
-
         self.test_data_folder = '/home/debian/oresat-star-tracker-software/misc/test-data'
-
-        # config_path = f'{self.test_data_folder}/exp1000/calibration.txt'
-        # median_path = f'{self.test_data_folder}/exp1000/median_image.png'
-        #config_path = f'{self.test_data_folder}/exp2500/calibration.txt'
-        #median_path = f'{self.test_data_folder}/exp2500/median_image.png'
-
-
-        # self._solver = Solver(config_path=config_path, median_path=median_path)
-        # self._solver.startup()
 
     def assert_image_matches_solution(self, image_path, y_size, x_size, solution, expect_to_fail=False):
         img_data = cv2.imread(image_path)
