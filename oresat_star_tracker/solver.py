@@ -215,9 +215,9 @@ class Solver:
                                         cy - beast.cvar.IMG_Y / 2.0,
                                         float(cv2.getRectSubPix(img_grey, (1, 1), (cx, cy))[0, 0]),
                                         -1)
-                logger.info(f'Adding star {i} at cx,cy : ({cx}, {cy})')
-                logger.info(f'Adding star {i} at flux: (float(cv2.getRectSubPix(img_grey, (1, 1), (cx, cy))[0, 0]))')
-                logger.info(f'Adding star {i} at {cx - beast.cvar.IMG_X / 2.0}  , {cy - beast.cvar.IMG_Y / 2.0}, flux: {float(cv2.getRectSubPix(img_grey, (1, 1), (cx, cy))[0, 0])}')
+                # logger.info(f'Adding star {i} at cx,cy : ({cx}, {cy})')
+                # logger.info(f'Adding star {i} at flux: (float(cv2.getRectSubPix(img_grey, (1, 1), (cx, cy))[0, 0]))')
+                # logger.info(f'Adding star {i} at {cx - beast.cvar.IMG_X / 2.0}  , {cy - beast.cvar.IMG_Y / 2.0}, flux: {float(cv2.getRectSubPix(img_grey, (1, 1), (cx, cy))[0, 0])}')
                 i+=1
 
         # We only want to use the brightest MAX_FALSE_STARS + REQUIRED_STARS
