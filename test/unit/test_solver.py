@@ -21,11 +21,14 @@ class TestSolver(unittest.TestCase):
 
         self.test_data_folder = '/home/debian/oresat-star-tracker-software/misc/test-data'
 
-        config_path = f'{self.test_data_folder}/exp1000/calibration.txt'
-        median_path = f'{self.test_data_folder}/exp1000/median_image.png'
+        # config_path = f'{self.test_data_folder}/exp1000/calibration.txt'
+        # median_path = f'{self.test_data_folder}/exp1000/median_image.png'
+        #config_path = f'{self.test_data_folder}/exp2500/calibration.txt'
+        #median_path = f'{self.test_data_folder}/exp2500/median_image.png'
 
-        self._solver = Solver(config_path=config_path, median_path=median_path)
-        self._solver.startup()
+
+        # self._solver = Solver(config_path=config_path, median_path=median_path)
+        # self._solver.startup()
 
     def assert_image_matches_solution(self, image_path, y_size, x_size, solution, expect_to_fail=False):
         img_data = cv2.imread(image_path)
@@ -54,10 +57,17 @@ class TestSolver(unittest.TestCase):
 
             return dec, ra, ori
 
-    def test_run(self):
+    def test_exp1000(self):
         '''
         Test solution of images are solved to close approximate of last known solution.
         '''
+
+        config_path = f'{self.test_data_folder}/exp1000/calibration.txt'
+        median_path = f'{self.test_data_folder}/exp1000/median_image.png'
+
+        self._solver = Solver(config_path=config_path, median_path=median_path, blur_kernel_size=5)
+        self._solver.startup()
+
         exposures = ['exp1000', 'exp2500']
         paths = [ f'{self.test_data_folder}/exp1000/samples' ]
         duration = -1
@@ -69,6 +79,8 @@ class TestSolver(unittest.TestCase):
         #       produced by solver.
         #
         # dec, ra, ori
+
+
         expected_solutions = [
             [ 74.798045847, 271.257311164, 84.470568   ],
             [ 26.4559966942, 246.783421908, 131.84151  ],
@@ -93,7 +105,6 @@ class TestSolver(unittest.TestCase):
         failing_indexes = []
 
         for idx, image_path in enumerate(image_paths):
-            #solution = solutions[image_path] if image_path in solutions else None
             solution = expected_solutions[idx]
             expect_to_fail = idx in failing_indexes
             try:
@@ -104,5 +115,61 @@ class TestSolver(unittest.TestCase):
                 duration = stop - start
             except:
                 traceback.print_exc()
+
+            self.assertTrue(duration < 10)
+
+    def test_run_2500(self):
+        '''
+        Test solution of images are solved to close approximate of last known solution.
+        '''
+        duration = -1
+        config_path = f'{self.test_data_folder}/exp2500/calibration.txt'
+        median_path = f'{self.test_data_folder}/exp2500/median_image.png'
+
+
+        self._solver = Solver(config_path=config_path, median_path=median_path, blur_kernel_size=10)
+        self._solver.startup()
+
+
+        x_size = 1280
+        y_size = 960
+
+        # TODO: Find root cause as to why the expected solutions are not being
+        #       produced by solver.
+        #
+        # dec, ra, ori
+        expected_solutions = [
+            [ 72.8920685767, 262.419524915, -102.963 ],
+            [ 44.7749205456, 247.450049403, -69.678617],
+            [ 17.8821827493, 238.612030831, -35.154497],
+            [ 32.8398399237, 166.294216383, 53.720769],
+            [-7.28448172686, 202.785409144, 2.7043533],
+            [ 6.68097353669, 225.179744445, -18.913663],
+            [ 13.5862063459, 223.278502629, -19.569697]]
+
+        image_paths = [
+            f'{self.test_data_folder}/exp2500/samples/1.bmp',
+            f'{self.test_data_folder}/exp2500/samples/2.bmp',
+            f'{self.test_data_folder}/exp2500/samples/3.bmp',
+            f'{self.test_data_folder}/exp2500/samples/4.bmp',
+            f'{self.test_data_folder}/exp2500/samples/5.bmp',
+            f'{self.test_data_folder}/exp2500/samples/6.bmp',
+            f'{self.test_data_folder}/exp2500/samples/7.bmp',
+        ]
+
+        failing_indexes = []
+
+        for idx, image_path in enumerate(image_paths):
+            solution = expected_solutions[idx]
+            expect_to_fail = idx in failing_indexes
+            try:
+                start = timer()
+                # Run the solver
+                self.assert_image_matches_solution(image_path, y_size, x_size, solution, expect_to_fail)
+                stop = timer()
+                duration = stop - start
+            except:
+                traceback.print_exc()
+
             self.assertTrue(duration < 10)
 
