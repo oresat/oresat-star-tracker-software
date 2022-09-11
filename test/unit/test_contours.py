@@ -11,14 +11,13 @@ from timeit import default_timer as timer
 
 from oresat_star_tracker.solver import Solver, SolverError
 
-from .utils import  read_preprocess_image
 
 class TestContours(unittest.TestCase):
+
     def setUp(self):
         '''
         Create and startup a solver.
         '''
-
         self.test_data_folder = '/home/debian/oresat-star-tracker-software/misc/test-data'
 
         config_path = f'{self.test_data_folder}/exp1000/calibration.txt'
@@ -52,7 +51,7 @@ class TestContours(unittest.TestCase):
             img_data = cv2.imread(image_path)
             img_grey  = self._solver._preprocess_img(img_data)
             contours = self._solver._find_contours(img_grey, guid=guid)
-            # overlay countours on original image.
+            # Overlay countours on original image.
             contours_img = cv2.drawContours(img_data, contours, -1, (0,255,0), 1)
             cv2.imwrite(f'/tmp/solver-countours-{guid}.png', contours_img)
 
@@ -72,6 +71,7 @@ class TestContours(unittest.TestCase):
         Given a starfiled test that the number of countours
         for the image match the number of stars in the image.
         '''
+
         image_paths = [
             f'{self.test_data_folder}/exp1000/samples/1.bmp',
             f'{self.test_data_folder}/exp1000/samples/2.bmp',
