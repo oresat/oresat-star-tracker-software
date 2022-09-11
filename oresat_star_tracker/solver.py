@@ -163,31 +163,13 @@ class Solver:
             img_stars += beast.star(cx - cx_center, cy - cy_center, flux, -1)
         return img_stars
 
-    def _find_constellation_matches(self, star_list):
-        '''
-        _find_constellation_matches
-        '''
-        # Create and initialize variables
-        match = None
-        fov_db = None
-
-        img_stars = self._star_list_to_beast_stars_db(star_list)
-        # Find the constellation matches
-        img_stars_n_brightest = img_stars.copy_n_brightest(
-            beast.cvar.MAX_FALSE_STARS + beast.cvar.REQUIRED_STARS)
-
-        img_const_n_brightest = beast.constellation_db(img_stars_n_brightest,
-                                                       beast.cvar.MAX_FALSE_STARS + 2, 1)
-
-        lis = beast.db_match(self.C_DB, img_const_n_brightest)
-
-        # Generate the match
-        if lis.p_match > self.P_MATCH_THRESH and lis.winner.size() >= beast.cvar.REQUIRED_STARS:
+    def _generate_match(self, lis, img_stars):
             x = lis.winner.R11
             y = lis.winner.R21
             z = lis.winner.R31
 
             r = beast.cvar.MAXFOV / 2
+
             self.SQ_RESULTS.kdsearch(x, y, z, r,
                                      beast.cvar.THRESH_FACTOR * beast.cvar.IMAGE_VARIANCE)
 
@@ -203,10 +185,36 @@ class Solver:
 
             img_const = beast.constellation_db(img_stars, beast.cvar.MAX_FALSE_STARS + 2, 1)
 
-            near = beast.db_match(fov_db, img_const)
+            nearest_match = beast.db_match(fov_db, img_const)
 
-            if near.p_match > self.P_MATCH_THRESH:
-                match = near
+            if nearest_match.p_match > self.P_MATCH_THRESH:
+                return nearest_match
+
+            return None
+
+
+    def _find_constellation_matches(self, star_list):
+        '''
+        _find_constellation_matches
+        '''
+        # Create and initialize variables
+        match = None
+        fov_db = None
+
+        img_stars = self._star_list_to_beast_stars_db(star_list)
+
+        # Find the constellation matches
+        img_stars_n_brightest = img_stars.copy_n_brightest(
+            beast.cvar.MAX_FALSE_STARS + beast.cvar.REQUIRED_STARS)
+
+        img_const_n_brightest = beast.constellation_db(img_stars_n_brightest,
+                                                       beast.cvar.MAX_FALSE_STARS + 2, 1)
+
+        lis = beast.db_match(self.C_DB, img_const_n_brightest)
+
+        # Generate the match
+        if lis.p_match > self.P_MATCH_THRESH and lis.winner.size() >= beast.cvar.REQUIRED_STARS:
+            match = self._generate_match(lis, img_stars)
 
         if match is not None:
             match.winner.calc_ori()
