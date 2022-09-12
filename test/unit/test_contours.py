@@ -4,10 +4,13 @@ import os
 import io
 import traceback
 import uuid
+import time
 
 import cv2
 import numpy as np
 from timeit import default_timer as timer
+
+from olaf import scet_int_from_time
 
 from oresat_star_tracker.solver import Solver, SolverError
 
@@ -45,7 +48,7 @@ class TestContours(unittest.TestCase):
 
         find_matches:
         '''
-        guid = str(uuid.uuid4())
+        trace_id = scet_int_from_time(time.time()) # Record the timestamp
 
         solver = Solver(config_path=self.config_path, median_path=self.median_path, blur_kernel_size=5)
 
@@ -71,7 +74,6 @@ class TestContours(unittest.TestCase):
             f'{self.test_data_folder}/exp1000/samples/8.bmp'
         ]
 
-
         # initialized the db
         solver.startup()
 
@@ -81,11 +83,7 @@ class TestContours(unittest.TestCase):
             img_grey  = solver._preprocess_img(img_data)
 
             # find the countours
-            contours = solver._find_contours(img_grey, guid=guid)
-
-            # Overlay countours on original image.  # find countours of the image.
-            contours_img = cv2.drawContours(img_data, contours, -1, (0,255,0), 1)
-            cv2.imwrite(f'/tmp/solver-countours-{guid}.png', contours_img)
+            contours = solver._find_contours(img_grey, trace_id=trace_id)
 
             # Create star list.
             star_list = solver._find_stars(img_grey, contours)
@@ -100,9 +98,9 @@ class TestContours(unittest.TestCase):
         """
         Find and mark the stars with a circle. Not all stars are marked.
         """
-        guid = str(uuid.uuid4())
+        trace_id = scet_int_from_time(time.time()) # Record the timestamp
 
-        solver = Solver(config_path=self.config_path, median_path=self.median_path)
+        solver = Solver(config_path=self.config_path, median_path=self.median_path, trace_intermediate_images=False)
 
         image_paths = [
             f'{self.test_data_folder}/exp1000/samples/1.bmp',
@@ -122,11 +120,9 @@ class TestContours(unittest.TestCase):
         for idx, image_path in enumerate(image_paths):
             img_data = cv2.imread(image_path)
             img_grey  = solver._preprocess_img(img_data)
-            contours = solver._find_contours(img_grey, guid=guid)
+            img_height, img_width  = img_grey.shape
+            contours = solver._find_contours(img_grey, trace_id=trace_id)
 
-            # Overlay countours on original image.
-            contours_img = cv2.drawContours(img_data, contours, -1, (0,255,0), 1)
-            cv2.imwrite(f'/tmp/solver-countours-{guid}.png', contours_img)
 
             star_list = solver._find_stars(img_grey, contours)
             num_stars = star_list.shape[0]
@@ -136,8 +132,9 @@ class TestContours(unittest.TestCase):
             for idx in range(star_list.shape[0]):
                 star = star_list[idx]
                 cx, cy, flux = int(star[0]), int(star[1]), int(star[2])
-                star_image = cv2.circle(star_image, (cx, cy), radius=int(flux/10), color=(0, 0, 255), thickness=1)
-            cv2.imwrite(f'/tmp/solver-stars-{guid}.png', star_image)
+                self.assertTrue(0<= cx < img_width)
+                self.assertTrue(0<= cy < img_height)
+                # star_image = cv2.circle(star_image, (cx, cy), radius=int(flux/10), color=(0, 0, 255), thickness=1)
 
     def test_find_contours(self):
         '''
@@ -163,10 +160,10 @@ class TestContours(unittest.TestCase):
         ]
 
         for idx, image_path in enumerate(image_paths):
-            guid = str(uuid.uuid4())
+            trace_id = scet_int_from_time(time.time()) # Record the timestamp
             expected_num_contours = expected_contours[idx]
             img_data = cv2.imread(image_path)
-            img_grey  = solver._preprocess_img(img_data, guid =guid)
-            contours = solver._find_contours(img_grey, guid=guid)
+            img_grey  = solver._preprocess_img(img_data, trace_id =trace_id)
+            contours = solver._find_contours(img_grey, trace_id=trace_id)
             self.assertEqual(expected_num_contours, len(contours))
 

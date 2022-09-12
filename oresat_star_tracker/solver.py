@@ -15,7 +15,7 @@ from os.path import abspath, dirname
 import numpy as np
 import cv2
 
-from olaf import logger
+from olaf import logger, scet_int_from_time
 
 from .beast import beast
 
@@ -27,7 +27,13 @@ class SolverError(Exception):
 class Solver:
     '''Solve star trackr images'''
 
-    def __init__(self, db_path=None, config_path=None, median_path=None, blur_kernel_size=None):
+    def __init__(self,
+            db_path=None,
+            config_path=None,
+            median_path=None,
+            blur_kernel_size=None,
+            trace_intermediate_images=False):
+
         # Prepare constants
         self.P_MATCH_THRESH = 0.99
         self.YEAR = 1991.25
@@ -50,6 +56,9 @@ class Solver:
 
         # Enable blur kernel
         self.blur_kernel_size = blur_kernel_size if blur_kernel_size else None
+
+        # Enable tracing intermediate processing steps for debugging.
+        self.trace_intermediate_images = trace_intermediate_images if trace_intermediate_images else None
 
         logger.debug(f'__init__:Solver \n Median Path: {self.median_path}\n DB Path:{self.db_path}\n Config Path:{self.config_path}')
 
@@ -93,7 +102,7 @@ class Solver:
             raise SolverError(f'Startup sequence failed with {exc}')
 
 
-    def _preprocess_img(self, orig_img, guid=None):
+    def _preprocess_img(self, orig_img, trace_id=None):
         '''
         Preprocess an input image, resize it to expected size, blur it if required,
         subtract a calibrated median image, finally convert it to
@@ -103,30 +112,35 @@ class Solver:
         ------
         Grey scale image of dimensions IMG_X x IMG_Y
         '''
-        if not guid:
-            guid = str(uuid.uuid4())
-        #cv2.imwrite(f'/tmp/solver-original-{guid}.png', orig_img)
+
+        if self.trace_intermediate_images:
+            cv2.imwrite(f'/tmp/solver-original-{trace_id}.png', orig_img)
 
         # Ensure images are always processed on calibration size.
         orig_img = cv2.resize(orig_img, (beast.cvar.IMG_X, beast.cvar.IMG_Y))
-        # cv2.imwrite(f'/tmp/solver-resized-{guid}.png', orig_img)
+
+        if self.trace_intermediate_images:
+            cv2.imwrite(f'/tmp/solver-resized-{trace_id}.png', orig_img)
 
         # Blur the image if a blur is specified.
         if self.blur_kernel_size:
             orig_img = cv2.blur(orig_img,(self.blur_kernel_size, self.blur_kernel_size))
-            # cv2.imwrite(f'/tmp/solver-blurred-{guid}.png', orig_img)
+            if self.trace_intermediate_images:
+                cv2.imwrite(f'/tmp/solver-blurred-{trace_id}.png', orig_img)
 
 
         # Process the image for solving
-        logger.info(f"start image pre-processing- {guid}")
+        logger.info(f"start image pre-processing-{trace_id}")
         tmp = orig_img.astype(np.int16) - self.MEDIAN_IMAGE
         img = np.clip(tmp, a_min=0, a_max=255).astype(np.uint8)
         img_grey = cv2.cvtColor(img, cv2.COLOR_RGB2GRAY)
-        #cv2.imwrite(f'/tmp/solver-grey-{guid}.png', img_grey)
+
+        if self.trace_intermediate_images:
+            cv2.imwrite(f'/tmp/solver-grey-{trace_id}.png', img_grey)
 
         return img_grey
 
-    def _find_contours(self, img_grey, guid=None):
+    def _find_contours(self, img_grey, trace_id=None):
         '''
         Find the contors of the possible stars in the thresholded binary image. The
         thresholding limit depends on configured IMAGE_VARIANCE and THRESH_FACTOR.
@@ -135,26 +149,29 @@ class Solver:
         ------
         List of contours for points which could be stars and meet our brightness threshold.
         '''
-        if not guid: guid = str(uuid.uuid4())
         logger.info(f'entry: solve():{beast.cvar.IMG_X}, {beast.cvar.IMG_Y}')
 
         # Remove areas of the image that don't meet our brightness threshold and then extract
         # contours
         ret, thresh = cv2.threshold(img_grey, beast.cvar.THRESH_FACTOR * beast.cvar.IMAGE_VARIANCE,
                                     255, cv2.THRESH_BINARY)
-        # cv2.imwrite(f'/tmp/solver-thresh-{guid}.png', thresh)
+
+        if self.trace_intermediate_images:
+            cv2.imwrite(f'/tmp/solver-thresh-{trace_id}.png', thresh)
         logger.info("finished image pre-processing")
 
         contours, _ = cv2.findContours(thresh, cv2.RETR_EXTERNAL, cv2.CHAIN_APPROX_SIMPLE)
 
-        # contours_img = cv2.drawContours(img_grey, contours, -1, (0,255,0), 1)
-        # cv2.imwrite(f'/tmp/solver-countours-{guid}.png', contours_img)
-        logger.info(f"Number of  countours: {len(contours)}")
+        if self.trace_intermediate_images:
+            contours_img = cv2.drawContours(img_grey, contours, -1, (0,255,0), 1)
+            cv2.imwrite(f'/tmp/solver-contours-{trace_id}.png', contours_img)
+
+        logger.info(f"Number of  contours: {len(contours)}")
         return contours
 
     def _find_stars(self, img_grey, contours):
         '''
-        Convert the countour list into an array of stars with corresponding
+        Convert the contour list into an array of stars with corresponding
         x,y positions of the stars and flux value for brightness of the star
         from the grey scale image generated.
 
@@ -310,13 +327,14 @@ class Solver:
         SolverError
             No matches found.
         '''
-        guid = str(uuid.uuid4())
+
+        correlation_timestamp = scet_int_from_time(time.time()) # Record the timestamp
 
         # Preprocess the image for solving
-        img_grey  = self._preprocess_img(orig_img, guid=guid)
+        img_grey  = self._preprocess_img(orig_img, trace_id=correlation_timestamp)
 
-        # Find the countours of the stars from binary image.
-        contours = self._find_contours(img_grey, guid=guid)
+        # Find the contours of the stars from binary image.
+        contours = self._find_contours(img_grey, trace_id=correlation_timestamp)
 
         # Find most promising star coordinates to search with
         # from brightness contours.
