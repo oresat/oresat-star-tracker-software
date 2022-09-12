@@ -114,7 +114,6 @@ class StarTrackerResource(Resource):
             logger.info('_capture: wrote to file:' + name)
             # add capture to fread cache
             self.fread_cache.add(name, consume=True)
-
         except CameraError as exc:
             logger.critial(exc)
             self._state = State.HW_ERROR
