@@ -19,10 +19,8 @@ class TestContours(unittest.TestCase):
         '''
         self.test_data_folder = '/home/debian/oresat-star-tracker-software/misc/test-data'
 
-        config_path = f'{self.test_data_folder}/exp1000/calibration.txt'
-        median_path = f'{self.test_data_folder}/exp1000/median_image.png'
-
-        self._solver = Solver(config_path=config_path, median_path=median_path, blur_kernel_size=5)
+        self.config_path = f'{self.test_data_folder}/exp1000/calibration.txt'
+        self.median_path = f'{self.test_data_folder}/exp1000/median_image.png'
 
 
     def assert_is_valid_solution(self, solution, expected_solution):
@@ -42,12 +40,14 @@ class TestContours(unittest.TestCase):
         self.assertTrue(np.isclose(ori, expected_ori, rtol=1e-01, atol=1e-01), f'ori {ori} expected:{expected_ori} is not close')
 
 
-    def test_find_matches(self):
+    def _test_find_matches(self):
         '''
 
         find_matches:
         '''
         guid = str(uuid.uuid4())
+
+        solver = Solver(config_path=self.config_path, median_path=self.median_path, blur_kernel_size=5)
 
         expected_solutions = [
             [ 74.798045847, 271.257311164, 84.470568   ],
@@ -73,34 +73,36 @@ class TestContours(unittest.TestCase):
 
 
         # initialized the db
-        self._solver.startup()
+        solver.startup()
 
         for idx, image_path in enumerate(image_paths):
             img_data = cv2.imread(image_path)
 
-            img_grey  = self._solver._preprocess_img(img_data)
+            img_grey  = solver._preprocess_img(img_data)
 
             # find the countours
-            contours = self._solver._find_contours(img_grey, guid=guid)
+            contours = solver._find_contours(img_grey, guid=guid)
 
             # Overlay countours on original image.  # find countours of the image.
             contours_img = cv2.drawContours(img_data, contours, -1, (0,255,0), 1)
             cv2.imwrite(f'/tmp/solver-countours-{guid}.png', contours_img)
 
             # Create star list.
-            star_list = self._solver._find_stars(img_grey, contours, guid)
+            star_list = solver._find_stars(img_grey, contours)
 
             # Find constellation
-            solution  = self._solver._solve_orientation(star_list)
+            solution  = solver._solve_orientation(star_list)
 
             # esnure it is within expected solutions
             self.assert_is_valid_solution(solution, expected_solutions[idx])
 
-    def _test_find_stars(self):
+    def test_find_stars(self):
         """
         Find and mark the stars with a circle. Not all stars are marked.
         """
         guid = str(uuid.uuid4())
+
+        solver = Solver(config_path=self.config_path, median_path=self.median_path)
 
         image_paths = [
             f'{self.test_data_folder}/exp1000/samples/1.bmp',
@@ -119,14 +121,14 @@ class TestContours(unittest.TestCase):
 
         for idx, image_path in enumerate(image_paths):
             img_data = cv2.imread(image_path)
-            img_grey  = self._solver._preprocess_img(img_data)
-            contours = self._solver._find_contours(img_grey, guid=guid)
+            img_grey  = solver._preprocess_img(img_data)
+            contours = solver._find_contours(img_grey, guid=guid)
 
             # Overlay countours on original image.
             contours_img = cv2.drawContours(img_data, contours, -1, (0,255,0), 1)
             cv2.imwrite(f'/tmp/solver-countours-{guid}.png', contours_img)
 
-            star_list = self._solver._find_stars(img_grey, contours, guid)
+            star_list = solver._find_stars(img_grey, contours)
             num_stars = star_list.shape[0]
             star_image = img_data
             self.assertEqual(num_stars, expected_star_counts[idx])
@@ -137,11 +139,14 @@ class TestContours(unittest.TestCase):
                 star_image = cv2.circle(star_image, (cx, cy), radius=int(flux/10), color=(0, 0, 255), thickness=1)
             cv2.imwrite(f'/tmp/solver-stars-{guid}.png', star_image)
 
-    def _test_find_contours(self):
+    def test_find_contours(self):
         '''
         Given a starfiled test that the number of countours
         for the image match the number of stars in the image.
         '''
+        solver = Solver(config_path=self.config_path, median_path=self.median_path)
+
+
         image_paths = [
             f'{self.test_data_folder}/exp1000/samples/1.bmp',
             f'{self.test_data_folder}/exp1000/samples/2.bmp',
@@ -161,7 +166,7 @@ class TestContours(unittest.TestCase):
             guid = str(uuid.uuid4())
             expected_num_contours = expected_contours[idx]
             img_data = cv2.imread(image_path)
-            img_grey  = self._solver._preprocess_img(img_data, guid =guid)
-            contours = self._solver._find_contours(img_grey, guid=guid)
+            img_grey  = solver._preprocess_img(img_data, guid =guid)
+            contours = solver._find_contours(img_grey, guid=guid)
             self.assertEqual(expected_num_contours, len(contours))
 
