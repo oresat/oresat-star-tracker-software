@@ -318,11 +318,11 @@ class Solver:
         # Find the countours of the stars from binary image.
         contours = self._find_contours(img_grey, guid=guid)
 
-        # Find most promising stars to search with.
+        # Find most promising star coordinates to search with
+        # from brightness contours.
         star_list = self._find_stars(img_grey, contours)
 
         # Find orientation using given stars.
         orientation  = self._solve_orientation(star_list)
 
         return orientation
-
