@@ -99,7 +99,7 @@ class StarTrackerResource(Resource):
         self._solver.startup()  # DB takes awhile to initialize
         self._state = State.STANDBY
 
-    def _capture(self):
+    def _capture(self, solve=False):
         logger.info('entry: capture')
         try:
             data = self._camera.capture()
@@ -114,6 +114,25 @@ class StarTrackerResource(Resource):
             logger.info('_capture: wrote to file:' + name)
             # add capture to fread cache
             self.fread_cache.add(name, consume=True)
+
+            if solve:
+                scet = scet_int_from_time(time()) # Record the timestamp
+                # Solver takes a single shot image and returns an orientation
+                logger.info('start solving')
+                dec, ra, ori = self._solver.solve(data) # run the solver
+                logger.info(f'finished solving: ra:{ra}, dec:{dec}, ori:{ori}')
+
+                self.right_angle_obj.value = int(ra)
+                self.declination_obj.value = int(dec)
+                self.orientation_obj.value = int(ori)
+
+                self.time_stamp_obj.value = scet
+
+                # The tpdo will be sent out by the application
+                self.send_tpdo(2)
+                self.send_tpdo(3)
+
+
         except CameraError as exc:
             logger.critial(exc)
             self._state = State.HW_ERROR
