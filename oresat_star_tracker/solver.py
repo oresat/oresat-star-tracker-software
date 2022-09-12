@@ -96,7 +96,7 @@ class Solver:
     def _preprocess_img(self, orig_img, guid=None):
         '''
         Preprocess an input image, resize it to expected size, blur it if required,
-        subtract a calibrated median image, convert it to
+        subtract a calibrated median image, finally convert it to
         a grey scale image of expected dimensions.
 
         Return
@@ -128,6 +128,12 @@ class Solver:
 
     def _find_contours(self, img_grey, guid=None):
         '''
+        Find the contors of the possible stars in the thresholded binary image. The
+        thresholding limit depends on configured IMAGE_VARIANCE and THRESH_FACTOR.
+
+        Return
+        ------
+        List of contours for points which could be stars and meet our brightness threshold.
         '''
         if not guid: guid = str(uuid.uuid4())
         logger.info(f'entry: solve():{beast.cvar.IMG_X}, {beast.cvar.IMG_Y}')
@@ -144,11 +150,20 @@ class Solver:
         # contours_img = cv2.drawContours(img_grey, contours, -1, (0,255,0), 1)
         # cv2.imwrite(f'/tmp/solver-countours-{guid}.png', contours_img)
         logger.info(f"Number of  countours: {len(contours)}")
-
         return contours
 
     def _find_stars(self, img_grey, contours):
         '''
+        Convert the countour list into an array of stars with corresponding
+        x,y positions of the stars and flux value for brightness of the star
+        from the grey scale image generated.
+
+        Return
+        ------
+        np.array of shape (num_stars, 3) : [x, y, flux]
+            x - position of the star in image coordinates.
+            y - position of the star in image coordinates.
+            flux - luminosity of the star as it appears in grey scale image.
         '''
         star_list = []
         for c in contours:
@@ -164,6 +179,14 @@ class Solver:
         return np.array(star_list)
 
     def _star_list_to_beast_stars_db(self, star_list):
+        '''
+        Convert list of stars to beast internal representation of stars. Star image
+        coordinates are translated to be relative to the center pixel of the image.
+
+        Return
+        ------
+        Returns beast star list.
+        '''
         img_stars = beast.star_db()
         image_center = (beast.cvar.IMG_X / 2.0, beast.cvar.IMG_Y / 2.0)
         number_of_stars = star_list.shape[0]
@@ -178,6 +201,10 @@ class Solver:
     def _generate_match(self, lis, img_stars):
         '''
         Returns the nearest match from the result of a db_match.
+
+        Return
+        ------
+        match
         '''
         x = lis.winner.R11
         y = lis.winner.R21
@@ -209,13 +236,17 @@ class Solver:
 
     def _extract_match_orientation(self, match):
         '''
+        Calculate and extract the oreintation from the top match after
+        star database search.
+
         Return
         ------
         float, float, float
             dec - rotation about the y-axis,
             ra  - rotation about the z-axis,
             ori - rotation about the camera axis
-
+        None
+            match was invalid.
         '''
         if match is None:
             return None
@@ -228,7 +259,17 @@ class Solver:
 
     def _solve_orientation(self, star_list):
         '''
-        _solve_orientation
+        Given a list of star positions with brightness values find the
+        estimated orientation by search the star database.
+
+        Return
+        ------
+        float, float, float
+            dec - rotation about the y-axis,
+            ra  - rotation about the z-axis,
+            ori - rotation about the camera axis
+        None
+            match was invalid.
         '''
         img_stars = self._star_list_to_beast_stars_db(star_list)
 
