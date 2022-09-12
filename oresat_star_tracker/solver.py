@@ -41,6 +41,7 @@ class Solver:
         self.median_path = median_path if median_path else f'{self.data_dir}/median-image.png'
         self.config_path = config_path if config_path else f'{self.data_dir}/configuration.txt'
         self.db_path = db_path if db_path else f'{self.data_dir}/hipparcos.dat'
+
         # Load median image
         self.MEDIAN_IMAGE = cv2.imread(self.median_path)
 
@@ -48,8 +49,7 @@ class Solver:
         beast.load_config(self.config_path)
 
         # Enable blur kernel
-        if blur_kernel_size:
-            self.blur_kernel_size = blur_kernel_size
+        self.blur_kernel_size = blur_kernel_size if blur_kernel_size else None
 
         logger.debug(f'__init__:Solver \n Median Path: {self.median_path}\n DB Path:{self.db_path}\n Config Path:{self.config_path}')
 
@@ -94,18 +94,27 @@ class Solver:
 
 
     def _preprocess_img(self, orig_img, guid=None):
+        '''
+        Preprocess an input image, resize it to expected size, blur it if required,
+        subtract a calibrated median image, convert it to
+        a grey scale image of expected dimensions.
+
+        Return
+        ------
+        Grey scale image of dimensions IMG_X x IMG_Y
+        '''
         if not guid:
             guid = str(uuid.uuid4())
-        cv2.imwrite(f'/tmp/solver-original-{guid}.png', orig_img)
+        #cv2.imwrite(f'/tmp/solver-original-{guid}.png', orig_img)
 
         # Ensure images are always processed on calibration size.
         orig_img = cv2.resize(orig_img, (beast.cvar.IMG_X, beast.cvar.IMG_Y))
-        cv2.imwrite(f'/tmp/solver-resized-{guid}.png', orig_img)
+        # cv2.imwrite(f'/tmp/solver-resized-{guid}.png', orig_img)
 
         # Blur the image if a blur is specified.
         if self.blur_kernel_size:
             orig_img = cv2.blur(orig_img,(self.blur_kernel_size, self.blur_kernel_size))
-            cv2.imwrite(f'/tmp/solver-blurred-{guid}.png', orig_img)
+            # cv2.imwrite(f'/tmp/solver-blurred-{guid}.png', orig_img)
 
 
         # Process the image for solving
@@ -113,11 +122,13 @@ class Solver:
         tmp = orig_img.astype(np.int16) - self.MEDIAN_IMAGE
         img = np.clip(tmp, a_min=0, a_max=255).astype(np.uint8)
         img_grey = cv2.cvtColor(img, cv2.COLOR_RGB2GRAY)
-        cv2.imwrite(f'/tmp/solver-grey-{guid}.png', img_grey)
+        #cv2.imwrite(f'/tmp/solver-grey-{guid}.png', img_grey)
 
         return img_grey
 
     def _find_contours(self, img_grey, guid=None):
+        '''
+        '''
         if not guid: guid = str(uuid.uuid4())
         logger.info(f'entry: solve():{beast.cvar.IMG_X}, {beast.cvar.IMG_Y}')
 
@@ -125,7 +136,7 @@ class Solver:
         # contours
         ret, thresh = cv2.threshold(img_grey, beast.cvar.THRESH_FACTOR * beast.cvar.IMAGE_VARIANCE,
                                     255, cv2.THRESH_BINARY)
-        cv2.imwrite(f'/tmp/solver-thresh-{guid}.png', thresh)
+        # cv2.imwrite(f'/tmp/solver-thresh-{guid}.png', thresh)
         logger.info("finished image pre-processing")
 
         contours, _ = cv2.findContours(thresh, cv2.RETR_EXTERNAL, cv2.CHAIN_APPROX_SIMPLE)
@@ -136,9 +147,9 @@ class Solver:
 
         return contours
 
-    def _find_stars(self, img_grey, contours, guid = None):
-        if not guid:
-            guid = str(uuid.uuid4())
+    def _find_stars(self, img_grey, contours):
+        '''
+        '''
         star_list = []
         for c in contours:
             M = cv2.moments(c)
@@ -165,35 +176,47 @@ class Solver:
         return img_stars
 
     def _generate_match(self, lis, img_stars):
-            x = lis.winner.R11
-            y = lis.winner.R21
-            z = lis.winner.R31
+        '''
+        Returns the nearest match from the result of a db_match.
+        '''
+        x = lis.winner.R11
+        y = lis.winner.R21
+        z = lis.winner.R31
 
-            r = beast.cvar.MAXFOV / 2
+        r = beast.cvar.MAXFOV / 2
 
-            self.SQ_RESULTS.kdsearch(x, y, z, r,
-                                     beast.cvar.THRESH_FACTOR * beast.cvar.IMAGE_VARIANCE)
+        self.SQ_RESULTS.kdsearch(x, y, z, r,
+                                 beast.cvar.THRESH_FACTOR * beast.cvar.IMAGE_VARIANCE)
 
-            # Estimate density for constellation generation
-            self.C_DB.results.kdsearch(x, y, z, r,
-                                       beast.cvar.THRESH_FACTOR * beast.cvar.IMAGE_VARIANCE)
+        # Estimate density for constellation generation
+        self.C_DB.results.kdsearch(x, y, z, r,
+                                   beast.cvar.THRESH_FACTOR * beast.cvar.IMAGE_VARIANCE)
 
-            fov_stars = self.SQ_RESULTS.from_kdresults()
-            fov_db = beast.constellation_db(fov_stars, self.C_DB.results.r_size(), 1)
+        fov_stars = self.SQ_RESULTS.from_kdresults()
+        fov_db = beast.constellation_db(fov_stars, self.C_DB.results.r_size(), 1)
 
-            self.C_DB.results.clear_kdresults()
-            self.SQ_RESULTS.clear_kdresults()
+        self.C_DB.results.clear_kdresults()
+        self.SQ_RESULTS.clear_kdresults()
 
-            img_const = beast.constellation_db(img_stars, beast.cvar.MAX_FALSE_STARS + 2, 1)
+        img_const = beast.constellation_db(img_stars, beast.cvar.MAX_FALSE_STARS + 2, 1)
 
-            nearest_match = beast.db_match(fov_db, img_const)
+        nearest_match = beast.db_match(fov_db, img_const)
 
-            if nearest_match.p_match > self.P_MATCH_THRESH:
-                return nearest_match
-
+        if nearest_match.p_match > self.P_MATCH_THRESH:
+            return nearest_match
+        else:
             return None
 
-    def _extract_orientation(self, match):
+    def _extract_match_orientation(self, match):
+        '''
+        Return
+        ------
+        float, float, float
+            dec - rotation about the y-axis,
+            ra  - rotation about the z-axis,
+            ori - rotation about the camera axis
+
+        '''
         if match is None:
             return None
 
@@ -223,7 +246,7 @@ class Solver:
         if lis.p_match > self.P_MATCH_THRESH and lis.winner.size() >= beast.cvar.REQUIRED_STARS:
             match = self._generate_match(lis, img_stars)
 
-        orientation = self._extract_orientation(match)
+        orientation = self._extract_match_orientation(match)
 
         if orientation is None:
             logger.info("Unable to find orientation for image!")
@@ -255,7 +278,7 @@ class Solver:
         contours = self._find_contours(img_grey, guid=guid)
 
         # Find most promising stars to search with.
-        star_list = self._find_stars(img_grey, contours, guid)
+        star_list = self._find_stars(img_grey, contours)
 
         # Find orientation using given stars.
         orientation  = self._solve_orientation(star_list)
