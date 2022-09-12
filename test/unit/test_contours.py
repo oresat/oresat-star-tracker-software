@@ -91,9 +91,9 @@ class TestContours(unittest.TestCase):
             star_list = self._solver._find_stars(img_grey, contours, guid)
 
             # Find constellation
-            solution  = self._solver._find_constellation_matches(star_list)
+            solution  = self._solver._solve_orientation(star_list)
 
-            # esnure it is withing expected solutions
+            # esnure it is within expected solutions
             self.assert_is_valid_solution(solution, expected_solutions[idx])
 
     def _test_find_stars(self):
