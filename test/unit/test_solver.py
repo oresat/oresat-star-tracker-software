@@ -96,7 +96,7 @@ class TestSolver(unittest.TestCase):
                 self.assert_image_matches_solution(image_path,  solution, expect_to_fail)
                 stop = timer()
                 duration = stop - start
-                self.assertTrue(duration < 5)
+                self.assertTrue(duration < 10)
             except Exception as exc:
                 traceback.print_exc()
                 raise exc
@@ -145,7 +145,7 @@ class TestSolver(unittest.TestCase):
                 self.assert_image_matches_solution(image_path, solution, expect_to_fail)
                 stop = timer()
                 duration = stop - start
-                self.assertTrue(duration < 5)
+                self.assertTrue(duration < 10)
             except Exception as exc:
                 traceback.print_exc()
                 raise exc

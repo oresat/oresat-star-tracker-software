@@ -102,6 +102,7 @@ class Solver:
         orig_img = cv2.resize(orig_img, (beast.cvar.IMG_X, beast.cvar.IMG_Y))
         cv2.imwrite(f'/tmp/solver-resized-{guid}.png', orig_img)
 
+        # Blur the image if a blur is specified.
         if self.blur_kernel_size:
             orig_img = cv2.blur(orig_img,(self.blur_kernel_size, self.blur_kernel_size))
             cv2.imwrite(f'/tmp/solver-blurred-{guid}.png', orig_img)
@@ -192,15 +193,20 @@ class Solver:
 
             return None
 
+    def _extract_orientation(self, match):
+        if match is None:
+            return None
 
-    def _find_constellation_matches(self, star_list):
-        '''
-        _find_constellation_matches
-        '''
-        # Create and initialize variables
-        match = None
-        fov_db = None
+        match.winner.calc_ori()
+        dec = match.winner.get_dec()
+        ra = match.winner.get_ra()
+        ori = match.winner.get_ori()
+        return dec, ra, ori
 
+    def _solve_orientation(self, star_list):
+        '''
+        _solve_orientation
+        '''
         img_stars = self._star_list_to_beast_stars_db(star_list)
 
         # Find the constellation matches
@@ -213,20 +219,17 @@ class Solver:
         lis = beast.db_match(self.C_DB, img_const_n_brightest)
 
         # Generate the match
+        match = None
         if lis.p_match > self.P_MATCH_THRESH and lis.winner.size() >= beast.cvar.REQUIRED_STARS:
             match = self._generate_match(lis, img_stars)
 
-        if match is not None:
-            match.winner.calc_ori()
-            dec = match.winner.get_dec()
-            ra = match.winner.get_ra()
-            ori = match.winner.get_ori()
-            return dec, ra, ori
-        else:
+        orientation = self._extract_orientation(match)
+
+        if orientation is None:
             logger.info("Unable to find orientation for image!")
             raise SolverError('Solution failed for image')
 
-        return dec, ra, ori
+        return orientation
 
 
     def solve(self, orig_img) -> (float, float, float):
@@ -241,114 +244,21 @@ class Solver:
         Raises
         -------
         SolverError
-            start up failed
+            No matches found.
         '''
         guid = str(uuid.uuid4())
-        logger.info(f'entry: solve():{beast.cvar.IMG_X}, {beast.cvar.IMG_Y}')
 
-        cv2.imwrite(f'/tmp/solver-original-{guid}.png', orig_img)
-        # Ensure images are always processed on calibration size.
-        orig_img = cv2.resize(orig_img, (beast.cvar.IMG_X, beast.cvar.IMG_Y))
-        cv2.imwrite(f'/tmp/solver-resized-{guid}.png', orig_img)
+        # Preprocess the image for solving
+        img_grey  = self._preprocess_img(orig_img, guid=guid)
 
-        # Ensure blur the image for better solving
-        if self.blur_kernel_size:
-            orig_img = cv2.blur(orig_img,(self.blur_kernel_size, self.blur_kernel_size))
-            cv2.imwrite(f'/tmp/solver-blurred-{guid}.png', orig_img)
+        # Find the countours of the stars from binary image.
+        contours = self._find_contours(img_grey, guid=guid)
 
-        # Create and initialize variables
-        img_stars = beast.star_db()
-        match = None
-        fov_db = None
+        # Find most promising stars to search with.
+        star_list = self._find_stars(img_grey, contours, guid)
 
-        # Process the image for solving
-        logger.info(f"start image pre-processing- {guid}")
-        tmp = orig_img.astype(np.int16) - self.MEDIAN_IMAGE
-        img = np.clip(tmp, a_min=0, a_max=255).astype(np.uint8)
-        img_grey = cv2.cvtColor(img, cv2.COLOR_RGB2GRAY)
+        # Find orientation using given stars.
+        orientation  = self._solve_orientation(star_list)
 
-        cv2.imwrite(f'/tmp/solver-grey-{guid}.png', img_grey)
+        return orientation
 
-        # Remove areas of the image that don't meet our
-        # brightness threshold and then extract contours.
-        ret, thresh = cv2.threshold(img_grey, beast.cvar.THRESH_FACTOR * beast.cvar.IMAGE_VARIANCE,
-                                    255, cv2.THRESH_BINARY)
-
-        cv2.imwrite(f'/tmp/solver-thresh-{guid}.png', thresh)
-        logger.info("finished image pre-processing")
-
-        contours, _ = cv2.findContours(thresh, cv2.RETR_EXTERNAL, cv2.CHAIN_APPROX_SIMPLE)
-
-        #cv2.imwrite(f'/tmp/solver-countours-{guid}.png', contours)
-
-        # Process the contours
-        i = 0
-        for c in contours:
-
-            M = cv2.moments(c)
-
-            if M['m00'] > 0:
-
-                # this is how the x and y position are defined by cv2
-                cx = M['m10'] / M['m00']
-                cy = M['m01'] / M['m00']
-
-                # See https://alyssaq.github.io/2015/computing-the-axes-or-orientation-of-a-blob/
-                # for how to convert these into eigenvectors/values
-                u20 = M['m20'] / M['m00'] - cx ** 2
-                u02 = M['m02'] / M['m00'] - cy ** 2
-                u11 = M['m11'] / M['m00'] - cx * cy
-
-                # The center pixel is used as the approximation of the brightest pixel
-                img_stars += beast.star(cx - beast.cvar.IMG_X / 2.0,
-                                        cy - beast.cvar.IMG_Y / 2.0,
-                                        float(cv2.getRectSubPix(img_grey, (1, 1), (cx, cy))[0, 0]),
-                                        -1)
-                i+=1
-
-        # We only want to use the brightest MAX_FALSE_STARS + REQUIRED_STARS
-        logger.info(f'Copying {beast.cvar.MAX_FALSE_STARS + beast.cvar.REQUIRED_STARS} brightest')
-
-        img_stars_n_brightest = img_stars.copy_n_brightest(
-            beast.cvar.MAX_FALSE_STARS + beast.cvar.REQUIRED_STARS)
-
-        img_const_n_brightest = beast.constellation_db(img_stars_n_brightest,
-                                                       beast.cvar.MAX_FALSE_STARS + 2, 1)
-
-        lis = beast.db_match(self.C_DB, img_const_n_brightest)
-
-        # Generate the match
-        if lis.p_match > self.P_MATCH_THRESH and lis.winner.size() >= beast.cvar.REQUIRED_STARS:
-            x = lis.winner.R11
-            y = lis.winner.R21
-            z = lis.winner.R31
-            r = beast.cvar.MAXFOV / 2
-            self.SQ_RESULTS.kdsearch(x, y, z, r,
-                                     beast.cvar.THRESH_FACTOR * beast.cvar.IMAGE_VARIANCE)
-
-            # Estimate density for constellation generation
-            self.C_DB.results.kdsearch(x, y, z, r,
-                                       beast.cvar.THRESH_FACTOR * beast.cvar.IMAGE_VARIANCE)
-            fov_stars = self.SQ_RESULTS.from_kdresults()
-            fov_db = beast.constellation_db(fov_stars, self.C_DB.results.r_size(), 1)
-            self.C_DB.results.clear_kdresults()
-            self.SQ_RESULTS.clear_kdresults()
-
-            img_const = beast.constellation_db(img_stars, beast.cvar.MAX_FALSE_STARS + 2, 1)
-            near = beast.db_match(fov_db, img_const)
-
-            if near.p_match > self.P_MATCH_THRESH:
-                match = near
-
-        if match is not None:
-            match.winner.calc_ori()
-            dec = match.winner.get_dec()
-            ra = match.winner.get_ra()
-            ori = match.winner.get_ori()
-        else:
-            logger.info("Unable to find orientation for image!")
-            raise SolverError('Solution failed for image')
-
-        logger.info(f'exit: solve(): dec:{dec} ra:{ra}, ori:{ori}')
-
-        return dec, ra, ori

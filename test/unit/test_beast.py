@@ -20,7 +20,6 @@ class TestBeast(unittest.TestCase):
         data_dir = dirname(abspath(__file__)) + '/../../oresat_star_tracker/data'
         config_path = f'{data_dir}/configuration.txt'
 
-        ''''''
         db_path = f'{data_dir}/hipparcos.dat'
 
         # Load configuration
