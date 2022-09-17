@@ -16,3 +16,4 @@ fi
 
 cd $top_level
 sudo python3 -m oresat_star_tracker
+
