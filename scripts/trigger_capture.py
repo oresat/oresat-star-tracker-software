@@ -8,7 +8,6 @@ bus_id="vcan0"
 node_id='0x2C'
 capture_idx='0x6002'
 
-
 if __name__ == "__main__":
     parser = argparse.ArgumentParser(description='Trigger a capture command.')
 
@@ -21,6 +20,4 @@ if __name__ == "__main__":
         os.system(f"sudo olaf-sdo-transfer {bus_id} {node_id} 'w' {capture_idx}  0 u8")
 
         if args.sleep:
-            # sleep for sleep
             time.sleep(args.sleep)
-
