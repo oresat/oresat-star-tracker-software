@@ -12,7 +12,7 @@ if __name__ == "__main__":
     parser = argparse.ArgumentParser(description='Trigger a capture command.')
 
     parser.add_argument('-n', '--ntimes', help='Number of captures to trigger.', type=int, default=1)
-    parser.add_argument('-s', '--sleep', help='Number of seconds to sleep between triggers.', type=int, default=None)
+    parser.add_argument('-s', '--sleep',  help='Number of seconds to sleep between triggers.', type=int, default=None)
 
     args = parser.parse_args()
 
@@ -21,4 +21,3 @@ if __name__ == "__main__":
 
         if args.sleep:
             time.sleep(args.sleep)
-

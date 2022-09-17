@@ -112,6 +112,7 @@ class StarTrackerResource(Resource):
             with open(name, "wb") as f:
                 f.write(encoded)
             logger.info('_capture: wrote to file:' + name)
+
             # add capture to fread cache
             self.fread_cache.add(name, consume=True)
 
@@ -146,7 +147,8 @@ class StarTrackerResource(Resource):
 
             # Solver takes a single shot image and returns an orientation
             logger.info('start solving')
-            dec, ra, ori = self._solver.solve(data) # run the solver
+            dec, ra, ori = (8, 8, 8)
+                #self._solver.solve(data) # run the solver
             logger.info(f'finished solving: ra:{ra}, dec:{dec}, ori:{ori}')
 
             self.right_angle_obj.value = int(ra)

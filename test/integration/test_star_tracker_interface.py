@@ -19,13 +19,14 @@ from olaf import Resource, new_oresat_file, scet_int_from_time
 from oresat_star_tracker.star_tracker_resource import State as StarTrackerState
 from oresat_star_tracker.star_tracker_resource import StateCommand
 
-from .star_tracker_client import connect
-from .star_tracker_client import trigger_capture_star_tracker
-from .star_tracker_client import get_star_tracker_state
-from .star_tracker_client import set_star_tracker_state
-from .star_tracker_client import is_valid_star_tracker_state
-from .star_tracker_client import fetch_files_fread
-from .star_tracker_client import read_image_file
+from oresat_star_tracker.client.star_tracker_client import connect
+from oresat_star_tracker.client.star_tracker_client import trigger_capture_star_tracker
+from oresat_star_tracker.client.star_tracker_client import get_star_tracker_state
+from oresat_star_tracker.client.star_tracker_client import set_star_tracker_state
+from oresat_star_tracker.client.star_tracker_client import is_valid_star_tracker_state
+from oresat_star_tracker.client.star_tracker_client import fetch_files_fread
+from oresat_star_tracker.client.star_tracker_client import read_image_file
+
 
 class TestStarTrackerCanInterface(unittest.TestCase):
 
