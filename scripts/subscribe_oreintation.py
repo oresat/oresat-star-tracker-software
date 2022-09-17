@@ -24,7 +24,12 @@ capture_idx='0x6002'
 if __name__ == "__main__":
     parser = argparse.ArgumentParser(description='Listen for Star Tracker Orientations.')
 
+    parser.add_argument('-r', '--record-time', help='Number of seconds to record for', type=int, default=10)
+    parser.add_argument('-o', '--output-file', help='Output file to recored orientations to ', type=str, default="output.txt")
+
     args = parser.parse_args()
+
+    RECORD_TIME = args.record_time
 
     node, network = connect()
     sdo = node.sdo
@@ -40,35 +45,42 @@ if __name__ == "__main__":
     node.tpdo.read()
 
     num_updates_to_check = 100
-    for  _ in range(num_updates_to_check):
-        received_orientation = dict()
-        def orientation_callback(message):
-            for var in message:
-                received_orientation[var.name] = var.raw
 
-        received_timestamp = dict()
-        def timestamp_callback(message):
-            for var in message:
-                received_timestamp[var.name] = var.raw
+    oreintations_received = []
+    def orientation_callback(message):
+        received_message = dict()
+        for var in message:
+            received_message[var.name] = var.raw
+        print('received_masage',received_message )
 
-        # Star Tracker Status:
-        # This is the one which contains star tracker paremeters as tpdo
-        node.tpdo[3].add_callback(orientation_callback)
 
-        # Orientation.Timestamp
-        # This contains timestamp: Orientation.Timestamp
-        # node.tpdo[4].add_callback(timestamp_callback)
+        dec = received_message['Orienation.Declination']
+        ra  = received_message['Orienation.Right Ascension']
+        ori = received_message['Orienation.Roll']
 
-        # Star Tracker Status:
-        # This is the one which contains star tracker paremeters as tpdo
-        node.tpdo[3].add_callback(orientation_callback)
+        oreintations_received.append([dec, ra, ori])
+        print(f'orientation-received: dec:{dec}, ra:{ra}, ori:{ori}')
 
-        # Orientation.Timestamp
-        # This contains timestamp: Orientation.Timestamp
-        node.tpdo[4].add_callback(timestamp_callback)
-        time.sleep(4)
-        print('Waiting for orientation.')
-        print(f'Received Orientation{received_timestamp["Orientation.Timestamp"]}:{received_orientation}'
+    received_timestamps = []
+    def timestamp_callback(message):
+        received_message = dict()
+        for var in message:
+            received_message[var.name] = var.raw
 
+        timestamp = received_message["Orienation.Timestamp"]
+        received_timestamps.append(timestamp)
+        print(f'timestamp: {timestamp}')
+
+    # star-tracker status:
+    # This is the one which contains star tracker paremeters as tpdo
+    node.tpdo[3].add_callback(orientation_callback)
+    node.tpdo[4].add_callback(timestamp_callback)
+
+    print(f'Recording orientations for {RECORD_TIME} seconds.')
+
+    time.sleep(RECORD_TIME)
+
+    print(f'Number of Orientations Received: {len(oreintations_received)}')
+    print(f'Number of Timetamps Received: {len(received_timestamps)}')
+    #foo
     set_star_tracker_state(sdo, StateCommand.STANDBY)
-
