@@ -37,6 +37,7 @@ class StreamHandler(WebSocketHandler):
         self._mock = options.mock
         if not self._mock:
             self.camera = Camera()
+            self.camera.power_on()
 
     def open(self, *args, **kwargs):
         '''New connection'''
