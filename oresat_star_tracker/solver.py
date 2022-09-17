@@ -21,7 +21,7 @@ from .beast import beast
 
 
 class SolverError(Exception):
-    '''An erro has occur for the :py:class:`solver`'''
+    '''An error has occur for the :py:class:`solver`'''
 
 
 class Solver:
@@ -60,7 +60,9 @@ class Solver:
         # Enable tracing intermediate processing steps for debugging.
         self.trace_intermediate_images = trace_intermediate_images if trace_intermediate_images else None
 
-        logger.debug(f'__init__:Solver \n Median Path: {self.median_path}\n DB Path:{self.db_path}\n Config Path:{self.config_path}')
+        logger.debug(f'Median Path: {self.median_path}')
+        logger.debug(f'DB Path:{self.db_path}')
+        logger.debug(f'Config Path:{self.config_path}')
 
 
     def startup(self):
@@ -77,12 +79,6 @@ class Solver:
         data_dir = dirname(abspath(__file__)) + '/data'
 
         try:
-            # Load median image
-            self.MEDIAN_IMAGE = cv2.imread(self.median_path)
-
-            # Load configuration
-            beast.load_config(self.config_path)
-
             # Load star database
             self.S_DB = beast.star_db() # 0 seconds
             self.S_DB.load_catalog(self.db_path, self.YEAR) # 7 seconds
