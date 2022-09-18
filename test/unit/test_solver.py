@@ -90,16 +90,12 @@ class TestSolver(unittest.TestCase):
         for idx, image_path in enumerate(image_paths):
             solution = expected_solutions[idx]
             expect_to_fail = idx in failing_indexes
-            try:
-                start = timer()
-                # Run the solver
-                self.assert_image_matches_solution(image_path,  solution, expect_to_fail)
-                stop = timer()
-                duration = stop - start
-                self.assertTrue(duration < 10)
-            except Exception as exc:
-                traceback.print_exc()
-                raise exc
+            start = timer()
+            # Run the solver
+            self.assert_image_matches_solution(image_path,  solution, expect_to_fail)
+            stop = timer()
+            duration = stop - start
+            self.assertTrue(duration < 10)
 
     def test_run_2500(self):
         '''
@@ -139,14 +135,10 @@ class TestSolver(unittest.TestCase):
         for idx, image_path in enumerate(image_paths):
             solution = expected_solutions[idx]
             expect_to_fail = idx in failing_indexes
-            try:
-                # Run the solver
-                start = timer()
-                self.assert_image_matches_solution(image_path, solution, expect_to_fail)
-                stop = timer()
-                duration = stop - start
-                self.assertTrue(duration < 10)
-            except Exception as exc:
-                traceback.print_exc()
-                raise exc
+            # Run the solver
+            start = timer()
+            self.assert_image_matches_solution(image_path, solution, expect_to_fail)
+            stop = timer()
+            duration = stop - start
+            self.assertTrue(duration < 10)
 
