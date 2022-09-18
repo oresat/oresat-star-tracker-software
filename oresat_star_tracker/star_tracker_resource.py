@@ -27,10 +27,11 @@ class State(IntEnum):
     SW_ERROR = 5
     HW_ERROR = 6
 
+
 class StateCommand(IntEnum):
     STANDBY = 0,
-    STAR_TRACKING=1,
-    CAPTURE=2
+    STAR_TRACKING = 1,
+    CAPTURE = 2
 
     @classmethod
     def command(cls, target_state):
@@ -58,6 +59,7 @@ class StateCommand(IntEnum):
             return State.CAPTURE
         else:
             raise ValueError('No target value: %d' % self)
+
 
 class StarTrackerResource(Resource):
 
@@ -119,12 +121,12 @@ class StarTrackerResource(Resource):
 
     def _star_track(self):
         try:
-            data = self._camera.capture() # Take the image
-            scet = scet_int_from_time(time()) # Record the timestamp
+            data = self._camera.capture()  # Take the image
+            scet = scet_int_from_time(time())  # Record the timestamp
 
             # Solver takes a single shot image and returns an orientation
             logger.info('start solving')
-            dec, ra, ori = self._solver.solve(data) # run the solver
+            dec, ra, ori = self._solver.solve(data)  # run the solver
             logger.info(f'finished solving: ra:{ra}, dec:{dec}, ori:{ori}')
 
             self.right_angle_obj.value = int(ra)
@@ -173,14 +175,13 @@ class StarTrackerResource(Resource):
         if index == self.state_index:
             logger.info(f'entry: on_write(state) {hex(index)} {subindex} {data}')
             try:
-                raw_command     =  self.state_obj.decode_raw(data)
-                command         =  StateCommand(raw_command)
-                self._state     =  command.target_state()
+                raw_command = self.state_obj.decode_raw(data)
+                command = StateCommand(raw_command)
+                new_state = command.target_state()
+                self._state = new_state
                 logger.info(f'start tracker now in state: {self._state.name}')
             except ValueError:
                 logger.error(f'new state value of {new_state} is invalid')
         elif index == self.capture_index:
             logger.info(f'entry: on_write(capture) {hex(index)} {subindex} {data}')
             self._capture()
-        logger.info('exit: on_write')
-
