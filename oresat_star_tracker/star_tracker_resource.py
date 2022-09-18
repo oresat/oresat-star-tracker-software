@@ -167,7 +167,6 @@ class StarTrackerResource(Resource):
 
     def on_read(self, index, subindex, od):
         if index == self.state_index:
-            logger.info(f'entry: on_read {hex(index)} {subindex}  returning :{self._state.value}')
             return self._state.value
 
     def on_write(self, index, subindex, od, data):

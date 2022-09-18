@@ -50,12 +50,8 @@ class TestStarTrackerCanInterface(unittest.TestCase):
         Then we can retreive its current state with an SDO and the
         state is one of the valid states
         '''
-        try:
-            state = get_star_tracker_state(self.sdo)
-            self.assertTrue(is_valid_star_tracker_state(state))
-        except Exception as exc:
-            traceback.print_exc()
-            raise exc
+        state = get_star_tracker_state(self.sdo)
+        self.assertTrue(is_valid_star_tracker_state(state))
 
 
     def test_switch_states_standby_capture(self):
