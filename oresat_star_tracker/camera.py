@@ -4,7 +4,6 @@ from os.path import abspath, dirname
 
 import numpy as np
 import cv2
-from datetime import datetime
 
 from olaf import PRU, PRUError
 

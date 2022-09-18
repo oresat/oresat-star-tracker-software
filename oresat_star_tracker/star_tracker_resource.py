@@ -100,7 +100,6 @@ class StarTrackerResource(Resource):
         self._state = State.STANDBY
 
     def _capture(self):
-        logger.info('entry: capture')
         try:
             data = self._camera.capture()
             ok, encoded = cv2.imencode('.bmp', data)
@@ -117,10 +116,8 @@ class StarTrackerResource(Resource):
         except CameraError as exc:
             logger.critial(exc)
             self._state = State.HW_ERROR
-        logger.info('exit: capture')
 
     def _star_track(self):
-        logger.info("entry: _star_track")
         try:
             data = self._camera.capture() # Take the image
             scet = scet_int_from_time(time()) # Record the timestamp
@@ -145,19 +142,14 @@ class StarTrackerResource(Resource):
             self._state = State.HW_ERROR
         except SolverError as exc:
             logger.error(exc)
-        logger.info("exit: _star_track")
 
     def on_loop(self):
         if self._state not in [State.STANDBY, State.CAPTURE, State.STAR_TRACKING]:
             raise ValueError(f'in invalid state for loop: {self._state.name}')
         if self._state == State.CAPTURE:
-            logger.info(f'entry: on_loop state: {self._state}')
             self._capture()
-            logger.info(f'exit: on_loop')
         elif self._state == State.STAR_TRACKING:
-            logger.info(f'entry: on_loop state: {self._state}')
             self._star_track()
-            logger.info(f'exit: on_loop')
 
     def on_end(self):
         try:
