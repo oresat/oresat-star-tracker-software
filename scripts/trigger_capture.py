@@ -4,15 +4,17 @@ import argparse
 import os
 import time
 
-bus_id="vcan0"
-node_id='0x2C'
-capture_idx='0x6002'
+bus_id = "vcan0"
+node_id = '0x2C'
+capture_idx = '0x6002'
 
 if __name__ == "__main__":
     parser = argparse.ArgumentParser(description='Trigger a capture command.')
 
-    parser.add_argument('-n', '--ntimes', help='Number of captures to trigger.', type=int, default=1)
-    parser.add_argument('-s', '--sleep',  help='Number of seconds to sleep between triggers.', type=int, default=None)
+    parser.add_argument('-n', '--ntimes', help='Number of captures to trigger.',
+                        type=int, default=1)
+    parser.add_argument(
+        '-s', '--sleep', help='Number of seconds to sleep between triggers.', type=int, default=None)
 
     args = parser.parse_args()
 

@@ -4,12 +4,8 @@ by Umair Khan, from the Portland State Aerospace Society
 based on OpenStarTracker from Andrew Tennenbaum at the University of Buffalo
 openstartracker.org
 '''
-import uuid
-import sys
 import time
-import datetime
 
-from  datetime import datetime
 from os.path import abspath, dirname
 
 import numpy as np
@@ -28,11 +24,11 @@ class Solver:
     '''Solve star trackr images'''
 
     def __init__(self,
-            db_path=None,
-            config_path=None,
-            median_path=None,
-            blur_kernel_size=None,
-            trace_intermediate_images=False):
+                 db_path=None,
+                 config_path=None,
+                 median_path=None,
+                 blur_kernel_size=None,
+                 trace_intermediate_images=False):
 
         # Prepare constants
         self.P_MATCH_THRESH = 0.99
@@ -64,7 +60,6 @@ class Solver:
         logger.debug(f'DB Path:{self.db_path}')
         logger.debug(f'Config Path:{self.config_path}')
 
-
     def startup(self):
         '''Start up sequence. Loads median image, loads config file, and setups database.
 
@@ -75,28 +70,25 @@ class Solver:
         SolverError
             start up failed
         '''
-
-        data_dir = dirname(abspath(__file__)) + '/data'
-
         try:
             # Load star database
-            self.S_DB = beast.star_db() # 0 seconds
-            self.S_DB.load_catalog(self.db_path, self.YEAR) # 7 seconds
+            self.S_DB = beast.star_db()  # 0 seconds
+            self.S_DB.load_catalog(self.db_path, self.YEAR)  # 7 seconds
 
             # Filter stars
-            self.SQ_RESULTS = beast.star_query(self.S_DB) # 1 sec
-            self.SQ_RESULTS.kdmask_filter_catalog() # 8 seconds
+            self.SQ_RESULTS = beast.star_query(self.S_DB)  # 1 sec
+            self.SQ_RESULTS.kdmask_filter_catalog()  # 8 seconds
 
-            self.SQ_RESULTS.kdmask_uniform_density(beast.cvar.REQUIRED_STARS) # 23 seconds!
+            self.SQ_RESULTS.kdmask_uniform_density(beast.cvar.REQUIRED_STARS)  # 23 seconds!
 
             self.S_FILTERED = self.SQ_RESULTS.from_kdmask()
 
             # Set up constellation database
-            self.C_DB = beast.constellation_db(self.S_FILTERED, 2 + beast.cvar.DB_REDUNDANCY, 0) # 1 second
+            self.C_DB = beast.constellation_db(
+                self.S_FILTERED, 2 + beast.cvar.DB_REDUNDANCY, 0)  # 1 second
 
         except Exception as exc:
             raise SolverError(f'Startup sequence failed with {exc}')
-
 
     def _preprocess_img(self, orig_img, trace_id=None):
         '''
@@ -120,10 +112,9 @@ class Solver:
 
         # Blur the image if a blur is specified.
         if self.blur_kernel_size:
-            orig_img = cv2.blur(orig_img,(self.blur_kernel_size, self.blur_kernel_size))
+            orig_img = cv2.blur(orig_img, (self.blur_kernel_size, self.blur_kernel_size))
             if self.trace_intermediate_images:
                 cv2.imwrite(f'/tmp/solver-blurred-{trace_id}.png', orig_img)
-
 
         # Process the image for solving
         logger.info(f"start image pre-processing-{trace_id}")
@@ -159,7 +150,7 @@ class Solver:
         contours, _ = cv2.findContours(thresh, cv2.RETR_EXTERNAL, cv2.CHAIN_APPROX_SIMPLE)
 
         if self.trace_intermediate_images:
-            contours_img = cv2.drawContours(img_grey, contours, -1, (0,255,0), 1)
+            contours_img = cv2.drawContours(img_grey, contours, -1, (0, 255, 0), 1)
             cv2.imwrite(f'/tmp/solver-contours-{trace_id}.png', contours_img)
 
         logger.info(f"Number of  contours: {len(contours)}")
@@ -188,7 +179,7 @@ class Solver:
                 flux = float(cv2.getRectSubPix(img_grey, (1, 1), (cx, cy))[0, 0])
 
                 # Add the list to star_list
-                star_list.append([cx, cy,flux])
+                star_list.append([cx, cy, flux])
         return np.array(star_list)
 
     def _star_list_to_beast_stars_db(self, star_list):
@@ -206,7 +197,7 @@ class Solver:
 
         for idx in range(number_of_stars):
             cx, cy, flux = star_list[idx]
-            cx_center, cy_center  = image_center
+            cx_center, cy_center = image_center
             # The center pixel is used as the approximation of the brightest pixel
             img_stars += beast.star(cx - cx_center, cy - cy_center, flux, -1)
         return img_stars
@@ -308,7 +299,6 @@ class Solver:
 
         return orientation
 
-
     def solve(self, orig_img) -> (float, float, float):
         '''
         Return
@@ -324,10 +314,10 @@ class Solver:
             No matches found.
         '''
 
-        correlation_timestamp = scet_int_from_time(time.time()) # Record the timestamp
+        correlation_timestamp = scet_int_from_time(time.time())  # Record the timestamp
 
         # Preprocess the image for solving
-        img_grey  = self._preprocess_img(orig_img, trace_id=correlation_timestamp)
+        img_grey = self._preprocess_img(orig_img, trace_id=correlation_timestamp)
 
         # Find the contours of the stars from binary image.
         contours = self._find_contours(img_grey, trace_id=correlation_timestamp)
@@ -337,6 +327,6 @@ class Solver:
         star_list = self._find_stars(img_grey, contours)
 
         # Find orientation using given stars.
-        orientation  = self._solve_orientation(star_list)
+        orientation = self._solve_orientation(star_list)
 
         return orientation

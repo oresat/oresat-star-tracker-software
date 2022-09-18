@@ -57,7 +57,6 @@ class Camera:
         except FileNotFoundError:
             raise CameraError('no sysfs attribute for camera auto-exposure')
 
-
     def power_off(self) -> None:
         '''Turn off the camera'''
 

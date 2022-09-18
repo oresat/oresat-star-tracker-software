@@ -17,15 +17,18 @@ from oresat_star_tracker.client.star_tracker_client import fetch_files_fread
 from oresat_star_tracker.client.star_tracker_client import read_image_file
 
 
-bus_id="vcan0"
-node_id='0x2C'
-capture_idx='0x6002'
+bus_id = "vcan0"
+node_id = '0x2C'
+capture_idx = '0x6002'
 
 if __name__ == "__main__":
     parser = argparse.ArgumentParser(description='Listen for Star Tracker Orientations.')
 
-    parser.add_argument('-r', '--record-time', help='Number of seconds to record for', type=int, default=10)
-    parser.add_argument('-o', '--output-file', help='Output file to recored orientations to ', type=str, default="output.txt")
+    parser.add_argument('-r', '--record-time',
+                        help='Number of seconds to record for', type=int, default=10)
+    parser.add_argument('-o', '--output-file',
+                        help='Output file to recored orientations to ',
+                        type=str, default="output.txt")
 
     args = parser.parse_args()
 
@@ -40,28 +43,28 @@ if __name__ == "__main__":
     # Put startracker in tracking state
     set_star_tracker_state(sdo, StateCommand.STAR_TRACKING)
 
-
     # Initialize the tpdo
     node.tpdo.read()
 
     num_updates_to_check = 100
 
     oreintations_received = []
+
     def orientation_callback(message):
         received_message = dict()
         for var in message:
             received_message[var.name] = var.raw
-        print('received_masage',received_message )
-
+        print('received_masage', received_message)
 
         dec = received_message['Orienation.Declination']
-        ra  = received_message['Orienation.Right Ascension']
+        ra = received_message['Orienation.Right Ascension']
         ori = received_message['Orienation.Roll']
 
         oreintations_received.append([dec, ra, ori])
         print(f'orientation-received: dec:{dec}, ra:{ra}, ori:{ori}')
 
     received_timestamps = []
+
     def timestamp_callback(message):
         received_message = dict()
         for var in message:
@@ -82,5 +85,5 @@ if __name__ == "__main__":
 
     print(f'Number of Orientations Received: {len(oreintations_received)}')
     print(f'Number of Timetamps Received: {len(received_timestamps)}')
-    #foo
+
     set_star_tracker_state(sdo, StateCommand.STANDBY)

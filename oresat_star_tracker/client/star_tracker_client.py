@@ -1,10 +1,4 @@
-import datetime
-import random
-import sys
-import time
 import traceback
-import unittest
-from  datetime import datetime
 
 from argparse import ArgumentParser
 from enum import IntEnum, Enum, auto
@@ -12,7 +6,6 @@ from os.path import abspath, dirname
 from struct import pack, unpack
 
 import canopen
-import cv2
 import numpy as np
 
 from olaf import Resource, new_oresat_file, scet_int_from_time
@@ -23,6 +16,7 @@ DEFAULT_BUS_ID = 'vcan0'
 STARTRACKER_NODE_ID = 0x2C
 
 EDS_FILE = dirname(abspath(__file__)) + '/../../oresat_star_tracker/data/star_tracker.eds'
+
 
 class CANopenTypes(Enum):
     '''All valid canopen types supported'''
@@ -40,6 +34,7 @@ class CANopenTypes(Enum):
     s = auto()
     d = auto()  # DOMAIN type
 
+
 DECODE_KEYS = {
     CANopenTypes.b: '?',
     CANopenTypes.i8: 'b',
@@ -52,6 +47,7 @@ DECODE_KEYS = {
     CANopenTypes.f32: 'f',
     CANopenTypes.f64: 'd',
 }
+
 
 def decode_value(raw_data, co_type):
     '''
@@ -87,7 +83,8 @@ def decode_value(raw_data, co_type):
         raise ValueError(raw_data)
     else:
         raise ValueError(f'invalid data type:{co_type}')
-    return data;
+    return data
+
 
 def encode_value(value, co_type):
     '''
@@ -124,16 +121,17 @@ def encode_value(value, co_type):
         raise RuntimeError('invalid data type')
     return raw_data
 
-def connect(bus_id = DEFAULT_BUS_ID, node_id = STARTRACKER_NODE_ID):
+
+def connect(bus_id=DEFAULT_BUS_ID, node_id=STARTRACKER_NODE_ID):
     '''
     Connect to to the startracker node
     '''
-
     network = canopen.Network()
     node = canopen.RemoteNode(node_id, EDS_FILE)
     network.add_node(node)
     network.connect(bustype='socketcan', channel=bus_id)
     return node, network
+
 
 def trigger_capture_star_tracker(sdo):
     '''
@@ -146,10 +144,11 @@ def trigger_capture_star_tracker(sdo):
         traceback.print_exc()
         raise exc
 
+
 def get_star_tracker_state(sdo):
     ''' Retreive tracker state.  '''
     returned_value = sdo.upload(0x6000, 0)
-    decoded_state  = decode_value(returned_value, CANopenTypes.i8)[0]
+    decoded_state = decode_value(returned_value, CANopenTypes.i8)[0]
     return decoded_state
 
 
@@ -158,27 +157,27 @@ def set_star_tracker_state(sdo, state_command):
     sdo.download(0x6000, 0, payload)
     return True
 
+
 def is_valid_star_tracker_state(state):
     '''
     Check that tracker is in valid state.
     '''
     valid_states = np.array(sorted(StarTrackerState), dtype=np.int8)
     result = np.where(valid_states == state)
-    return np.shape(result) ==  (1,1)
+    return np.shape(result) == (1, 1)
 
 
 def fetch_files_fread(sdo, keyword='capture', max_files=None):
     '''
     Fetch all the tracker files from the fread cache.
     '''
-    cache = 'fread'
     FCACHE_INDEX = 0x3002
-    sdo[FCACHE_INDEX][3].phys = 0 # on_write:file_cahce
+    sdo[FCACHE_INDEX][3].phys = 0  # on_write:file_cahce
 
     # 2. Clear any preset filters. # on_write_filter
-    sdo[FCACHE_INDEX][4].raw = keyword.encode() #b'capture'  # Clear filter
+    sdo[FCACHE_INDEX][4].raw = keyword.encode()  # b'capture'  # Clear filter
 
-    #b'\00'  # Clear filter
+    # b'\00'  # Clear filter
 
     # QOD: Why is list files returning 0 ?
 
@@ -194,9 +193,12 @@ def fetch_files_fread(sdo, keyword='capture', max_files=None):
         capture_files.append(file_name)
     return capture_files
 
+
 '''
 TOO SLOW UNUSABLE
 '''
+
+
 def read_image_file(sdo, file_name: str):
     sdo[0x3003][1].raw = file_name.encode('utf-8')
     total_size = 3686454
@@ -205,7 +207,8 @@ def read_image_file(sdo, file_name: str):
     sdo = node.sdo
     sdo.RESPONSE_TIMEOUT = 5.0
 
-    infile = sdo[0x3003][2].open('rb', encoding='ascii', buffering=1024 , size=3686454, block_transfer=True)
+    infile = sdo[0x3003][2].open('rb', encoding='ascii', buffering=1024,
+                                 size=3686454, block_transfer=True)
 
     file_bytes = np.asarray(bytearray(infile.read()), dtype=np.uint8)
 
@@ -227,5 +230,3 @@ def read_image_file(sdo, file_name: str):
     # print("read-shape: ", np.shape(retval))
     network.disconnect()
     return retval
-
-
