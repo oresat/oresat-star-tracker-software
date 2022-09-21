@@ -14,7 +14,8 @@ if __name__ == "__main__":
     parser.add_argument('-n', '--ntimes', help='Number of captures to trigger.',
                         type=int, default=1)
     parser.add_argument(
-        '-s', '--sleep', help='Number of seconds to sleep between triggers.', type=int, default=None)
+        '-s', '--sleep', help='Number of seconds to sleep between triggers.',
+        type=int, default=None)
 
     args = parser.parse_args()
 

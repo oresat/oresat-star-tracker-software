@@ -18,6 +18,7 @@ class DataSubindex(IntEnum):
     ORIENTATION = 0x3
     TIME_STAMP = 0x4
 
+
 class State(IntEnum):
     OFF = 0
     BOOT = 1
