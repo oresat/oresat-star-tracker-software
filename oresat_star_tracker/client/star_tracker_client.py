@@ -199,9 +199,9 @@ TOO SLOW UNUSABLE
 '''
 
 
+"""
 def read_image_file(sdo, file_name: str):
     sdo[0x3003][1].raw = file_name.encode('utf-8')
-    total_size = 3686454
 
     node, network = connect()
     sdo = node.sdo
@@ -210,9 +210,9 @@ def read_image_file(sdo, file_name: str):
     infile = sdo[0x3003][2].open('rb', encoding='ascii', buffering=1024,
                                  size=3686454, block_transfer=True)
 
-    file_bytes = np.asarray(bytearray(infile.read()), dtype=np.uint8)
 
-    '''
+    file_bytes = np.asarray(bytearray(infile.read()), dtype=np.uint8)
+    total_size = 3686454
     total_read = 0
     block_size = 1024
     num_blocks = total_size % block_size
@@ -223,10 +223,10 @@ def read_image_file(sdo, file_name: str):
         total_read+=block_size
         print('Read bytes ', total_read)
     print("after::reading.")
-    '''
 
     # retval = cv2.imdecode(contents, cv2.IMREAD_GRAYSCALE)
     infile.close()
     # print("read-shape: ", np.shape(retval))
     network.disconnect()
     return retval
+"""
