@@ -6,6 +6,7 @@ openstartracker.org
 '''
 import time
 
+from typing import Tuple
 from os.path import abspath, dirname
 
 import numpy as np
@@ -54,7 +55,8 @@ class Solver:
         self.blur_kernel_size = blur_kernel_size if blur_kernel_size else None
 
         # Enable tracing intermediate processing steps for debugging.
-        self.trace_intermediate_images = trace_intermediate_images if trace_intermediate_images else None
+        self.trace_intermediate_images = \
+            trace_intermediate_images if trace_intermediate_images else None
 
         logger.debug(f'Median Path: {self.median_path}')
         logger.debug(f'DB Path:{self.db_path}')
@@ -299,7 +301,7 @@ class Solver:
 
         return orientation
 
-    def solve(self, orig_img) -> (float, float, float):
+    def solve(self, orig_img) -> Tuple[float, float, float]:
         '''
         Return
         ------
