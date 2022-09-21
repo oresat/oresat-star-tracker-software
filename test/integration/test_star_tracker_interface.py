@@ -12,6 +12,7 @@ from oresat_star_tracker.client.star_tracker_client import set_star_tracker_stat
 from oresat_star_tracker.client.star_tracker_client import is_valid_star_tracker_state
 from oresat_star_tracker.client.star_tracker_client import fetch_files_fread
 
+
 class TestStarTrackerCanInterface(unittest.TestCase):
 
     def setUp(self):
@@ -50,7 +51,7 @@ class TestStarTrackerCanInterface(unittest.TestCase):
             # 2. Ensure can set to CAPTURE state
             set_star_tracker_state(self.sdo, StateCommand.CAPTURE)
             # set_star_tracker_capture(self.sdo)
-            #set_star_tracker_state(self.sdo, StarTrackerState.CAPTURE)
+            # set_star_tracker_state(self.sdo, StarTrackerState.CAPTURE)
             decoded_state = get_star_tracker_state(self.sdo)
             self.assertEqual(decoded_state, StarTrackerState.CAPTURE.value)
             time.sleep(5)
@@ -91,7 +92,7 @@ class TestStarTrackerCanInterface(unittest.TestCase):
 
     def test_read_from_fread_cache(self):
         pass
-        #capture_files = fetch_files_fread(self.sdo, 'capture')
+        # capture_files = fetch_files_fread(self.sdo, 'capture')
         # first_file = capture_files[0]
         # print("first file", first_file)
         # read_image_file(self.sdo, first_file)

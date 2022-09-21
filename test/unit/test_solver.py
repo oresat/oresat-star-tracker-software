@@ -59,7 +59,6 @@ class TestSolver(unittest.TestCase):
         self._solver = Solver(config_path=config_path, median_path=median_path, blur_kernel_size=5)
         self._solver.startup()
 
-
         # TODO: Find root cause as to why the expected solutions are not being
         #       produced by solver.
         #
