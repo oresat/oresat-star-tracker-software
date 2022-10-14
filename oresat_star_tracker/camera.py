@@ -36,14 +36,14 @@ class Camera:
 
     def read_image_size(self):
         '''Read dimensions of image from the camera'''
-        x_size = self.context_setting('x_size')
-        y_size = self.context_setting('y_size')
+        x_size = self.read_context_setting('x_size')
+        y_size = self.read_context_setting('y_size')
         return (y_size, x_size)
 
     def read_context_setting(self, name):
         ''''Read a context setting.'''
 
-        context_path = '/sys/devices/platform/prudev/context_settings/'
+        context_path = '/sys/devices/platform/prudev/context_settings'
         try:
             with open(f'{context_path}/{name}', 'r') as f:
                 return int(f.read())
