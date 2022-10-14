@@ -155,14 +155,6 @@ class StarTrackerResource(Resource):
             self._star_track()
 
     def on_end(self):
-        try:
-            self._camera.power_off()
-        except CameraError as exc:
-            logger.error(exc)
-            self._state = State.HW_ERROR
-
-        logger.info('camera is powered off')
-
         self.right_angle_obj.value = 0
         self.declination_obj.value = 0
         self.orientation_obj.value = 0
