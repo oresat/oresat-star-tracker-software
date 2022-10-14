@@ -16,8 +16,6 @@ class Camera:
     '''Star tracker AR013x camera'''
 
     # these files are provide by the prucam-dkms debian package
-    PRU0_FW = '/lib/firmware/prucam_pru0_fw.out'
-    PRU1_FW = '/lib/firmware/prucam_pru1_fw.out'
 
     def __init__(self, mock: bool = False):
 
@@ -27,7 +25,6 @@ class Camera:
             self._capture_path = f'{dirname(abspath(__file__))}/data/mock.bmp'
         else:
             self._capture_path = '/dev/prucam'
-            self._prus = [PRU(0, self.PRU0_FW), PRU(1, self.PRU1_FW)]
 
     def power_on(self) -> None:
         '''Turn on the camera'''
@@ -35,37 +32,23 @@ class Camera:
         if self._mock:
             return
 
-        try:
-            self._prus[0].start()
-            self._prus[1].start()
-        except PRUError as exc:
-            raise CameraError(exc)
+        self.image_size = self.read_image_size()
 
+    def read_image_size(self):
+        '''Read dimensions of image from the camera'''
+        x_size = self.context_setting('x_size')
+        y_size = self.context_setting('y_size')
+        return (y_size, x_size)
+
+    def read_context_setting(self, name):
+        ''''Read a context setting.'''
+
+        context_path = '/sys/devices/platform/prudev/context_settings/'
         try:
-            with open('/sys/class/pru/prucam/context_settings/x_size', 'r') as f:
-                x_size = int(f.read())
-            with open('/sys/class/pru/prucam/context_settings/y_size', 'r') as f:
-                y_size = int(f.read())
+            with open(f'{context_path}/{name}', 'r') as f:
+                return int(f.read())
         except FileNotFoundError:
-            raise CameraError('no sysfs attributes for camera')
-
-        self.image_size = (y_size, x_size)
-
-        try:
-            with open('/sys/class/pru/prucam/auto_exposure_settings/ae_enable', 'w') as f:
-                f.write('1')
-        except FileNotFoundError:
-            raise CameraError('no sysfs attribute for camera auto-exposure')
-
-    def power_off(self) -> None:
-        '''Turn off the camera'''
-
-        if not self._mock:
-            try:
-                self._prus[0].stop()
-                self._prus[1].stop()
-            except PRUError as exc:
-                raise CameraError(exc)
+            raise CameraError(f'no sysfs attribute {name} for camera')
 
     def capture(self, color=True) -> np.ndarray:
         '''Capture an image
