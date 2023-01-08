@@ -251,12 +251,7 @@ class Solver:
             dec - rotation about the y-axis,
             ra  - rotation about the z-axis,
             ori - rotation about the camera axis
-        None
-            match was invalid.
         '''
-        if match is None:
-            return None
-
         match.winner.calc_ori()
         dec = match.winner.get_dec()
         ra = match.winner.get_ra()
@@ -293,10 +288,13 @@ class Solver:
         if lis.p_match > self.P_MATCH_THRESH and lis.winner.size() >= beast.cvar.REQUIRED_STARS:
             match = self._generate_match(lis, img_stars)
 
+        if match is None:
+            raise SolverError('Cannot extract orientation from empty match. Solution failed for image!')
+
         orientation = self._extract_match_orientation(match)
 
         if orientation is None:
-            logger.info("Unable to find orientation for image!")
+            logger.info('Unable to find orientation for image!')
             raise SolverError('Solution failed for image')
 
         return orientation
