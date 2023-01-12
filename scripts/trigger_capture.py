@@ -16,7 +16,7 @@ if __name__ == "__main__":
     parser.add_argument('-n', '--node-id', help='Number of captures to trigger.',
                         type=str, default='0x2C')
 
-    parser.add_argument('-c', '--capture_idx', help='Number of captures to trigger.',
+    parser.add_argument('-c', '--capture-idx', help='Number of captures to trigger.',
                         type=str, default='0x6002')
 
     parser.add_argument('-s', '--sleep',
