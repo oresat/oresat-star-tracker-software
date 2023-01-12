@@ -14,12 +14,7 @@ from oresat_star_tracker.client.star_tracker_client import get_star_tracker_stat
 from oresat_star_tracker.client.star_tracker_client import set_star_tracker_state
 from oresat_star_tracker.client.star_tracker_client import is_valid_star_tracker_state
 from oresat_star_tracker.client.star_tracker_client import fetch_files_fread
-from oresat_star_tracker.client.star_tracker_client import read_image_file
 
-
-bus_id = "vcan0"
-node_id = '0x2C'
-capture_idx = '0x6002'
 
 if __name__ == "__main__":
     parser = argparse.ArgumentParser(description='Listen for Star Tracker Orientations.')
@@ -29,10 +24,22 @@ if __name__ == "__main__":
     parser.add_argument('-o', '--output-file',
                         help='Output file to recored orientations to ',
                         type=str, default="output.txt")
+    parser.add_argument('-b', '--bus',
+                        help='CAN bus identifier, defaults to virutal CAN bus vbus0',
+                        type=str, default="vcan0")
+    parser.add_argument('-n', '--node-id',
+                        help='Node identifier for star tracker, defaults to 0x2C',
+                        type=str, default="0x2C")
+    parser.add_argument('-c', '--capture-idx',
+                        help='Command index to subscribe to, defaults to 0x6002',
+                        type=str, default="0x6002")
 
     args = parser.parse_args()
 
-    RECORD_TIME = args.record_time
+    record_time = args.record_time
+    capture_idx = args.capture_idx
+    bus_id = args.bus
+    node_id = args.node_id
 
     node, network = connect()
     sdo = node.sdo
@@ -45,8 +52,6 @@ if __name__ == "__main__":
 
     # Initialize the tpdo
     node.tpdo.read()
-
-    num_updates_to_check = 100
 
     oreintations_received = []
 
@@ -79,9 +84,9 @@ if __name__ == "__main__":
     node.tpdo[3].add_callback(orientation_callback)
     node.tpdo[4].add_callback(timestamp_callback)
 
-    print(f'Recording orientations for {RECORD_TIME} seconds.')
+    print(f'Recording orientations for {record_time} seconds.')
 
-    time.sleep(RECORD_TIME)
+    time.sleep(record_time)
 
     print(f'Number of Orientations Received: {len(oreintations_received)}')
     print(f'Number of Timetamps Received: {len(received_timestamps)}')
