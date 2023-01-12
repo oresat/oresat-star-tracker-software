@@ -6,6 +6,8 @@ import traceback
 
 import cv2
 import numpy as np
+
+from os.path import dirname, abspath
 from timeit import default_timer as timer
 
 from oresat_star_tracker.solver import Solver, SolverError
@@ -17,7 +19,7 @@ class TestSolver(unittest.TestCase):
         '''
         Create and startup a solver.
         '''
-        self.test_data_folder = '/home/debian/oresat-star-tracker-software/misc/test-data'
+        self.test_data_folder = dirname(abspath(__file__)) + "/../../misc/test-data"
 
     def assert_image_matches_solution(self, image_path, solution, expect_to_fail=False):
         img_data = cv2.imread(image_path)
