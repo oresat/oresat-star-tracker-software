@@ -9,6 +9,7 @@ import time
 import cv2
 import numpy as np
 from timeit import default_timer as timer
+from os.path import dirname, abspath
 
 from olaf import scet_int_from_time
 
@@ -21,7 +22,7 @@ class TestContours(unittest.TestCase):
         '''
         Create and startup a solver.
         '''
-        self.test_data_folder = '/home/debian/oresat-star-tracker-software/misc/test-data'
+        self.test_data_folder = dirname(abspath(__file__)) + "/../../misc/test-data"
 
         self.config_path = f'{self.test_data_folder}/exp1000/calibration.txt'
         self.median_path = f'{self.test_data_folder}/exp1000/median_image.png'
