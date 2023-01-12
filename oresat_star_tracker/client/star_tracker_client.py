@@ -1,5 +1,3 @@
-import traceback
-
 from argparse import ArgumentParser
 from enum import IntEnum, Enum, auto
 from os.path import abspath, dirname
@@ -33,11 +31,7 @@ def trigger_capture_star_tracker(sdo):
     '''
     Send the capture command.
     '''
-    try:
-        sdo[0x6002].phys = 1
-    except Exception as exc:
-        traceback.print_exc()
-        raise exc
+    sdo[0x6002].phys = 1
 
 
 def get_star_tracker_state(sdo):
