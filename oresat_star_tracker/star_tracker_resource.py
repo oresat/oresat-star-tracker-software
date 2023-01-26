@@ -66,13 +66,18 @@ class StarTrackerResource(Resource):
 
     def __init__(self, *args, **kwargs):
         super().__init__(*args, **kwargs)
+        self._state = State.BOOT
 
         if self.mock_hw:
             logger.debug('mocking camera')
         else:
             logger.debug('not mocking camera')
 
-        self._state = State.BOOT
+
+        self._camera = Camera(self.mock_hw)
+        self._solver = Solver()
+
+    def on_start(self):
         self.state_index = 0x6000
         self.state_obj = self.od[self.state_index]
 
@@ -90,11 +95,6 @@ class StarTrackerResource(Resource):
         self.declination_obj = data_record[DataSubindex.DECLINATION.value]
         self.orientation_obj = data_record[DataSubindex.ORIENTATION.value]
         self.time_stamp_obj = data_record[DataSubindex.TIME_STAMP.value]
-
-        self._camera = Camera(self.mock_hw)
-        self._solver = Solver()
-
-    def on_start(self):
 
         self._camera.power_on()
         logger.info('camera is powered on')
