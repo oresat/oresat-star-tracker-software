@@ -5,8 +5,6 @@ from os.path import abspath, dirname
 import numpy as np
 import cv2
 
-# from olaf import PRU, PRUError
-
 
 class CameraError(Exception):
     '''An error has occured with camera'''
