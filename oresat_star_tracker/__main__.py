@@ -1,16 +1,23 @@
 '''Star Tracker App'''
 
-from os.path import dirname, abspath
-from olaf import app, olaf_run
+import os
+
+from olaf import app, olaf_setup, olaf_run
+
 from .star_tracker_resource import StarTrackerResource
 
 
 def main():
-    app.add_resource(StarTrackerResource)
+    path = os.path.dirname(os.path.abspath(__file__))
 
-    eds_file = dirname(abspath(__file__)) + '/data/star_tracker.dcf'
-    olaf_run(eds_file)
+    args = olaf_setup(f'{path}/data/oresat_star_tracker.dcf')
+    mock_args = [i.lower() for i in args.mock_hw]
+    mock_camera = 'camera' in mock_args or 'all' in mock_args
 
+
+    app.add_resource(StarTrackerResource(mock_camera))
+
+    olaf_run()
 
 if __name__ == '__main__':
     main()

@@ -1,6 +1,7 @@
 from setuptools import Extension, find_packages, setup
 from setuptools.command.build_py import build_py
 
+from oresat_star_tracker import __version__
 
 BEAST_EXT = Extension(
     name='_beast',
@@ -28,7 +29,7 @@ class BuildPy(build_py):
 setup(
     name='oresat-star-tracker',
     description='The OreSat Star Tracker app',
-    version='0.1.0',
+    version=__version__,
     license='GPLv3',
     author='PSAS',
     author_email='oresat@pdx.edu',
