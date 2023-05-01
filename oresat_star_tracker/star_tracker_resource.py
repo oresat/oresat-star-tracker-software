@@ -10,13 +10,6 @@ from .camera import Camera, CameraError
 from .solver import Solver, SolverError
 
 
-class DataSubindex(IntEnum):
-    RIGHT_ANGLE = 0x1
-    DECLINATION = 0x2
-    ORIENTATION = 0x3
-    TIME_STAMP = 0x4
-
-
 class State(IntEnum):
     OFF = 0
     BOOT = 1
