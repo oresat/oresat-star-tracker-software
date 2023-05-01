@@ -14,7 +14,7 @@ BEAST_EXT = Extension(
     ],
     extra_compile_args=[
         '-std=c++11',
-    ]
+    ],
 )
 
 

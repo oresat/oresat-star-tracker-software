@@ -9,7 +9,6 @@ from oresat_star_tracker.solver import Solver
 
 
 class TestContours(unittest.TestCase):
-
     def setUp(self):
         '''
         Create and startup a solver.
@@ -34,12 +33,18 @@ class TestContours(unittest.TestCase):
         ra = ra + 360 if ra < 0 else ra
         ori = ori + 360 if ori < 0 else ori
 
-        self.assertTrue(np.isclose(ra, expected_ra, rtol=1e-01, atol=1e-01),
-                        f'ra: {ra} expected: {expected_ra} is not close')
-        self.assertTrue(np.isclose(dec, expected_dec, rtol=1e-01, atol=1e-01),
-                        f'dec {dec} expected:{expected_dec} is not close')
-        self.assertTrue(np.isclose(ori, expected_ori, rtol=1e-01, atol=1e-01),
-                        f'ori {ori} expected:{expected_ori} is not close')
+        self.assertTrue(
+            np.isclose(ra, expected_ra, rtol=1e-01, atol=1e-01),
+            f'ra: {ra} expected: {expected_ra} is not close',
+        )
+        self.assertTrue(
+            np.isclose(dec, expected_dec, rtol=1e-01, atol=1e-01),
+            f'dec {dec} expected:{expected_dec} is not close',
+        )
+        self.assertTrue(
+            np.isclose(ori, expected_ori, rtol=1e-01, atol=1e-01),
+            f'ori {ori} expected:{expected_ori} is not close',
+        )
 
     def _test_find_matches(self):
         '''
@@ -48,8 +53,9 @@ class TestContours(unittest.TestCase):
         '''
         trace_id = scet_int_from_time(time())  # Record the timestamp
 
-        solver = Solver(config_path=self.config_path,
-                        median_path=self.median_path, blur_kernel_size=5)
+        solver = Solver(
+            config_path=self.config_path, median_path=self.median_path, blur_kernel_size=5
+        )
 
         expected_solutions = [
             [74.798045847, 271.257311164, 84.470568],
@@ -59,7 +65,8 @@ class TestContours(unittest.TestCase):
             [52.1052996922, 122.156847972, -118.22782],
             [49.3122891085, 270.202436708, 112.54466],
             [1.44809534992, 237.50518643, 151.45222],
-            [-14.4507215149, 200.764441589, -177.89854]]
+            [-14.4507215149, 200.764441589, -177.89854],
+        ]
 
         image_paths = [
             f'{self.test_data_folder}/exp1000/samples/1.bmp',
@@ -69,7 +76,7 @@ class TestContours(unittest.TestCase):
             f'{self.test_data_folder}/exp1000/samples/5.bmp',
             f'{self.test_data_folder}/exp1000/samples/6.bmp',
             f'{self.test_data_folder}/exp1000/samples/7.bmp',
-            f'{self.test_data_folder}/exp1000/samples/8.bmp'
+            f'{self.test_data_folder}/exp1000/samples/8.bmp',
         ]
 
         # initialized the db
@@ -98,8 +105,11 @@ class TestContours(unittest.TestCase):
         """
         trace_id = scet_int_from_time(time())  # Record the timestamp
 
-        solver = Solver(config_path=self.config_path, median_path=self.median_path,
-                        trace_intermediate_images=False)
+        solver = Solver(
+            config_path=self.config_path,
+            median_path=self.median_path,
+            trace_intermediate_images=False,
+        )
 
         image_paths = [
             f'{self.test_data_folder}/exp1000/samples/1.bmp',
@@ -109,12 +119,10 @@ class TestContours(unittest.TestCase):
             f'{self.test_data_folder}/exp1000/samples/5.bmp',
             f'{self.test_data_folder}/exp1000/samples/6.bmp',
             f'{self.test_data_folder}/exp1000/samples/7.bmp',
-            f'{self.test_data_folder}/exp1000/samples/8.bmp'
+            f'{self.test_data_folder}/exp1000/samples/8.bmp',
         ]
 
-        expected_star_counts = [
-            41, 36, 34, 44, 77, 46, 44, 48
-        ]
+        expected_star_counts = [41, 36, 34, 44, 77, 46, 44, 48]
 
         for idx, image_path in enumerate(image_paths):
             img_data = cv2.imread(image_path)
@@ -147,12 +155,10 @@ class TestContours(unittest.TestCase):
             f'{self.test_data_folder}/exp1000/samples/5.bmp',
             f'{self.test_data_folder}/exp1000/samples/6.bmp',
             f'{self.test_data_folder}/exp1000/samples/7.bmp',
-            f'{self.test_data_folder}/exp1000/samples/8.bmp'
+            f'{self.test_data_folder}/exp1000/samples/8.bmp',
         ]
 
-        expected_contours = [
-            188, 220, 321, 249, 1243, 523, 758, 731
-        ]
+        expected_contours = [188, 220, 321, 249, 1243, 523, 758, 731]
 
         for idx, image_path in enumerate(image_paths):
             trace_id = scet_int_from_time(time())  # Record the timestamp

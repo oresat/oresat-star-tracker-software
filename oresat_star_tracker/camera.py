@@ -16,7 +16,6 @@ class Camera:
     # these files are provide by the prucam-dkms debian package
 
     def __init__(self, mock: bool = False):
-
         self._mock = mock
 
         if self._mock:
@@ -39,7 +38,7 @@ class Camera:
         return (y_size, x_size)
 
     def read_context_setting(self, name):
-        ''''Read a context setting.'''
+        ''' 'Read a context setting.'''
 
         context_path = '/sys/devices/platform/prudev/context_settings'
         try:
@@ -80,8 +79,7 @@ class Camera:
 
             # Convert to image
             img = np.frombuffer(imgbuf, dtype=np.uint8).reshape(
-                self.image_size[0],
-                self.image_size[1]
+                self.image_size[0], self.image_size[1]
             )
 
             # Convert to color

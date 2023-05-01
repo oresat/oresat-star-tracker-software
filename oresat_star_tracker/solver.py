@@ -21,13 +21,14 @@ class SolverError(Exception):
 class Solver:
     '''Solve star trackr images'''
 
-    def __init__(self,
-                 db_path=None,
-                 config_path=None,
-                 median_path=None,
-                 blur_kernel_size=None,
-                 trace_intermediate_images=False):
-
+    def __init__(
+        self,
+        db_path=None,
+        config_path=None,
+        median_path=None,
+        blur_kernel_size=None,
+        trace_intermediate_images=False,
+    ):
         # Prepare constants
         self.P_MATCH_THRESH = 0.99
         self.YEAR = 1991.25
@@ -52,8 +53,9 @@ class Solver:
         self.blur_kernel_size = blur_kernel_size if blur_kernel_size else None
 
         # Enable tracing intermediate processing steps for debugging.
-        self.trace_intermediate_images = \
+        self.trace_intermediate_images = (
             trace_intermediate_images if trace_intermediate_images else None
+        )
 
         logger.debug(f'Median Path: {self.median_path}')
         logger.debug(f'DB Path: {self.db_path}')
@@ -85,7 +87,8 @@ class Solver:
 
             # Set up constellation database
             self.C_DB = beast.constellation_db(
-                self.S_FILTERED, 2 + beast.cvar.DB_REDUNDANCY, 0)  # 1 second
+                self.S_FILTERED, 2 + beast.cvar.DB_REDUNDANCY, 0
+            )  # 1 second
 
         except Exception as exc:
             raise SolverError(f'Startup sequence failed with {exc}')
@@ -140,8 +143,9 @@ class Solver:
 
         # Remove areas of the image that don't meet our brightness threshold and then extract
         # contours
-        ret, thresh = cv2.threshold(img_grey, beast.cvar.THRESH_FACTOR * beast.cvar.IMAGE_VARIANCE,
-                                    255, cv2.THRESH_BINARY)
+        ret, thresh = cv2.threshold(
+            img_grey, beast.cvar.THRESH_FACTOR * beast.cvar.IMAGE_VARIANCE, 255, cv2.THRESH_BINARY
+        )
 
         if self.trace_intermediate_images:
             cv2.imwrite(f'/tmp/solver-thresh-{trace_id}.png', thresh)
@@ -221,12 +225,10 @@ class Solver:
 
         r = beast.cvar.MAXFOV / 2
 
-        self.SQ_RESULTS.kdsearch(x, y, z, r,
-                                 beast.cvar.THRESH_FACTOR * beast.cvar.IMAGE_VARIANCE)
+        self.SQ_RESULTS.kdsearch(x, y, z, r, beast.cvar.THRESH_FACTOR * beast.cvar.IMAGE_VARIANCE)
 
         # Estimate density for constellation generation
-        self.C_DB.results.kdsearch(x, y, z, r,
-                                   beast.cvar.THRESH_FACTOR * beast.cvar.IMAGE_VARIANCE)
+        self.C_DB.results.kdsearch(x, y, z, r, beast.cvar.THRESH_FACTOR * beast.cvar.IMAGE_VARIANCE)
 
         fov_stars = self.SQ_RESULTS.from_kdresults()
         fov_db = beast.constellation_db(fov_stars, self.C_DB.results.r_size(), 1)
@@ -283,10 +285,12 @@ class Solver:
 
         # Find the constellation matches
         img_stars_n_brightest = img_stars.copy_n_brightest(
-            beast.cvar.MAX_FALSE_STARS + beast.cvar.REQUIRED_STARS)
+            beast.cvar.MAX_FALSE_STARS + beast.cvar.REQUIRED_STARS
+        )
 
-        img_const_n_brightest = beast.constellation_db(img_stars_n_brightest,
-                                                       beast.cvar.MAX_FALSE_STARS + 2, 1)
+        img_const_n_brightest = beast.constellation_db(
+            img_stars_n_brightest, beast.cvar.MAX_FALSE_STARS + 2, 1
+        )
 
         lis = beast.db_match(self.C_DB, img_const_n_brightest)
 
@@ -296,8 +300,9 @@ class Solver:
             match = self._generate_match(lis, img_stars)
 
         if match is None:
-            raise SolverError('Cannot extract orientation from empty match. Solution failed for'
-                              'image!')
+            raise SolverError(
+                'Cannot extract orientation from empty match. Solution failed for image!'
+            )
 
         orientation = self._extract_match_orientation(match)
 

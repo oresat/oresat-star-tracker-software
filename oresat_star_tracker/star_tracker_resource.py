@@ -36,7 +36,6 @@ STATE_TRANSISTIONS = {
 
 
 class StarTrackerResource(Resource):
-
     def __init__(self, mock_hw: bool = False):
         super().__init__()
 
@@ -54,7 +53,6 @@ class StarTrackerResource(Resource):
         self.timer_loop = TimerLoop('star tracker resource', self._loop, 1000)
 
     def on_start(self):
-
         self.state_index = 0x6000
         self.state_obj = self.node.od[self.state_index]
 
@@ -85,7 +83,6 @@ class StarTrackerResource(Resource):
         self.timer_loop.start()
 
     def on_end(self):
-
         self.timer_loop.stop()
         self.right_ascension_obj.value = 0
         self.declination_obj.value = 0
@@ -95,7 +92,6 @@ class StarTrackerResource(Resource):
         self._state = State.OFF
 
     def _capture(self, ext: str = '.bmp', save: bool = False) -> bytes:
-
         try:
             data = self._camera.capture()
         except CameraError as exc:
@@ -109,7 +105,7 @@ class StarTrackerResource(Resource):
         if save:
             # save capture
             name = '/tmp/' + new_oresat_file('capture', ext='.bmp')
-            with open(name, "wb") as f:
+            with open(name, 'wb') as f:
                 f.write(encoded)
             logger.info(f'saved new capture {name}')
 
@@ -119,7 +115,6 @@ class StarTrackerResource(Resource):
         return bytes(encoded)
 
     def _star_track(self):
-
         try:
             data = self._camera.capture()  # Take the image
             scet = scet_int_from_time(time())  # Record the timestamp
@@ -147,7 +142,6 @@ class StarTrackerResource(Resource):
             logger.error(exc)
 
     def _loop(self) -> bool:
-
         if self._state == State.STAR_TRACKING:
             self._star_track()
         elif self._state == State.ERROR:
@@ -157,17 +151,14 @@ class StarTrackerResource(Resource):
         return True
 
     def on_state_read(self, index: int, subindex: int):
-
         if index == self.state_index:
             return self._state.value
 
     def on_test_camera_read(self, index: int, subindex: int):
-
         if index == self.test_camera_index and subindex == 0x1:
             return self._capture(ext='.jpg')
 
     def on_state_write(self, index: int, subindex: int, data):
-
         if index != self.state_index:
             return
 
@@ -184,6 +175,5 @@ class StarTrackerResource(Resource):
             logger.info(f'invalid state change: {self._state.name} -> {new_state.name}')
 
     def on_capture_write(self, index: int, subindex: int, data):
-
         if index == self.capture_index:
             self._capture(save=True)

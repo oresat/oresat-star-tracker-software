@@ -5,10 +5,8 @@ from oresat_star_tracker.beast import beast
 
 
 class TestBeast(unittest.TestCase):
-
     @classmethod
     def beast_setup(cls):
-
         # Prepare constants
         cls.YEAR = 1991.25
         cls.MEDIAN_IMAGE = None
@@ -48,7 +46,7 @@ class TestBeast(unittest.TestCase):
 
     @classmethod
     def setUpClass(cls):
-        '''  '''
+        ''' '''
         cls.beast_setup()
 
     def test_constellation_db_successfully_constructed(self):
