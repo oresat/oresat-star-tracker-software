@@ -109,7 +109,9 @@ class TestSolver(unittest.TestCase):
         config_path = f'{self.test_data_folder}/exp2500/calibration.txt'
         median_path = f'{self.test_data_folder}/exp2500/median_image.png'
 
-        self._solver = Solver(config_path=config_path, median_path=median_path, blur_kernel_size=10)
+        self._solver = Solver(
+            config_path=config_path, median_path=median_path, blur_kernel_size=10
+        )
         self._solver.startup()
 
         # dec, ra, ori

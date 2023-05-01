@@ -228,7 +228,9 @@ class Solver:
         self.SQ_RESULTS.kdsearch(x, y, z, r, beast.cvar.THRESH_FACTOR * beast.cvar.IMAGE_VARIANCE)
 
         # Estimate density for constellation generation
-        self.C_DB.results.kdsearch(x, y, z, r, beast.cvar.THRESH_FACTOR * beast.cvar.IMAGE_VARIANCE)
+        self.C_DB.results.kdsearch(
+            x, y, z, r, beast.cvar.THRESH_FACTOR * beast.cvar.IMAGE_VARIANCE
+        )
 
         fov_stars = self.SQ_RESULTS.from_kdresults()
         fov_db = beast.constellation_db(fov_stars, self.C_DB.results.r_size(), 1)
