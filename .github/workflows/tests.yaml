@@ -26,6 +26,10 @@ jobs:
         python -m pip install --upgrade pip
         pip install -r requirements.txt
 
+    - name: Compile beast
+      run: |
+        make -C oresat_star_tracker/beast
+
     - name: Lint with flake8
       run: flake8 . --count --show-source --statistics
 
