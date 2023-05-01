@@ -1,4 +1,4 @@
-from setuptools import Extension, find_packages, setup
+from setuptools import Extension, setup
 from setuptools.command.build_py import build_py
 
 from oresat_star_tracker import __version__
