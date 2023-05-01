@@ -2,3 +2,4 @@ flake8
 numpy
 opencv-python-headless
 oresat-olaf
+swig

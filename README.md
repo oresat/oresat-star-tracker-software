@@ -1,65 +1,68 @@
-# oresat-star-tracker-software
+# OreSat Star Tracker Software
 
-### Introduction
+This is a modified version of [OpenStarTracker], originally developed by
+Andrew Tennenbaum at the University at Buffalo. Some of the information
+below comes from the original README file in the [OpenStarTracker repo].
 
-This is a modified version of [OpenStarTracker](https://openstartracker.org), originally developed by Andrew Tennenbaum at the University at Buffalo. Some of the information below comes from the original README file in the [OpenStarTracker repository](https://github.com/UBNanosatLab/openstartracker).
+Like all OreSat software projects it is built using OLAF (OreSat Linux App
+Framework), which it built ontop of [CANopen for Python]. See the
+[oresat-olaf repo] for more info about OLAF.
 
-### Dependencies
+**NOTE:** The prucam-ar013x kernel module is required to use the camera and
+will only work on the custom OreSat Star Tracker board. See the
+[oresat-prucam-ar013x repo] for more info.
 
-The following should be readily available from standard package repositories.
+## Quickstart
 
-```
-$ sudo apt install python3 python3-numpy python3-opencv python3-pydbus python3-systemd
-```
+Install dependenies
 
-In addition, this software depends on [python3-prucam](https://github.com/oresat/oresat-linux-prucam) and [swig](http://swig.org/) (version 4.0.1 or greater), both of which will likely have to be manually built and installed.
-
-### Building
-
-```
-# Build everything (source + two packages)
-$ dpkg-buildpackage -us -uc
-
-# Build just oresat-star-tracker
-$ dpkg-buildpackage -us -uc -B
-
-# Build just oresat-star-tracker-data
-$ dpkg-buildpackage -us -uc -A
+```bash
+$ pip3 install -r requirements.txt
 ```
 
-This repository can build two separate packages, `oresat-star-tracker` and `oresat-star-tracker-data`. The former contains the daemon and the latter contains the data (star catalog, calibration parameters, etc.) that the daemon requires to run. Splitting up the packages means we can update the daemon without having to put megabytes of redundant information in the package.
+Compile the cpp backend
 
-Note that `oresat-star-tracker` formally depends on `oresat-star-tracker-data`. You won't be able to install it until you have the data in place.
-
-### Installing
-
-```
-$ sudo dpkg -i [name].deb
+```bash
+make -C oresat_star_tracker/beast
 ```
 
-### Usage
+Make a virtual CAN bus
 
-```
-# Start the daemon
-sudo systemctl start oresat-star-trackerd
-
-# Stop the daemon
-sudo systemctl stop oresat-star-trackerd
+```bash
+$ sudo ip link add dev vcan0 type vcan
+$ sudo ip link set vcan0 up
 ```
 
-The star tracker runs as a daemon, which sends runtime details to `/var/log/syslog` and exposes the following methods and properties via D-Bus. Note that states are encoded as integers, where `0` represents the standby state and `1` represents the solving state.
+Run the Star Tracker app
 
-- `CurrentState` -- Current state.
-- `CapturePath` -- Filepath of last image manually captured.
-- `SolvePath` -- Filepath of last image for which a solution was attempted.
-- `Coor` -- The results of the last solution attempt, represented as (declination, right ascension, orientation, Unix timestamp). If the first three numbers are all 0, it means the solution attempt failed.
-- `Capture()` -- A method to take a photo and update `CapturePath`. Only works when in standby.
-- `ChangeState(NewState)` -- A method to change states.
+```bash
+$ python3 -m oresat_star_tracker
+```
 
-### Behavior
+Can select the CAN bus to use (`vcan0`, `can0`, etc) with the `-b BUS` arg.
 
-After being started, the daemon will first load and filter the star database in memory and then go into standby mode. This process may take five minutes or more.
+Can mock hardware by using the `-m HARDWARE` flag.
 
-While in standby mode, images can be manually captured and saved using the `Capture()` function. If put in the solving state, the software will automatically take images and attempt to solve them continuously. In this state, calling the `Capture()` function will not do anything.
+- The`-m all` flag can be used to mock all hardware (CAN bus is always
+required).
+- The `-m camera` flag would only mock camera.
 
-Images will be stored in `/usr/share/oresat-star-tracker/data/[snaps|solves]`, with the former being used for manual captures and the latter for automatic captures during star tracking. Each folder will contain (up to) the most recent fifty images, though `CapturePath` and `SolvePath` will only point to the most recent images.
+See other options with `-h` flag.
+
+A basic [Flask]-based website for development and integration can be found at
+`http://localhost:8000` when the software is running.
+
+## Unit Test
+
+Run the unit tests
+
+```bash
+$ python3 -m unittest
+```
+
+[OpenStarTracker]: https://openstartracker.org
+[OpenStarTracker repo]: https://github.com/UBNanosatLab/openstartracker
+[Flask]: https://flask.palletsprojects.com/en/latest/
+[oresat-olaf repo]: https://github.com/oresat/oresat-olaf
+[CANopen for Python]: https://github.com/christiansandberg/canopen
+[oresat-prucam-ar013x repo]: https://github.com/oresat/oresat-prucam-ar013x
