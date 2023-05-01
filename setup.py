@@ -44,7 +44,9 @@ setup(
             'beast/*.i',
             'beast/*.o',
             'beast/*.so',
+            'beast/Makefile',
             'data/*',
+            'templates/*',
         ]
     },
     ext_modules=[BEAST_EXT],
@@ -54,6 +56,7 @@ setup(
     install_requires=[
         'oresat-olaf',
         'opencv-python-headless',
+        'swig',
     ],
     entry_points={
         'console_scripts': [
