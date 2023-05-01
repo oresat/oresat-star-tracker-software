@@ -1,0 +1,16 @@
+{% extends 'base.html' %}
+
+{% block content %}
+  <img id="image" src="mock.bmp" alt="capture">
+  <script>
+    async function takeCapture() {
+      let obj = await readValue('0x7000', '0x1');
+      document.getElementById('image').src = 'data:image/jpg;base64, ' + obj.value;
+    }
+
+    takeCapture();
+    const interval = setInterval(function() {
+      takeCapture();
+    }, 5000);
+  </script>
+{% endblock %}

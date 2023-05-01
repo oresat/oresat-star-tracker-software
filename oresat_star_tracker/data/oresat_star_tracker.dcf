@@ -120,7 +120,7 @@ AccessType=ro
 DefaultValue=0x00000000
 
 [OptionalObjects]
-SupportedObjects=88
+SupportedObjects=89
 1=0x1002
 2=0x1003
 3=0x1005
@@ -209,6 +209,7 @@ SupportedObjects=88
 86=0x6000
 87=0x6001
 88=0x6002
+89=0x7000
 
 [1002]
 ParameterName=Manufacturer status register
@@ -4189,41 +4190,35 @@ DataType=0x0007
 AccessType=rw
 DefaultValue=0x00000008
 
-;Status. read for current state, write commands
+;Status. read for current state, write to change state
 ;
-;States:
-;  0x00: Off
-;  0x00: Booting
-;  0x02: Standby
-;  0x03: Capturing image in a loop
-;  0x04: Star tracking
-;  0x05: Software error (star tracker algorithm errored)
-;  0x06: Hardware error (most likely camera is not working correctly)
+;States
 ;
-;Commands:
-;  0: Goto to standby state
-;  1: Start star tracking
-;  2: Start capture looping
+;- 0x00: Off
+;- 0x00: Booting
+;- 0x02: Standby
+;- 0x03: Star tracking
+; - 0xFF: Error (most likely camera is not working correctly)
 [6000]
 ParameterName=Star tracker status
 ObjectType=0x07
 DataType=0x0005
 AccessType=rw
-DefaultValue=0xFF
+DefaultValue=0x00
 PDOMapping=1
 
 ;Orienation data from last solve
 [6001]
-ParameterName=Orienation
+ParameterName=Last solve
 ObjectType=0x09
-SubNumber=5
+SubNumber=6
 
 [6001sub0]
 ParameterName=Highest sub-index supported
 ObjectType=0x07
 DataType=0x0005
 AccessType=const
-DefaultValue=0x04
+DefaultValue=0x05
 
 ;The right ascension in deg calculated by last solve
 [6001sub1]
@@ -4261,6 +4256,13 @@ AccessType=ro
 DefaultValue=0
 PDOMapping=1
 
+;Get the last solve image as jpg
+[6001sub5]
+ParameterName=Image
+ObjectType=0x07
+DataType=0x000F
+AccessType=ro
+
 ;Take an image and place it in the fread cache
 [6002]
 ParameterName=Capture
@@ -4268,6 +4270,24 @@ ObjectType=0x07
 DataType=0x0001
 AccessType=wo
 DefaultValue=0
+
+[7000]
+ParameterName=Test Camera
+ObjectType=0x09
+SubNumber=2
+
+[7000sub0]
+ParameterName=Highest sub-index supported
+ObjectType=0x07
+DataType=0x0005
+AccessType=const
+DefaultValue=0x01
+
+[7000sub1]
+ParameterName=Capture
+ObjectType=0x07
+DataType=0x000F
+AccessType=ro
 
 [ManufacturerObjects]
 SupportedObjects=12
@@ -4912,7 +4932,7 @@ AccessType=rw
 DefaultValue=0
 
 [3006]
-ParameterName=New Record
+ParameterName=Logs
 ObjectType=0x09
 SubNumber=3
 

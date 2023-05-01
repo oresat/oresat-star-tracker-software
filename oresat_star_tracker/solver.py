@@ -117,7 +117,7 @@ class Solver:
                 cv2.imwrite(f'/tmp/solver-blurred-{trace_id}.png', orig_img)
 
         # Process the image for solving
-        logger.info(f"start image pre-processing-{trace_id}")
+        logger.debug(f'start image pre-processing-{trace_id}')
         tmp = orig_img.astype(np.int16) - self.MEDIAN_IMAGE
         img = np.clip(tmp, a_min=0, a_max=255).astype(np.uint8)
         img_grey = cv2.cvtColor(img, cv2.COLOR_RGB2GRAY)
@@ -136,7 +136,7 @@ class Solver:
         ------
         List of contours for points which could be stars and meet our brightness threshold.
         '''
-        logger.info(f'entry: solve():{beast.cvar.IMG_X}, {beast.cvar.IMG_Y}')
+        logger.debug(f'entry: solve():{beast.cvar.IMG_X}, {beast.cvar.IMG_Y}')
 
         # Remove areas of the image that don't meet our brightness threshold and then extract
         # contours
@@ -145,7 +145,7 @@ class Solver:
 
         if self.trace_intermediate_images:
             cv2.imwrite(f'/tmp/solver-thresh-{trace_id}.png', thresh)
-        logger.info("finished image pre-processing")
+        logger.debug('finished image pre-processing')
 
         contours, _ = cv2.findContours(thresh, cv2.RETR_EXTERNAL, cv2.CHAIN_APPROX_SIMPLE)
 
@@ -153,7 +153,7 @@ class Solver:
             contours_img = cv2.drawContours(img_grey, contours, -1, (0, 255, 0), 1)
             cv2.imwrite(f'/tmp/solver-contours-{trace_id}.png', contours_img)
 
-        logger.info(f"Number of  contours: {len(contours)}")
+        logger.debug(f'Number of  contours: {len(contours)}')
         return contours
 
     def _find_stars(self, img_grey, contours):
@@ -302,7 +302,7 @@ class Solver:
         orientation = self._extract_match_orientation(match)
 
         if orientation is None:
-            logger.info('Unable to find orientation for image!')
+            logger.error('Unable to find orientation for image!')
             raise SolverError('Solution failed for image')
 
         return orientation
