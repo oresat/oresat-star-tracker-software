@@ -1,15 +1,10 @@
 import unittest
-import sys
-import os
-import io
-import traceback
+from time import time
+from os.path import dirname, abspath
 
 import cv2
 import numpy as np
-
-from os.path import dirname, abspath
-from timeit import default_timer as timer
-
+from olaf import logger
 from oresat_star_tracker.solver import Solver, SolverError
 
 
@@ -19,7 +14,9 @@ class TestSolver(unittest.TestCase):
         '''
         Create and startup a solver.
         '''
-        self.test_data_folder = dirname(abspath(__file__)) + "/../../misc/test-data"
+        logger.remove()  # remove logging to not mess with unittest output
+
+        self.test_data_folder = dirname(abspath(__file__)) + "/../misc/test-data"
 
     def assert_image_matches_solution(self, image_path, solution, expect_to_fail=False):
         img_data = cv2.imread(image_path)
@@ -92,10 +89,10 @@ class TestSolver(unittest.TestCase):
         for idx, image_path in enumerate(image_paths):
             solution = expected_solutions[idx]
             expect_to_fail = idx in failing_indexes
-            start = timer()
+            start = time()
             # Run the solver
             self.assert_image_matches_solution(image_path, solution, expect_to_fail)
-            stop = timer()
+            stop = time()
             duration = stop - start
             self.assertTrue(duration < 10)
 
@@ -136,8 +133,8 @@ class TestSolver(unittest.TestCase):
             solution = expected_solutions[idx]
             expect_to_fail = idx in failing_indexes
             # Run the solver
-            start = timer()
+            start = time()
             self.assert_image_matches_solution(image_path, solution, expect_to_fail)
-            stop = timer()
+            stop = time()
             duration = stop - start
             self.assertTrue(duration < 10)

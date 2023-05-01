@@ -5,13 +5,10 @@ based on OpenStarTracker from Andrew Tennenbaum at the University of Buffalo
 openstartracker.org
 '''
 import time
-
-from typing import Tuple
 from os.path import abspath, dirname
 
-import numpy as np
 import cv2
-
+import numpy as np
 from olaf import logger, scet_int_from_time
 
 from .beast import beast
@@ -59,11 +56,12 @@ class Solver:
             trace_intermediate_images if trace_intermediate_images else None
 
         logger.debug(f'Median Path: {self.median_path}')
-        logger.debug(f'DB Path:{self.db_path}')
-        logger.debug(f'Config Path:{self.config_path}')
+        logger.debug(f'DB Path: {self.db_path}')
+        logger.debug(f'Config Path: {self.config_path}')
 
     def startup(self):
-        '''Start up sequence. Loads median image, loads config file, and setups database.
+        '''
+        Start up sequence. Loads median image, loads config file, and setups database.
 
         Seperate from :py:func:`__init__` as it take time to setup database.
 
@@ -208,6 +206,11 @@ class Solver:
         '''
         Returns the nearest match from the result of a db_match.
 
+        Raises
+        -------
+        SolverError
+            No matches found.
+
         Return
         ------
         match
@@ -237,8 +240,8 @@ class Solver:
 
         if nearest_match.p_match > self.P_MATCH_THRESH:
             return nearest_match
-        else:
-            return None
+
+        raise SolverError('No match was found')
 
     def _extract_match_orientation(self, match):
         '''
@@ -252,16 +255,22 @@ class Solver:
             ra  - rotation about the z-axis,
             ori - rotation about the camera axis
         '''
+
         match.winner.calc_ori()
         dec = match.winner.get_dec()
         ra = match.winner.get_ra()
         ori = match.winner.get_ori()
         return dec, ra, ori
 
-    def _solve_orientation(self, star_list):
+    def _solve_orientation(self, star_list) -> (float, float, float):
         '''
         Given a list of star positions with brightness values find the
         estimated orientation by search the star database.
+
+        Raises
+        -------
+        SolverError
+            No matches found.
 
         Return
         ------
@@ -269,8 +278,6 @@ class Solver:
             dec - rotation about the y-axis,
             ra  - rotation about the z-axis,
             ori - rotation about the camera axis
-        None
-            match was invalid.
         '''
         img_stars = self._star_list_to_beast_stars_db(star_list)
 
@@ -289,7 +296,8 @@ class Solver:
             match = self._generate_match(lis, img_stars)
 
         if match is None:
-            raise SolverError('Cannot extract orientation from empty match. Solution failed for image!')
+            raise SolverError('Cannot extract orientation from empty match. Solution failed for'
+                              'image!')
 
         orientation = self._extract_match_orientation(match)
 
@@ -299,7 +307,7 @@ class Solver:
 
         return orientation
 
-    def solve(self, orig_img) -> Tuple[float, float, float]:
+    def solve(self, orig_img) -> (float, float, float):
         '''
         Return
         ------

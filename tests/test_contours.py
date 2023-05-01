@@ -1,19 +1,11 @@
 import unittest
-import sys
-import os
-import io
-import traceback
-import uuid
-import time
+from time import time
+from os.path import dirname, abspath
 
 import cv2
 import numpy as np
-from timeit import default_timer as timer
-from os.path import dirname, abspath
-
-from olaf import scet_int_from_time
-
-from oresat_star_tracker.solver import Solver, SolverError
+from olaf import scet_int_from_time, logger
+from oresat_star_tracker.solver import Solver
 
 
 class TestContours(unittest.TestCase):
@@ -22,7 +14,10 @@ class TestContours(unittest.TestCase):
         '''
         Create and startup a solver.
         '''
-        self.test_data_folder = dirname(abspath(__file__)) + "/../../misc/test-data"
+
+        logger.remove()  # remove logging to not mess with unittest output
+
+        self.test_data_folder = dirname(abspath(__file__)) + "/../misc/test-data"
 
         self.config_path = f'{self.test_data_folder}/exp1000/calibration.txt'
         self.median_path = f'{self.test_data_folder}/exp1000/median_image.png'
@@ -51,7 +46,7 @@ class TestContours(unittest.TestCase):
 
         find_matches:
         '''
-        trace_id = scet_int_from_time(time.time())  # Record the timestamp
+        trace_id = scet_int_from_time(time())  # Record the timestamp
 
         solver = Solver(config_path=self.config_path,
                         median_path=self.median_path, blur_kernel_size=5)
@@ -101,7 +96,7 @@ class TestContours(unittest.TestCase):
         """
         Find and mark the stars with a circle. Not all stars are marked.
         """
-        trace_id = scet_int_from_time(time.time())  # Record the timestamp
+        trace_id = scet_int_from_time(time())  # Record the timestamp
 
         solver = Solver(config_path=self.config_path, median_path=self.median_path,
                         trace_intermediate_images=False)
@@ -160,7 +155,7 @@ class TestContours(unittest.TestCase):
         ]
 
         for idx, image_path in enumerate(image_paths):
-            trace_id = scet_int_from_time(time.time())  # Record the timestamp
+            trace_id = scet_int_from_time(time())  # Record the timestamp
             expected_num_contours = expected_contours[idx]
             img_data = cv2.imread(image_path)
             img_grey = solver._preprocess_img(img_data, trace_id=trace_id)

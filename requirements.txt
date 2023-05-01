@@ -1,2 +1,4 @@
-oresat-olaf
+flake8
+numpy
 opencv-python-headless
+oresat-olaf

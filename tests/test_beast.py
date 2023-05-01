@@ -1,11 +1,7 @@
 import unittest
-import sys
-import datetime
-
 from os.path import abspath, dirname
 
 from oresat_star_tracker.beast import beast
-from oresat_star_tracker.solver import Solver, SolverError
 
 
 class TestBeast(unittest.TestCase):
@@ -17,7 +13,7 @@ class TestBeast(unittest.TestCase):
         cls.YEAR = 1991.25
         cls.MEDIAN_IMAGE = None
 
-        data_dir = dirname(abspath(__file__)) + '/../../oresat_star_tracker/data'
+        data_dir = dirname(abspath(__file__)) + '/../oresat_star_tracker/data'
         config_path = f'{data_dir}/configuration.txt'
 
         db_path = f'{data_dir}/hipparcos.dat'
