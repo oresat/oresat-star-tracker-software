@@ -55,7 +55,7 @@ setup(
     },
     install_requires=[
         'oresat-olaf',
-        'opencv-python-headless',
+        'opencv-python-headless==4.6.0.66',
         'swig',
     ],
     entry_points={

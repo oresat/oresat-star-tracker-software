@@ -1,7 +1,7 @@
 build
 flake8
 numpy
-opencv-python-headless
+opencv-python-headless==4.6.0.66
 oresat-olaf
 setuptools
 swig
