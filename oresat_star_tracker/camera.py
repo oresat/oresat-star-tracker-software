@@ -88,33 +88,3 @@ class Camera:
 
         return img
 
-    def capture_and_save(self, file_path: str, color=True, ext='.bmp') -> None:
-        '''Capture an image and save it to disk
-
-        Parameters
-        ----------
-        file_path: str
-            set the new file path
-        color: bool
-            enable color
-        ext: str
-            file extision including the '.'
-
-        Raises
-        ------
-        CameraError
-            failed to capture image
-        '''
-
-        img = self.capture(color)
-
-        ok, data = cv2.imencode(ext, img)
-        if not ok:
-            raise CameraError('encode error')
-
-        try:
-            # Save image
-            with open(file_path, 'wb') as f:
-                f.write(data)
-        except Exception as exc:
-            raise CameraError(exc)
