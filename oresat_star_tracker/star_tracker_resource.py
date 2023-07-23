@@ -120,9 +120,7 @@ class StarTrackerResource(Resource):
         self.orientation_obj.value = int(ori)
 
         self.time_stamp_obj.value = scet
-
-        _, encoded = cv2.imencode('.tiff', data)
-        self.image_obj.value = bytes(encoded)
+        self.image_obj.value = bytes(self._encode(data))
 
         # Send the star tracker data TPDOs
         self.node.send_tpdo(2)
