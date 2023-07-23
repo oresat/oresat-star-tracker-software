@@ -4,6 +4,8 @@ from enum import IntEnum
 from time import time
 
 import cv2
+import numpy as np
+
 from olaf import Resource, logger, new_oresat_file, scet_int_from_time, TimerLoop
 
 from .camera import Camera, CameraError
@@ -55,7 +57,6 @@ class StarTrackerResource(Resource):
         self.data_index = 0x6001
         data_record = self.node.od['Last solve']
 
-        self.capture_index = 0x6002
         self.test_camera_index = 0x7000
 
         # Save references to camera
@@ -74,7 +75,6 @@ class StarTrackerResource(Resource):
         self.node.add_sdo_read_callback(self.test_camera_index, self.on_test_camera_read)
 
         self.node.add_sdo_write_callback(self.state_index, self.on_state_write)
-        self.node.add_sdo_write_callback(self.capture_index, self.on_capture_write)
 
         self.timer_loop.start()
 
@@ -87,63 +87,82 @@ class StarTrackerResource(Resource):
         self.image_obj.value = b''
         self._state = State.OFF
 
-    def _capture(self, ext: str = '.bmp', save: bool = False) -> bytes:
-        try:
-            data = self._camera.capture()
-        except CameraError as exc:
-            logger.critial(exc)
-            self._state = State.ERROR
-
+    # Wrap opencv's encode function to throw exception
+    def _encode(self, data: np.ndarray, ext: str = '.tiff') -> np.ndarray:
         ok, encoded = cv2.imencode(ext, data)
         if not ok:
             raise ValueError(f'{ext} encode error')
+        
+        return encoded
+        
+    def _save_to_cache(self, file_keyword: str, encoded_data: np.ndarray, ext: str = '.tiff'):
+        # save capture
+        name = '/tmp/' + new_oresat_file(file_keyword, ext='.tiff')
+        with open(name, 'wb') as f:
+            f.write(encoded_data)
+        logger.info(f'saved new capture {name}')
 
-        if save:
-            # save capture
-            name = '/tmp/' + new_oresat_file('capture', ext='.bmp')
-            with open(name, 'wb') as f:
-                f.write(encoded)
-            logger.info(f'saved new capture {name}')
+        # add capture to fread cache
+        self.fread_cache.add(name, consume=True)
 
-            # add capture to fread cache
-            self.fread_cache.add(name, consume=True)
-
-        return bytes(encoded)
 
     def _star_track(self):
+        data = self._camera.capture()  # Take the image
+        scet = scet_int_from_time(time())  # Record the timestamp
+
+        # Solver takes a single shot image and returns an orientation
+        dec, ra, ori = self._solver.solve(data)  # run the solver
+        logger.debug(f'solved: ra:{ra}, dec:{dec}, ori:{ori}')
+
+        self.right_ascension_obj.value = int(ra)
+        self.declination_obj.value = int(dec)
+        self.orientation_obj.value = int(ori)
+
+        self.time_stamp_obj.value = scet
+
+        _, encoded = cv2.imencode('.tiff', data)
+        self.image_obj.value = bytes(encoded)
+
+        # Send the star tracker data TPDOs
+        self.node.send_tpdo(2)
+        self.node.send_tpdo(3)
+
+
+    def _camera(self):
+        data = self._camera.capture()  # Take the image
+        #scet = scet_int_from_time(time())  # Record the timestamp
+        self._save_to_cache(scet_int_from_time(time()), self._encode(data)) # USe timestamp to name image
+
+        self._state = State.STANDBY
+        return True
+
+    def _loop(self) -> bool:
         try:
-            data = self._camera.capture()  # Take the image
-            scet = scet_int_from_time(time())  # Record the timestamp
+            match self._state:
+                case State.OFF:
+                    self.node.od['Power control']['Poweroff'].value = True
+                    self.node.od['Power control']['Reset'].value = 0
 
-            # Solver takes a single shot image and returns an orientation
-            dec, ra, ori = self._solver.solve(data)  # run the solver
-            logger.debug(f'solved: ra:{ra}, dec:{dec}, ori:{ori}')
-
-            self.right_ascension_obj.value = int(ra)
-            self.declination_obj.value = int(dec)
-            self.orientation_obj.value = int(ori)
-
-            self.time_stamp_obj.value = scet
-
-            _, encoded = cv2.imencode('.jpg', data)
-            self.image_obj.value = bytes(encoded)
-
-            # Send the star tracker data TPDOs
-            self.node.send_tpdo(2)
-            self.node.send_tpdo(3)
+                case State.BOOT:
+                    pass
+                case State.STANDBY:
+                    pass
+                case State.STAR_TRACKING:
+                    self._star_track()
+                case State.CAMERA:
+                    self._camera()
+                case State.ERROR:
+                    logger.critical('camera in bad state exit star tracker loop')
+                    return False
+                
         except CameraError as exc:
             logger.critial(exc)
             self._state = State.ERROR
         except SolverError as exc:
             logger.error(exc)
-
-    def _loop(self) -> bool:
-        if self._state == State.STAR_TRACKING:
-            self._star_track()
-        elif self._state == State.ERROR:
-            logger.critical('camera in bad state exit star tracker loop')
-            return False
-
+        except ValueError as exc:
+            logger.error(exc)
+               
         return True
 
     def on_state_read(self, index: int, subindex: int):
@@ -151,8 +170,20 @@ class StarTrackerResource(Resource):
             return self._state.value
 
     def on_test_camera_read(self, index: int, subindex: int):
-        if index == self.test_camera_index and subindex == 0x1:
-            return self._capture(ext='.jpg')
+        try:
+            if index == self.test_camera_index and subindex == 0x1:
+                data = self._camera.capture()
+                return bytes(self._encode(data))
+        
+        except CameraError as exc:
+            logger.critial(exc)
+            raise
+        except SolverError as exc:
+            logger.error(exc)
+            raise
+        except ValueError as exc:
+            logger.error(exc)
+            raise
 
     def on_state_write(self, index: int, subindex: int, data):
         if index != self.state_index:
@@ -169,7 +200,3 @@ class StarTrackerResource(Resource):
             self._state = new_state
         else:
             logger.info(f'invalid state change: {self._state.name} -> {new_state.name}')
-
-    def on_capture_write(self, index: int, subindex: int, data):
-        if index == self.capture_index:
-            self._capture(save=True)
