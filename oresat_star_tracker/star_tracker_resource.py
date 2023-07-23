@@ -13,16 +13,19 @@ from .solver import Solver, SolverError
 class State(IntEnum):
     OFF = 0
     BOOT = 1
-    STANDBY = 2
-    STAR_TRACKING = 3
+    UPDATE = 2
+    STANDBY = 3
+    STAR_TRACKING = 4
+    CAMERA = 5
     ERROR = 0xFF
 
 
 STATE_TRANSISTIONS = {
     State.OFF: [State.BOOT],
     State.BOOT: [State.STANDBY],
-    State.STANDBY: [State.STAR_TRACKING],
-    State.STAR_TRACKING: [State.STANDBY, State.ERROR],
+    State.STANDBY: [State.STAR_TRACKING, State.CAMERA, State.OFF],
+    State.STAR_TRACKING: [State.STANDBY, State.CAMERA, State.OFF, State.ERROR],
+    State.CAMERA: [State.STANDBY, State.STAR_TRACKING, State.OFF, State.ERROR],
     State.ERROR: [],
 }
 '''Valid state transistions.'''
