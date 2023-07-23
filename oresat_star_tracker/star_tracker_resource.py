@@ -25,6 +25,7 @@ class State(IntEnum):
 STATE_TRANSISTIONS = {
     State.OFF: [State.BOOT],
     State.BOOT: [State.STANDBY],
+    State.UPDATE: [],
     State.STANDBY: [State.STAR_TRACKING, State.CAMERA, State.OFF],
     State.STAR_TRACKING: [State.STANDBY, State.CAMERA, State.OFF, State.ERROR],
     State.CAMERA: [State.STANDBY, State.STAR_TRACKING, State.OFF, State.ERROR],
@@ -146,6 +147,8 @@ class StarTrackerResource(Resource):
                 case State.BOOT:
                     pass
                 case State.STANDBY:
+                    pass
+                case State.UPDATE:
                     pass
                 case State.STAR_TRACKING:
                     self._star_track()
