@@ -120,7 +120,7 @@ AccessType=ro
 DefaultValue=0x00000000
 
 [OptionalObjects]
-SupportedObjects=88
+SupportedObjects=90
 1=0x1002
 2=0x1003
 3=0x1005
@@ -208,7 +208,9 @@ SupportedObjects=88
 85=0x1F80
 86=0x6000
 87=0x6001
-88=0x7000
+88=0x6002
+89=0x6003
+90=0x7000
 
 [1002]
 ParameterName=Manufacturer status register
@@ -4261,6 +4263,82 @@ ParameterName=Image
 ObjectType=0x07
 DataType=0x000F
 AccessType=ro
+
+[6002]
+ParameterName=Camera Settings
+ObjectType=0x09
+SubNumber=4
+
+[6002sub0]
+ParameterName=Highest sub-index supported
+ObjectType=0x07
+DataType=0x0005
+AccessType=const
+DefaultValue=0x03
+
+;How often to take photos (photos/sec).
+[6002sub1]
+ParameterName=Frequency
+ObjectType=0x07
+DataType=0x0007
+AccessType=rw
+LowLimit=0
+
+;How long to take photos for (sec).
+[6002sub2]
+ParameterName=Time
+ObjectType=0x07
+DataType=0x0007
+AccessType=rw
+DefaultValue=0
+
+;How many photos to take.
+[6002sub3]
+ParameterName=Count
+ObjectType=0x07
+DataType=0x0007
+AccessType=rw
+DefaultValue=0
+
+[6003]
+ParameterName=Filter
+ObjectType=0x09
+SubNumber=5
+
+[6003sub0]
+ParameterName=Highest sub-index supported
+ObjectType=0x07
+DataType=0x0005
+AccessType=const
+DefaultValue=0x04
+
+;Intensity threshold (0-255) for a pixel to be considered bright enough
+[6003sub1]
+ParameterName=Lower Bound
+ObjectType=0x07
+DataType=0x0007
+AccessType=rw
+
+;What percentage of pixels must be above the lower bound
+[6003sub2]
+ParameterName=Lower Percentage
+ObjectType=0x07
+DataType=0x0007
+AccessType=rw
+
+;Intensity threshold (0-255) for a pixel to be considered too bright
+[6003sub3]
+ParameterName=Upper Bound
+ObjectType=0x07
+DataType=0x0007
+AccessType=rw
+
+;What percentage of pixels must be below the upper bound
+[6003sub4]
+ParameterName=Upper Percentage
+ObjectType=0x07
+DataType=0x0007
+AccessType=rw
 
 [7000]
 ParameterName=Test Camera
