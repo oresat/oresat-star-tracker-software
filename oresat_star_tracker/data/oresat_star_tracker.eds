@@ -4186,9 +4186,11 @@ DefaultValue=0x00000008
 ;States
 ;
 ;- 0x00: Off
-;- 0x00: Booting
+;- 0x01: Booting
 ;- 0x02: Standby
-;- 0x03: Star tracking
+;-0x03: Low power
+;- 0x04: Star tracking
+;- 0x05: Camera
 ; - 0xFF: Error (most likely camera is not working correctly)
 [6000]
 ParameterName=Star tracker status
@@ -4255,7 +4257,7 @@ DataType=0x000F
 AccessType=ro
 
 [6002]
-ParameterName=Camera Settings
+ParameterName=Mode settings
 ObjectType=0x09
 SubNumber=4
 
@@ -4266,29 +4268,35 @@ DataType=0x0005
 AccessType=const
 DefaultValue=0x03
 
-;How often to take photos (photos/sec).
+;In Star tracking mode, how long to wait between every capture-solve action (ms)
+;If value is 0, star tracking mode only capture-solves once, then returns to standby mode.
+;
 [6002sub1]
-ParameterName=Frequency
+ParameterName=Star Tracking delay
 ObjectType=0x07
 DataType=0x0007
 AccessType=rw
+DefaultValue=0
 
 ;How long to take photos for (sec).
 [6002sub2]
-ParameterName=Time
+ParameterName=Capture duration
 ObjectType=0x07
 DataType=0x0007
 AccessType=rw
+DefaultValue=0
 
 ;How many photos to take.
 [6002sub3]
-ParameterName=Count
+ParameterName=Image count
 ObjectType=0x07
 DataType=0x0007
 AccessType=rw
+DefaultValue=0
 
+;The settings the app will use to either accept or reject images.
 [6003]
-ParameterName=Filter
+ParameterName=Image filter
 ObjectType=0x09
 SubNumber=5
 
@@ -4301,31 +4309,35 @@ DefaultValue=0x04
 
 ;Intensity threshold (0-255) for a pixel to be considered bright enough
 [6003sub1]
-ParameterName=Lower Bound
+ParameterName=Lower bound
 ObjectType=0x07
-DataType=0x0007
+DataType=0x0005
 AccessType=rw
+DefaultValue=0
 
 ;What percentage of pixels must be above the lower bound
 [6003sub2]
-ParameterName=Lower Percentage
+ParameterName=Lower percentage
 ObjectType=0x07
-DataType=0x0007
+DataType=0x0005
 AccessType=rw
+DefaultValue=0
 
 ;Intensity threshold (0-255) for a pixel to be considered too bright
 [6003sub3]
-ParameterName=Upper Bound
+ParameterName=Upper bound
 ObjectType=0x07
-DataType=0x0007
+DataType=0x0005
 AccessType=rw
+DefaultValue=0
 
 ;What percentage of pixels must be below the upper bound
 [6003sub4]
-ParameterName=Upper Percentage
+ParameterName=Upper percentage
 ObjectType=0x07
-DataType=0x0007
+DataType=0x0005
 AccessType=rw
+DefaultValue=0
 
 [7000]
 ParameterName=Test Camera

@@ -17,17 +17,19 @@ class State(IntEnum):
     OFF = 0
     BOOT = 1
     STANDBY = 2
-    STAR_TRACKING = 3
-    CAMERA = 4
+    LOW_POWER = 3
+    STAR_TRACKING = 4
+    CAMERA = 5
     ERROR = 0xFF
 
 
 STATE_TRANSISTIONS = {
     State.OFF: [State.BOOT],
     State.BOOT: [State.STANDBY],
-    State.STANDBY: [State.STAR_TRACKING, State.CAMERA, State.OFF],
-    State.STAR_TRACKING: [State.STANDBY, State.CAMERA, State.OFF, State.ERROR],
-    State.CAMERA: [State.STANDBY, State.STAR_TRACKING, State.OFF, State.ERROR],
+    State.STANDBY: [State.LOW_POWER, State.STAR_TRACKING, State.CAMERA],
+    State.LOW_POWER: [State.STANDBY, State.STAR_TRACKING, State.CAMERA],
+    State.STAR_TRACKING: [State.STANDBY, State.LOW_POWER, State.CAMERA, State.ERROR],
+    State.CAMERA: [State.STANDBY, State.LOW_POWER, State.STAR_TRACKING, State.ERROR],
     State.ERROR: [],
 }
 '''Valid state transistions.'''
@@ -48,36 +50,40 @@ class StarTrackerResource(Resource):
         self._camera = Camera(self.mock_hw)
         self._solver = Solver()
 
-        self.timer_loop = TimerLoop('star tracker resource', self._loop, self.node.od['Camera Settings']['Frequency'])
+        self.timer_loop = TimerLoop('star tracker resource', self._loop, self.node.od['Mode Settings']['Star tracking delay'])
 
     def on_start(self):
+        # Save references to OD variables
+
+        # State
         self.state_index = 0x6000
         self.state_obj = self.node.od[self.state_index]
         
-        # Save references to last solve record
-        self.data_index = 0x6001
+
+        # Last solve record
+        self.last_solve_index = 0x6001
         last_solve_record = self.node.od['Last solve']
-        self.right_ascension_obj = last_solve_record['Right Ascension']
-        self.declination_obj = last_solve_record['Declination']
-        self.orientation_obj = last_solve_record['Roll']
-        self.time_stamp_obj = last_solve_record['Timestamp']
-        self.image_obj = last_solve_record['Image']
-        self.image_obj.value = b''
+        self.right_ascension_var = last_solve_record['Right Ascension']
+        self.declination_var = last_solve_record['Declination']
+        self.orientation_var = last_solve_record['Roll']
+        self.time_stamp_var = last_solve_record['Timestamp']
+        self.image_domain = last_solve_record['Image']
+        self.image_domain.value = b''
 
-        # Save references to camera settings record
-        self.camera_settings_index = 0x6002
-        camera_settings_record = self.node.od['Camera Settings']
-        self.frequency_obj = camera_settings_record['Frequency']
-        self.time_obj = camera_settings_record['Time']
-        self.count_obj = camera_settings_record['Count']
+        # Mode settings record
+        self.mode_settings_index = 0x6002
+        mode_settings_record = self.node.od['Mode Settings']
+        self.Star_tracking_delay_var = mode_settings_record['Star tracking delay']
+        self.capture_duration_var = mode_settings_record['Capture duration']
+        self.image_count_var = mode_settings_record['Image count']
 
-        # Save references to filter record
-        self.filter_index = 0x6003
-        filter_record = self.node.od['Filter']
-        self.lower_bound_obj = filter_record['Lower Bound']
-        self.lower_percentage_obj = filter_record['Lower Percentage']
-        self.upper_bound_obj = filter_record['Upper Bound']
-        self.upper_percentage_obj = filter_record['Upper Percentage']
+        # Image filter record
+        self.image_filter_index = 0x6003
+        image_filter_record = self.node.od['Image filter']
+        self.lower_bound_var = image_filter_record['Lower bound']
+        self.lower_percentage_var = image_filter_record['Lower percentage']
+        self.upper_bound_var = image_filter_record['Upper bound']
+        self.upper_percentage_var = image_filter_record['Upper percentage']
 
         self.test_camera_index = 0x7000
 
@@ -93,11 +99,11 @@ class StarTrackerResource(Resource):
 
     def on_end(self):
         self.timer_loop.stop()
-        self.right_ascension_obj.value = 0
-        self.declination_obj.value = 0
-        self.orientation_obj.value = 0
-        self.time_stamp_obj.value = 0
-        self.image_obj.value = b''
+        self.right_ascension_var.value = 0
+        self.declination_var.value = 0
+        self.orientation_var.value = 0
+        self.time_stamp_var.value = 0
+        self.image_domain.value = b''
         self._state = State.OFF
 
     # Wrap opencv's encode function to throw exception
@@ -119,35 +125,42 @@ class StarTrackerResource(Resource):
         self.fread_cache.add(name, consume=True)
 
     def _filter(self, img: np.ndarray) -> bool:
-
+        
+        # If both bounds are ignored, return
+        if self.lower_bound_var.value == 0 and self.upper_bound_var.value == 0:
+            return True
+        
         # Convert the BGR image to grayscale
         gray_img = cv2.cvtColor(img, cv2.COLOR_BGR2GRAY)
 
         '''Check that enough pixels are bright enough'''
+        if self.lower_bound_var.value != 0:
         
-        # Threshold the grayscale image for brightness check
-        bright_binary_image = np.where(gray_img > self.lower_bound_obj.value, 1, 0)
-        
-        # Calculate the mean of lit pixels in the original grayscale image
-        lit_mean = np.mean(bright_binary_image)
-        
-        # Check if the mean exceeds the threshold
-        if lit_mean < self.lower_percentage_obj.value:
-            return False
+            # Threshold the grayscale image for brightness check
+            bright_binary_image = np.where(gray_img > self.lower_bound_var.value, 1, 0)
+            
+            # Calculate the mean of lit pixels in the original grayscale image
+            lit_mean = np.mean(bright_binary_image)
+            
+            # Check if the mean exceeds the threshold
+            if lit_mean < self.lower_percentage_var.value:
+                return False
         
         '''Check that enough pixels are dim enough'''
+        if self.upper_bound_var.value != 0:
 
-        # Threshold the grayscale image for dimness check
-        dim_binary_image = np.where(gray_img < self.upper_bound_obj.value, 1, 0)
-        
-        # Calculate the mean of dim pixels in the original grayscale image
-        dim_mean = np.mean(dim_binary_image)
+            # Threshold the grayscale image for dimness check
+            dim_binary_image = np.where(gray_img < self.upper_bound_var.value, 1, 0)
+            
+            # Calculate the mean of dim pixels in the original grayscale image
+            dim_mean = np.mean(dim_binary_image)
 
-        if dim_mean < self.upper_percentage_obj.value:
-            return False
+            if dim_mean < self.upper_percentage_var.value:
+                return False
 
         return True
 
+    # Star track once
     def _star_track(self):
         data = self._camera.capture()  # Take the image
         scet = scet_int_from_time(time())  # Record the timestamp
@@ -156,29 +169,31 @@ class StarTrackerResource(Resource):
         dec, ra, ori = self._solver.solve(data)  # run the solver
         logger.debug(f'solved: ra:{ra}, dec:{dec}, ori:{ori}')
 
-        self.right_ascension_obj.value = int(ra)
-        self.declination_obj.value = int(dec)
-        self.orientation_obj.value = int(ori)
+        self.right_ascension_var.value = int(ra)
+        self.declination_var.value = int(dec)
+        self.orientation_var.value = int(ori)
 
-        self.time_stamp_obj.value = scet
-        self.image_obj.value = bytes(self._encode(data))
+        self.time_stamp_var.value = scet
+        self.image_domain.value = bytes(self._encode(data))
 
         # Send the star tracker data TPDOs
         self.node.send_tpdo(2)
         self.node.send_tpdo(3)
         
         # If the frequency is 0, star track once
-        if self.frequency_obj.value == 0:
+        if self.Star_tracking_delay_var.value == 0:
             self._state = State.STANDBY
 
-
-    def _camera(self):
+    # Use camera for some amount of time
+    def _camera_mode(self):
         img_count = 0
         start_timestamp = time()
 
         # Take images until either time runs out or image count has been reached
-        while time() - start_timestamp < self.camera_settings_record['Time'] and img_count < self.camera_settings_record['Count']:
+        while time() - start_timestamp < self.capture_duration_var.value and img_count < self.image_count_var.value:
          
+            # Todo - possibly add some sort of delay
+
             data = self._camera.capture()  # Take the image
             
             if not self._filter(data):  # Check if image passes filter
@@ -186,6 +201,9 @@ class StarTrackerResource(Resource):
 
             self._save_to_cache(scet_int_from_time(time()), self._encode(data)) # Save image
             img_count += 1
+
+        if img_count == 0:
+            logger.info('No images taken, check camera mode settings and filter')
 
         self._state = State.STANDBY
 
@@ -195,13 +213,13 @@ class StarTrackerResource(Resource):
                 case State.STAR_TRACKING:
                     self._star_track()
                 case State.CAMERA:
-                    self._camera()
+                    self._camera_mode()
                 case State.ERROR:
                     logger.critical('camera in bad state exit star tracker loop')
                     return False
                 
         except CameraError as exc:
-            logger.critial(exc)
+            logger.critical(exc)
             self._state = State.ERROR
         except SolverError as exc:
             logger.error(exc)
@@ -221,7 +239,7 @@ class StarTrackerResource(Resource):
                 return bytes(self._encode(data))
         
         except CameraError as exc:
-            logger.critial(exc)
+            logger.critical(exc)
             raise
         except SolverError as exc:
             logger.error(exc)
@@ -242,13 +260,16 @@ class StarTrackerResource(Resource):
 
         if new_state == self._state or new_state in STATE_TRANSISTIONS[self._state]:
             
-            # When entering off state, turn on low power mode
-            if new_state == State.OFF and self._state != State.OFF:
+            # When entering low power state, turn on low power mode
+            if new_state == State.LOW_POWER and self._state != State.LOW_POWER:
                 set_cpufreq(300)
+                # Todo - Turn off PRUs/sensor
             
-            # When leaving off state, turn off low power mode
-            elif self._state == State.OFF and new_state != State.OFF:
+            # When leaving power state, turn off low power mode
+            elif self._state == State.LOW_POWER and new_state != State.LOW_POWER:
                 set_cpufreq(1000)
+                # Todo - Turn on PRUs/sensor
+
 
             logger.info(f'changing state: {self._state.name} -> {new_state.name}')
             self._state = new_state
