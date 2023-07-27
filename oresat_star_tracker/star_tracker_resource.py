@@ -12,6 +12,21 @@ from olaf.common.cpufreq import set_cpufreq
 from .camera import Camera, CameraError
 from .solver import Solver, SolverError
 
+class Index(IntEnum):
+    STATE = 0x6000
+    LAST_SOLVE = 0x6001
+    MODE_SETTINGS = 0x6002
+    IMAGE_FILTER = 0x6003
+    TEST_CAMERA = 0x7000
+
+
+SUB_INDICES = {
+    Index.STATE: [],
+    Index.LAST_SOLVE: {'Right Ascension': 0x1, 'Declination': 0x2, 'Roll': 0x3, 'Timestamp': 0x4, 'Image': 0x5},
+    Index.MODE_SETTINGS: {'Star tracker delay': 0x1, 'Capture Duration': 0x2, 'Image count': 0x3},
+    Index.IMAGE_FILTER: {'Lower bound': 0x1, 'Lower percentage': 0x2, 'Upper bound': 0x3, 'Upper percentage': 0x4},
+    Index.TEST_CAMERA: {'Capture': 0x1},
+}
 
 class State(IntEnum):
     OFF = 0
@@ -50,19 +65,18 @@ class StarTrackerResource(Resource):
         self._camera = Camera(self.mock_hw)
         self._solver = Solver()
 
-        self.timer_loop = TimerLoop('star tracker resource', self._loop, self.node.od['Mode Settings']['Star tracking delay'])
 
     def on_start(self):
-        # Save references to OD variables
+        '''Save references to OD variables'''
+
+        # Set loop timer to the delay in the OD
+        self.timer_loop = TimerLoop('star tracker resource', self._loop, self.node.od['Mode settings']['Star tracking delay'])
 
         # State
-        self.state_index = 0x6000
-        self.state_obj = self.node.od[self.state_index]
+        self.state_var = self.node.od[Index.STATE]
         
-
         # Last solve record
-        self.last_solve_index = 0x6001
-        last_solve_record = self.node.od['Last solve']
+        last_solve_record = self.node.od[Index.LAST_SOLVE]
         self.right_ascension_var = last_solve_record['Right Ascension']
         self.declination_var = last_solve_record['Declination']
         self.orientation_var = last_solve_record['Roll']
@@ -71,30 +85,25 @@ class StarTrackerResource(Resource):
         self.image_domain.value = b''
 
         # Mode settings record
-        self.mode_settings_index = 0x6002
-        mode_settings_record = self.node.od['Mode Settings']
+        mode_settings_record = self.node.od[Index.MODE_SETTINGS]
         self.Star_tracking_delay_var = mode_settings_record['Star tracking delay']
         self.capture_duration_var = mode_settings_record['Capture duration']
         self.image_count_var = mode_settings_record['Image count']
 
         # Image filter record
-        self.image_filter_index = 0x6003
-        image_filter_record = self.node.od['Image filter']
+        image_filter_record = self.node.od[Index.IMAGE_FILTER]
         self.lower_bound_var = image_filter_record['Lower bound']
         self.lower_percentage_var = image_filter_record['Lower percentage']
         self.upper_bound_var = image_filter_record['Upper bound']
         self.upper_percentage_var = image_filter_record['Upper percentage']
 
-        self.test_camera_index = 0x7000
-
         self._solver.startup()  # DB takes awhile to initialize
+
+        self.node.add_sdo_read_callback(Index.STATE, self.on_state_read)
+        self.node.add_sdo_read_callback(Index.TEST_CAMERA, self.on_test_camera_read)
+        self.node.add_sdo_write_callback(Index.STATE, self.on_state_write)
+
         self._state = State.STANDBY
-
-        self.node.add_sdo_read_callback(self.state_index, self.on_state_read)
-        self.node.add_sdo_read_callback(self.test_camera_index, self.on_test_camera_read)
-
-        self.node.add_sdo_write_callback(self.state_index, self.on_state_write)
-
         self.timer_loop.start()
 
     def on_end(self):
@@ -229,12 +238,11 @@ class StarTrackerResource(Resource):
         return True
 
     def on_state_read(self, index: int, subindex: int):
-        if index == self.state_index:
-            return self._state.value
+        return self._state.value
 
     def on_test_camera_read(self, index: int, subindex: int):
         try:
-            if index == self.test_camera_index and subindex == 0x1:
+            if subindex == SUB_INDICES[Index.TEST_CAMERA]["Capture"]:
                 data = self._camera.capture()
                 return bytes(self._encode(data))
         
@@ -249,9 +257,6 @@ class StarTrackerResource(Resource):
             raise
 
     def on_state_write(self, index: int, subindex: int, data):
-        if index != self.state_index:
-            return
-
         try:
             new_state = State(data)
         except ValueError:
