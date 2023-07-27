@@ -4340,7 +4340,7 @@ AccessType=rw
 DefaultValue=0
 
 [7000]
-ParameterName=Test Camera
+ParameterName=Test camera
 ObjectType=0x09
 SubNumber=2
 
