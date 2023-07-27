@@ -12,6 +12,7 @@ from olaf.common.cpufreq import set_cpufreq
 from .camera import Camera, CameraError
 from .solver import Solver, SolverError
 
+
 class Index(IntEnum):
     STATE = 0x6000
     LAST_SOLVE = 0x6001
@@ -28,6 +29,7 @@ SUB_INDICES = {
     Index.TEST_CAMERA: {'Capture': 0x1},
 }
 
+
 class State(IntEnum):
     OFF = 0
     BOOT = 1
@@ -38,6 +40,7 @@ class State(IntEnum):
     ERROR = 0xFF
 
 
+'''Valid state transistions.'''
 STATE_TRANSISTIONS = {
     State.OFF: [State.BOOT],
     State.BOOT: [State.STANDBY],
@@ -47,7 +50,6 @@ STATE_TRANSISTIONS = {
     State.CAMERA: [State.STANDBY, State.LOW_POWER, State.STAR_TRACKING, State.ERROR],
     State.ERROR: [],
 }
-'''Valid state transistions.'''
 
 
 class StarTrackerResource(Resource):
@@ -183,7 +185,7 @@ class StarTrackerResource(Resource):
         self.orientation_var.value = int(ori)
 
         self.time_stamp_var.value = scet
-        self.image_domain.value = bytes(self._encode(data))
+        self.image_domain.value = bytes(self._encode(data, '.tiff'))
 
         # Send the star tracker data TPDOs
         self.node.send_tpdo(2)
@@ -278,7 +280,6 @@ class StarTrackerResource(Resource):
 
             logger.info(f'changing state: {self._state.name} -> {new_state.name}')
             self._state = new_state
-
             
         else:
             logger.info(f'invalid state change: {self._state.name} -> {new_state.name}')
