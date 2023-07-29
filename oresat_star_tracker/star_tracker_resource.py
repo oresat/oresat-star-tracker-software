@@ -5,6 +5,8 @@ from time import time
 
 import cv2
 import numpy as np
+import tifffile as tiff
+from io import BytesIO
 
 from olaf import Resource, logger, new_oresat_file, scet_int_from_time, TimerLoop
 from olaf.common.cpufreq import set_cpufreq
@@ -124,6 +126,18 @@ class StarTrackerResource(Resource):
             raise ValueError(f'{ext} encode error')
         
         return encoded
+    
+    def _encode_compress_tiff(self, data: np.ndarray, meta: dict = None) -> np.ndarray:
+        buff = BytesIO()
+        tiff.imwrite(buff, data, dtype=data.dtype, metadata=meta, compression='zstd', compressionargs={'level': 1})
+
+        # Get the encoded TIFF data from the memory file
+        encoded_data = buff.getvalue()
+
+        # Convert the encoded TIFF data to a NumPy array
+        encoded_data = np.frombuffer(encoded_data, dtype=np.uint8)
+
+        return encoded_data
         
     def _save_to_cache(self, file_keyword: str, encoded_data: np.ndarray, ext: str = '.tiff'):
         # save capture
@@ -185,7 +199,7 @@ class StarTrackerResource(Resource):
         self.orientation_var.value = int(ori)
 
         self.time_stamp_var.value = scet
-        self.image_domain.value = bytes(self._encode(data, '.tiff'))
+        self.image_domain.value = bytes(self._encode_compress_tiff(data))
 
         # Send the star tracker data TPDOs
         self.node.send_tpdo(2)
@@ -210,7 +224,7 @@ class StarTrackerResource(Resource):
             if not self._filter(data):  # Check if image passes filter
                 continue
 
-            self._save_to_cache(scet_int_from_time(time()), self._encode(data)) # Save image
+            self._save_to_cache(scet_int_from_time(time()), self._encode_compress_tiff(data)) # Save image
             img_count += 1
 
         if img_count == 0:
@@ -246,7 +260,7 @@ class StarTrackerResource(Resource):
         try:
             if subindex == SUB_INDICES[Index.TEST_CAMERA]["Capture"]:
                 data = self._camera.capture()
-                return bytes(self._encode(data))
+                return bytes(self._encode(data, '.jpg'))
         
         except CameraError as exc:
             logger.critical(exc)
