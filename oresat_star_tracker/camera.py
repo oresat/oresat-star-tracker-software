@@ -22,14 +22,7 @@ class Camera:
             self._capture_path = f'{dirname(abspath(__file__))}/data/mock.bmp'
         else:
             self._capture_path = '/dev/prucam'
-
-    def power_on(self) -> None:
-        '''Turn on the camera'''
-
-        if self._mock:
-            return
-
-        self.image_size = self.read_image_size()
+            self.image_size = self.read_image_size()
 
     def read_image_size(self):
         '''Read dimensions of image from the camera'''
