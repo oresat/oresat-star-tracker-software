@@ -9,7 +9,7 @@ import tifffile as tiff
 from io import BytesIO
 
 from olaf import Resource, logger, new_oresat_file, scet_int_from_time, TimerLoop
-from olaf.common.cpufreq import set_cpufreq
+from olaf.common.cpufreq import set_cpufreq_gov
 
 from .camera import Camera, CameraError
 from .solver import Solver, SolverError
@@ -283,12 +283,12 @@ class StarTrackerResource(Resource):
             
             # When entering low power state, turn on low power mode
             if new_state == State.LOW_POWER and self._state != State.LOW_POWER:
-                set_cpufreq(300)
+                set_cpufreq_gov('powersave')
                 # Todo - Turn off PRUs/sensor
             
             # When leaving power state, turn off low power mode
             elif self._state == State.LOW_POWER and new_state != State.LOW_POWER:
-                set_cpufreq(1000)
+                set_cpufreq_gov('performace')
                 # Todo - Turn on PRUs/sensor
 
 
