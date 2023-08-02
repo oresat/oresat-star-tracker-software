@@ -234,14 +234,13 @@ class StarTrackerResource(Resource):
 
     def _loop(self) -> bool:
         try:
-            match self._state:
-                case State.STAR_TRACKING:
-                    self._star_track()
-                case State.CAMERA:
-                    self._camera_mode()
-                case State.ERROR:
-                    logger.critical('camera in bad state exit star tracker loop')
-                    return False
+            if self._state == State.STAR_TRACKING:
+                self._star_track()
+            elif self._state == State.CAMERA:
+                self._camera_mode()
+            elif self._state == State.ERROR:
+                logger.critical('camera in bad state exit star tracker loop')
+                return False
                 
         except CameraError as exc:
             logger.critical(exc)
