@@ -7,9 +7,9 @@ from olaf import app, rest_api, olaf_setup, olaf_run, render_olaf_template
 from .star_tracker_resource import StarTrackerResource
 
 
-@rest_api.app.route('/camera')
+@rest_api.app.route('/one-shot')
 def camera_template():
-    return render_olaf_template('camera.html', name='Camera')
+    return render_olaf_template('one_shot.html', name='One Shot')
 
 
 @rest_api.app.route('/star-track')
@@ -26,7 +26,7 @@ def main():
 
     app.add_resource(StarTrackerResource(mock_camera))
 
-    rest_api.add_template(f'{path}/templates/camera.html')
+    rest_api.add_template(f'{path}/templates/one_shot.html')
     rest_api.add_template(f'{path}/templates/star_track.html')
 
     olaf_run()
