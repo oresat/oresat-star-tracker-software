@@ -165,7 +165,7 @@ class StarTrackerResource(Resource):
             bright_binary_image = np.where(gray_img > self.lower_bound_var.value, 1, 0)
             
             # Calculate the mean of lit pixels in the original grayscale image
-            lit_mean = np.mean(bright_binary_image)
+            lit_mean = np.mean(bright_binary_image) * 100
             
             # Check if the mean exceeds the threshold
             if lit_mean < self.lower_percentage_var.value:
@@ -178,7 +178,7 @@ class StarTrackerResource(Resource):
             dim_binary_image = np.where(gray_img < self.upper_bound_var.value, 1, 0)
             
             # Calculate the mean of dim pixels in the original grayscale image
-            dim_mean = np.mean(dim_binary_image)
+            dim_mean = np.mean(dim_binary_image) * 100
 
             if dim_mean < self.upper_percentage_var.value:
                 return False
@@ -230,7 +230,9 @@ class StarTrackerResource(Resource):
         if img_count == 0:
             logger.info('No images taken, check camera mode settings and filter')
 
+        logger.info(f'changing state: {self._state.name} -> {State.STANDBY.name}')
         self._state = State.STANDBY
+
 
     def _loop(self) -> bool:
         try:
