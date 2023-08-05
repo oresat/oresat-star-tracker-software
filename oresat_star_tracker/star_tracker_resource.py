@@ -147,7 +147,7 @@ class StarTrackerResource(Resource):
         logger.info(f'saved new capture {name}')
 
         # add capture to fread cache
-        self.fread_cache.add(name, consume=True)
+        self.node.fread_cache.add(name, consume=True)
 
     def _filter(self, img: np.ndarray) -> bool:
         
@@ -223,8 +223,8 @@ class StarTrackerResource(Resource):
             
             if not self._filter(data):  # Check if image passes filter
                 continue
-
-            self._save_to_cache(scet_int_from_time(time()), self._encode_compress_tiff(data)) # Save image
+            
+            self._save_to_cache('img', self._encode_compress_tiff(data)) # Save image
             img_count += 1
 
         if img_count == 0:
