@@ -4,7 +4,7 @@ import os
 
 from olaf import app, rest_api, olaf_setup, olaf_run, render_olaf_template
 
-from .star_tracker_resource import StarTrackerResource
+from .star_tracker_service import StarTrackerService
 
 
 @rest_api.app.route('/one-shot')
@@ -24,7 +24,7 @@ def main():
     mock_args = [i.lower() for i in args.mock_hw]
     mock_camera = 'camera' in mock_args or 'all' in mock_args
 
-    app.add_resource(StarTrackerResource(mock_camera))
+    app.add_service(StarTrackerService(mock_camera))
 
     rest_api.add_template(f'{path}/templates/one_shot.html')
     rest_api.add_template(f'{path}/templates/star_track.html')

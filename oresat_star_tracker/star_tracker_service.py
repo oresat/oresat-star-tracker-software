@@ -8,7 +8,7 @@ import numpy as np
 import tifffile as tiff
 from io import BytesIO
 
-from olaf import Resource, logger, new_oresat_file, scet_int_from_time, TimerLoop
+from olaf import Service, logger, new_oresat_file, scet_int_from_time, TimerLoop
 from olaf.common.cpufreq import set_cpufreq_gov
 
 from .camera import Camera, CameraError
@@ -54,7 +54,7 @@ STATE_TRANSISTIONS = {
 }
 
 
-class StarTrackerResource(Resource):
+class StarTrackerService(Service):
     def __init__(self, mock_hw: bool = False):
         super().__init__()
 
@@ -72,9 +72,6 @@ class StarTrackerResource(Resource):
 
     def on_start(self):
         '''Save references to OD variables'''
-
-        # Set loop timer to the delay in the OD
-        self.timer_loop = TimerLoop('star tracker resource', self._loop, self.node.od['Mode settings']['Star tracking delay'])
 
         # State
         self.state_var = self.node.od[Index.STATE]
@@ -108,10 +105,8 @@ class StarTrackerResource(Resource):
         self.node.add_sdo_write_callback(Index.STATE, self.on_state_write)
 
         self._state = State.STANDBY
-        self.timer_loop.start()
 
-    def on_end(self):
-        self.timer_loop.stop()
+    def on_stop(self):
         self.right_ascension_var.value = 0
         self.declination_var.value = 0
         self.orientation_var.value = 0
@@ -234,25 +229,38 @@ class StarTrackerResource(Resource):
         self._state = State.STANDBY
 
 
-    def _loop(self) -> bool:
-        try:
-            if self._state == State.STAR_TRACKING:
-                self._star_track()
-            elif self._state == State.CAMERA:
-                self._camera_mode()
-            elif self._state == State.ERROR:
-                logger.critical('camera in bad state exit star tracker loop')
-                return False
-                
-        except CameraError as exc:
-            logger.critical(exc)
+    def on_loop(self):
+        if self._state == State.STAR_TRACKING:
+            self._star_track()
+        elif self._state == State.CAMERA:
+            self._camera_mode()
+        elif self._state == State.ERROR:
+            logger.critical('camera in bad state exit star tracker loop')
+            return
+        
+        # Sleep for time specified in OD
+        self.sleep(self.node.od['Mode settings']['Star tracking delay'].value)
+
+    def on_loop_error(self, error: Exception):
+        if error is CameraError:
+            logger.critical(error)
             self._state = State.ERROR
-        except SolverError as exc:
-            logger.error(exc)
-        except ValueError as exc:
-            logger.error(exc)
-               
-        return True
+        elif error is SolverError:
+            logger.error(error)
+        elif error is ValueError:
+            logger.error(error)
+        else:
+            logger.critical('Unkown error')
+            self._state = State.ERROR
+            return
+
+    def on_stop(self) -> None:
+            '''
+            Called when the program stops and if the services fails. Should be used to stop any
+            hardware the service controls.
+            '''
+
+            pass
 
     def on_state_read(self, index: int, subindex: int):
         return self._state.value
@@ -289,7 +297,7 @@ class StarTrackerResource(Resource):
             
             # When leaving power state, turn off low power mode
             elif self._state == State.LOW_POWER and new_state != State.LOW_POWER:
-                set_cpufreq_gov('performace')
+                set_cpufreq_gov('performance')
                 # Todo - Turn on PRUs/sensor
 
 
