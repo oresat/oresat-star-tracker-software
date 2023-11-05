@@ -10,7 +10,7 @@ BEAST_EXT = Extension(
         "oresat_star_tracker/beast/beast.i",
     ],
     include_dirs=[
-        "oresat_star_tracker",
+        "oresat_star_tracker/beast",
     ],
     extra_compile_args=[
         "-std=c++11",

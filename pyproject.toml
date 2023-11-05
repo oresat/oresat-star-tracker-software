@@ -39,7 +39,7 @@ version = {attr = "oresat_star_tracker.__version__"}
 exclude = ["docs*", "tests*"]
 
 [tool.setuptools.package-data]
-"*" = ["*.html", "*.so"]
+"*" = ["*.html", "*.so", "*.h", "*.i", "Makefile"]
 
 [tool.black]
 line_length = 100
