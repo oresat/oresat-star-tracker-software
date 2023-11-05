@@ -3,31 +3,29 @@
 import os
 
 from olaf import app, rest_api, olaf_setup, olaf_run, render_olaf_template
+from oresat_configs import NodeId
 
+from . import __version__
 from .star_tracker_service import StarTrackerService
 
 
-@rest_api.app.route('/one-shot')
-def camera_template():
-    return render_olaf_template('one_shot.html', name='One Shot')
-
-
-@rest_api.app.route('/star-track')
+@rest_api.app.route('/star-tracker')
 def star_tracker_template():
-    return render_olaf_template('star_track.html', name='Star Track')
+    return render_olaf_template('star_tracker.html', name='Star Tracker')
 
 
 def main():
     path = os.path.dirname(os.path.abspath(__file__))
 
-    args = olaf_setup(f'{path}/data/oresat_star_tracker.dcf')
+    args, _ = olaf_setup(NodeId.STAR_TRACKER_1)
     mock_args = [i.lower() for i in args.mock_hw]
     mock_camera = 'camera' in mock_args or 'all' in mock_args
 
+    app.od["versions"]["sw_version"].value = __version__
+
     app.add_service(StarTrackerService(mock_camera))
 
-    rest_api.add_template(f'{path}/templates/one_shot.html')
-    rest_api.add_template(f'{path}/templates/star_track.html')
+    rest_api.add_template(f'{path}/templates/star_tracker.html')
 
     olaf_run()
 

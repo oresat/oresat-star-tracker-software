@@ -1,0 +1,237 @@
+{% extends "base.html" %}
+
+{% block content %}
+  <style>
+    table {
+      font-family: arial, sans-serif;
+      border-collapse: collapse;
+      margin-left: auto;
+      margin-right: auto;
+      width: 80%;
+    }
+    td, th {
+      border: 1px solid #dddddd;
+      text-align: left;
+      padding: 8px;
+      width: 50%;
+    }
+    #grid {
+      display: grid;
+      grid-template-columns: 25% 50% 25%;
+    }
+    #gridColum {
+      text-align: center;
+    }
+    #image {
+      width: 90%;
+    }
+  </style>
+  <div id="grid">
+    <div id="gridColumn">
+      <!--only here for spacing-->
+    </div>
+    <div id="gridColumn">
+      <!--the "//:0" is a basically the way to make any empty img-->
+      <img id="image" src="//:0" alt="capture"/>
+      <br/>
+      <button onclick="downloadRawImage()">Download Raw Image</button>
+      <button onclick="downloadDisplayImage()">Download Display Image</button>
+    </div>
+    <div id="gridColumn">
+      <h4>State Machine</h4>
+      <table>
+        <tr>
+          <td>Status</td>
+          <td><span id="state">OFF</span></td>
+        </tr>
+        <tr>
+          <td>Capture Delay</td>
+          <td><span id="captureDelay">1000</span> ms</td>
+        </tr>
+        <tr>
+          <td>Capture Amount</td>
+          <td><span id="captureAmount">1</span></td>
+        </tr>
+        <tr>
+          <td>Save Captures</td>
+          <td><span id="saveCaptures">TRUE</span></td>
+        </tr>
+      </table>
+      <br />
+      <div>
+        <button id="changeSettings">Change Settings</button>
+      </div>
+    </div>
+  </div>
+  <dialog id="favDialog">
+    <form method="dialog">
+      <p>
+        <b>Change Settings</b>
+        <br>
+        <br>
+        <b>State Machine</b>
+        <br>
+        <br>
+        <label for="newState">State:</label>
+        <select id="newState" name="newState">
+          <option id="OFF" disabled>OFF</option>
+          <option id="STANDBY">STANDBY</option>
+          <option id="LOW_POWER" disabled>LOW_POWER</option>
+          <option id="STAR_TRACK">STAR_TRACK</option>
+          <option id="CAPTURE_ONLY">CAPTURE_ONLY</option>
+        </select>
+        <br>
+        <br>
+        <label for="newCapDelay">Capture Delay (ms):</label>
+        <input id="newCapDelay" type="number" step="1">
+        <br>
+        <br>
+        <label for="newCapAmount">Capture Amount:</label>
+        <input id="newCapAmount" type="number" step="1">
+        <br>
+        <br>
+        <label for="newCapSave">Save Captures:</label>
+        <input id="newCapSave" type="checkbox">
+      </p>
+      <div>
+        <button id="cancel" type="reset">Cancel</button>
+        <button id="submit" type="submit">Set</button>
+      </div>
+    </form>
+  </dialog>
+  <script>
+    let lastDisplayImage;
+    const settingsButton = document.getElementById("changeSettings");
+    const cancelButton = document.getElementById("cancel");
+    const submitButton = document.getElementById("submit");
+    const dialog = document.getElementById("favDialog");
+    dialog.returnValue = "cancel";
+
+    async function openCheck(dialog) {
+      if (dialog.open) {
+        const stateObj = await readValue("status", null);
+        const capDelayObj = await readValue("capture", "delay");
+        const capAmountObj = await readValue("capture", "num_of_images");
+        const capSaveObj = await readValue("capture", "save_captures");
+        const state = stateObj.value;
+        const stateStr = STATES[state];
+
+        document.getElementById("newState").selectedIndex = state - 1;
+        document.getElementById("newCapSave").checked = capSaveObj.value;
+        document.getElementById("newCapDelay").value = capDelayObj.value;
+        document.getElementById("newCapAmount").value = capAmountObj.value;
+      } else if (dialog.returnValue === "submit") {
+        const newState = document.getElementById("newState").selectedOptions[0].id;
+        const newStateInt = Object.keys(STATES).find(key => STATES[key] === newState);
+        writeValue("status", null, newStateInt);
+        writeValue("capture", "delay", parseInt(document.getElementById("newCapDelay").value));
+        writeValue("capture", "num_of_images", parseInt(document.getElementById("newCapAmount").value));
+        writeValue("capture", "save_captures", document.getElementById("newCapSave").checked);
+      }
+    }
+
+    /** Update button opens a modal dialog */
+    settingsButton.addEventListener("click", () => {
+      dialog.showModal();
+      openCheck(dialog);
+    });
+
+    /** Form cancel button closes the dialog box */
+    cancelButton.addEventListener("click", () => {
+      dialog.close("cancel");
+      openCheck(dialog);
+    });
+
+    /** Form submit button closes the dialog box */
+    submitButton.addEventListener("click", () => {
+      dialog.close("submit");
+      openCheck(dialog);
+    });
+
+    /** Let the user download the raw image */
+    async function downloadRawImage() {
+      let obj = await readValue("capture", "last_capture");
+      const unixTime = Math.floor(Date.now() / 1000);
+      downloadFile(`star-tracker_capture_${unixTime}.raw`, obj.value);
+    }
+
+    /** Let the user download the display image */
+    function downloadDisplayImage() {
+      const unixTime = Math.floor(Date.now() / 1000);
+      downloadFile(`star-tracker_capture_${unixTime}.jpg`, lastDisplayImage);
+    }
+
+    /** Let the user download a file */
+    function downloadFile(filename, data) {
+      const byteCharacters = atob(data);
+      const byteArrays = [];
+      const sliceSize = 512;
+
+      for (let offset = 0; offset < byteCharacters.length; offset += sliceSize) {
+        const slice = byteCharacters.slice(offset, offset + sliceSize);
+
+        const byteNumbers = new Array(slice.length);
+        for (let i = 0; i < slice.length; i++) {
+          byteNumbers[i] = slice.charCodeAt(i);
+        }
+
+        const byteArray = new Uint8Array(byteNumbers);
+        byteArrays.push(byteArray);
+      }
+
+      const blob = new Blob(byteArrays, {
+        type: "application/octet-stream",
+      });
+
+      const a = document.createElement("a");
+      a.download = filename;
+      a.href = window.URL.createObjectURL(blob);
+      a.click();
+    }
+
+    const STATES = {
+      0: "OFF",
+      1: "BOOT",
+      2: "STANDBY",
+      3: "LOW_POWER",
+      4: "STAR_TRACK",
+      5: "CAPTURE_ONLY",
+      255: "ERROR",
+    };
+    let lastCapture = 0;
+
+    /** Update all info / data being displayed */
+    async function update() {
+      let obj;
+
+      // get Star Tracker state
+      obj = await readValue("status", null);
+      let state = STATES[obj.value];
+      document.getElementById("state").innerHTML = state;
+      obj = await readValue("capture", "delay");
+      document.getElementById("captureDelay").innerHTML = obj.value;
+      obj = await readValue("capture", "num_of_images");
+      document.getElementById("captureAmount").innerHTML = obj.value;
+      obj = await readValue("capture", "save_captures");
+      if (obj.value === true) {
+        document.getElementById("saveCaptures").innerHTML = "TRUE";
+      } else {
+        document.getElementById("saveCaptures").innerHTML = "FALSE";
+      }
+
+      // get last image capture for display
+      obj = await readValue("capture", "last_capture_time");
+      if (obj.value != lastCapture) {
+        lastCapture = obj.value;
+        obj = await readValue("capture", "last_display_image");
+        lastDisplayImage = obj.value;
+        document.getElementById("image").src = "data:image/jpg;base64, " + obj.value;
+      }
+    }
+
+    update();
+    const interval = setInterval(function() {
+      update();
+    }, 2500);
+  </script>
+{% endblock %}
