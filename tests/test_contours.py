@@ -1,3 +1,5 @@
+"""Test contours?"""
+
 import unittest
 from os.path import abspath, dirname
 from time import time
@@ -10,6 +12,8 @@ from oresat_star_tracker.solver import Solver
 
 
 class TestContours(unittest.TestCase):
+    """Test contours?"""
+
     def setUp(self):
         """
         Create and startup a solver.
@@ -22,7 +26,10 @@ class TestContours(unittest.TestCase):
         self.config_path = f"{self.test_data_folder}/exp1000/calibration.txt"
         self.median_path = f"{self.test_data_folder}/exp1000/median_image.png"
 
-    def assert_is_valid_solution(self, solution, expected_solution):
+    def assert_is_valid_solution(
+        self, solution: tuple[float, float, float], expected_solution: tuple[float, float, float]
+    ):
+        """Test if a solution is valid."""
         dec, ra, ori = solution
         expected_dec, expected_ra, expected_ori = expected_solution
 
@@ -86,10 +93,10 @@ class TestContours(unittest.TestCase):
         for idx, image_path in enumerate(image_paths):
             img_data = cv2.imread(image_path)
 
-            img_grey = solver._preprocess_img(img_data)
+            img_grey = solver._preprocess_img(img_data, trace_id)
 
             # find the countours
-            contours = solver._find_contours(img_grey, trace_id=trace_id)
+            contours = solver._find_contours(img_grey, trace_id)
 
             # Create star list.
             star_list = solver._find_stars(img_grey, contours)
@@ -127,15 +134,15 @@ class TestContours(unittest.TestCase):
 
         for idx, image_path in enumerate(image_paths):
             img_data = cv2.imread(image_path)
-            img_grey = solver._preprocess_img(img_data)
+            img_grey = solver._preprocess_img(img_data, trace_id)
             img_height, img_width = img_grey.shape
-            contours = solver._find_contours(img_grey, trace_id=trace_id)
+            contours = solver._find_contours(img_grey, trace_id)
 
             star_list = solver._find_stars(img_grey, contours)
-            num_stars = star_list.shape[0]
+            num_stars = len(star_list)
             self.assertEqual(num_stars, expected_star_counts[idx])
 
-            for idx in range(star_list.shape[0]):
+            for idx in range(num_stars):
                 star = star_list[idx]
                 cx, cy, _ = int(star[0]), int(star[1]), int(star[2])
                 self.assertTrue(0 <= cx < img_width)
@@ -165,6 +172,6 @@ class TestContours(unittest.TestCase):
             trace_id = scet_int_from_time(time())  # Record the timestamp
             expected_num_contours = expected_contours[idx]
             img_data = cv2.imread(image_path)
-            img_grey = solver._preprocess_img(img_data, trace_id=trace_id)
-            contours = solver._find_contours(img_grey, trace_id=trace_id)
+            img_grey = solver._preprocess_img(img_data, trace_id)
+            contours = solver._find_contours(img_grey, trace_id)
             self.assertEqual(expected_num_contours, len(contours))

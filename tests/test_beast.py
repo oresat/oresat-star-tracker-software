@@ -1,3 +1,5 @@
+"""Test beast module."""
+
 import unittest
 from os.path import abspath, dirname
 
@@ -5,8 +7,10 @@ from oresat_star_tracker.beast import beast
 
 
 class TestBeast(unittest.TestCase):
+    """Test beast module."""
+
     @classmethod
-    def beast_setup(cls):
+    def setUpClass(cls):
         # Prepare constants
         cls.YEAR = 1991.25
         cls.MEDIAN_IMAGE = None
@@ -44,13 +48,10 @@ class TestBeast(unittest.TestCase):
         # Set up constellation database, Duration 1 second(s)
         cls.C_DB = beast.constellation_db(cls.S_FILTERED, 2 + beast.cvar.DB_REDUNDANCY, 0)
 
-    @classmethod
-    def setUpClass(cls):
-        """ """
-        cls.beast_setup()
-
     def test_constellation_db_successfully_constructed(self):
+        """Test the constellation db was constructed."""
         self.assertTrue(TestBeast.C_DB is not None, "constellation database was not constructed.")
 
     def test_star_db_successfully_constructed(self):
+        """Test the star db was constructed."""
         self.assertTrue(TestBeast.S_DB is not None, "star database was not constructed.")

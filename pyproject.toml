@@ -47,7 +47,7 @@ line_length = 100
 
 [tool.pylama]
 format = "pylint"
-skip = "*/.tox/*,*/.env/,*/.git/*,*/.github/*,*/build/*"
+skip = "*/.tox/*,*/.env/,*/.git/*,*/.github/*,*/build/*,*/beast/*"
 linters = "pycodestyle,pyflakes,pylint,mccabe,mypy,radon"
 # C0103:    Arguments are not snake_case naming style or too short
 # E203:     Whitespace before ':' (black does this)
@@ -56,12 +56,28 @@ linters = "pycodestyle,pyflakes,pylint,mccabe,mypy,radon"
 # R901:     Too complex
 # R0913:    Too many arguments
 # R0914:    Too many local variables
-ignore = "C0103,E203,W0613,R0902,R901,R0913,R0914"
+# W1514:    Using open wth explicitly specifying an encoding
+# W0707:    Consider explicitly re-raising
+ignore = "C0103,E203,W0613,R0902,R901,R0913,R0914,E1101,W1514,W0707"
 max_line_length = 100
+
+[[tool.pylama.files]]
+path = "*/__init__.py"
+# W0611:    Imported but unused
+# C0114:    Missing module docstring
+ignore = "W0611,C0114"
+
+[[tool.pylama.files]]
+path = "tests/*"
+# W0212:    Access to a protected member of a class
+ignore = "W0212"
 
 [[tool.mypy.overrides]]
 module = "canopen,olaf,tifffile,oresat_configs,cv2"
 ignore_missing_imports = true
+
+[tool.pylint.main]
+extension-pkg-whitelist = ["cv2"]
 
 [tool.isort]
 profile = "black"

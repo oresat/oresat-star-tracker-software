@@ -11,10 +11,12 @@ from .star_tracker_service import StarTrackerService
 
 @rest_api.app.route("/star-tracker")
 def star_tracker_template():
+    """Render the star tracker web page."""
     return render_olaf_template("star_tracker.html", name="Star Tracker")
 
 
 def main():
+    """Star Tracker OLAF app main."""
     path = os.path.dirname(os.path.abspath(__file__))
 
     args, _ = olaf_setup(NodeId.STAR_TRACKER_1)

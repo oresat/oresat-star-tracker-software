@@ -1,3 +1,5 @@
+"""Star tracker AR013x camera"""
+
 import io
 import os
 from os.path import abspath, dirname
@@ -30,17 +32,18 @@ class Camera:
         y_size = self.read_context_setting("y_size")
         return (y_size, x_size)
 
-    def read_context_setting(self, name):
+    def read_context_setting(self, name: str) -> int:
         """'Read a context setting."""
 
         context_path = "/sys/devices/platform/prudev/context_settings"
         try:
             with open(f"{context_path}/{name}", "r") as f:
-                return int(f.read())
+                value = int(f.read())
         except FileNotFoundError:
             raise CameraError(f"no sysfs attribute {name} for camera")
+        return value
 
-    def capture(self, color=True) -> np.ndarray:
+    def capture(self, color: bool = True) -> np.ndarray:
         """Capture an image
 
         Parameters

@@ -1,3 +1,5 @@
+"""Test the Solver."""
+
 import unittest
 from os.path import abspath, dirname
 from time import time
@@ -10,6 +12,8 @@ from oresat_star_tracker.solver import Solver, SolverError
 
 
 class TestSolver(unittest.TestCase):
+    """Test the Solver."""
+
     def setUp(self):
         """
         Create and startup a solver.
@@ -18,15 +22,21 @@ class TestSolver(unittest.TestCase):
 
         self.test_data_folder = dirname(abspath(__file__)) + "/../misc/test-data"
 
-    def assert_image_matches_solution(self, image_path, solution, expect_to_fail=False):
+    def assert_image_matches_solution(
+        self,
+        solver: Solver,
+        image_path: str,
+        solution: tuple[float, float, float],
+        expect_to_fail: bool = False,
+    ):
+        """Test the image matches the expected solution."""
         img_data = cv2.imread(image_path)
 
-        if (not solution) or expect_to_fail:
-            self.assertRaises(SolverError, self._solver.solve, img_data)
-            return None, None, None
+        if not solution or expect_to_fail:
+            self.assertRaises(SolverError, solver.solve, img_data)
         else:
             # Run the solver
-            dec, ra, ori = self._solver.solve(img_data)
+            dec, ra, ori = solver.solve(img_data)
             # print(f'dec: {dec}, ra:{ra}, ori:{ori}')
             if solution:
                 expected_dec, expected_ra, expected_ori = solution
@@ -52,8 +62,6 @@ class TestSolver(unittest.TestCase):
                     f"ori {ori} expected:{expected_ori} is not close",
                 )
 
-            return dec, ra, ori
-
     def test_exp1000(self):
         """
         Test solution of images are solved to close approximate of last known solution.
@@ -61,12 +69,12 @@ class TestSolver(unittest.TestCase):
         config_path = f"{self.test_data_folder}/exp1000/calibration.txt"
         median_path = f"{self.test_data_folder}/exp1000/median_image.png"
 
-        self._solver = Solver(config_path=config_path, median_path=median_path, blur_kernel_size=5)
-        self._solver.startup()
+        solver = Solver(config_path=config_path, median_path=median_path, blur_kernel_size=5)
+        solver.startup()
 
-        # TODO: Find root cause as to why the expected solutions are not being
-        #       produced by solver.
-        #
+        # Find root cause as to why the expected solutions are not being
+        # produced by solver.
+
         # dec, ra, ori
         expected_solutions = [
             [74.798045847, 271.257311164, 84.470568],
@@ -98,7 +106,7 @@ class TestSolver(unittest.TestCase):
             expect_to_fail = idx in failing_indexes
             start = time()
             # Run the solver
-            self.assert_image_matches_solution(image_path, solution, expect_to_fail)
+            self.assert_image_matches_solution(solver, image_path, solution, expect_to_fail)
             stop = time()
             duration = stop - start
             self.assertTrue(duration < 10)
@@ -110,8 +118,8 @@ class TestSolver(unittest.TestCase):
         config_path = f"{self.test_data_folder}/exp2500/calibration.txt"
         median_path = f"{self.test_data_folder}/exp2500/median_image.png"
 
-        self._solver = Solver(config_path=config_path, median_path=median_path, blur_kernel_size=10)
-        self._solver.startup()
+        solver = Solver(config_path=config_path, median_path=median_path, blur_kernel_size=10)
+        solver.startup()
 
         # dec, ra, ori
         expected_solutions = [
@@ -141,7 +149,7 @@ class TestSolver(unittest.TestCase):
             expect_to_fail = idx in failing_indexes
             # Run the solver
             start = time()
-            self.assert_image_matches_solution(image_path, solution, expect_to_fail)
+            self.assert_image_matches_solution(solver, image_path, solution, expect_to_fail)
             stop = time()
             duration = stop - start
             self.assertTrue(duration < 10)

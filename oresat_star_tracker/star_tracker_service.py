@@ -4,11 +4,11 @@ from enum import IntEnum
 from io import BytesIO
 from time import time
 
+import canopen
 import cv2
 import numpy as np
 import tifffile as tiff
-from olaf import Service, logger, new_oresat_file, scet_int_from_time
-from olaf.common.cpufreq import set_cpufreq_gov
+from olaf import Service, logger, new_oresat_file  # , set_cpufreq_gov
 
 from .camera import Camera, CameraError
 from .solver import Solver, SolverError
@@ -33,7 +33,7 @@ STATE_TRANSISTIONS = {
     State.LOW_POWER: [State.STANDBY, State.STAR_TRACK, State.CAPTURE_ONLY],
     State.STAR_TRACK: [State.STANDBY, State.LOW_POWER, State.CAPTURE_ONLY, State.ERROR],
     State.CAPTURE_ONLY: [State.STANDBY, State.LOW_POWER, State.STAR_TRACK, State.ERROR],
-    State.ERROR: [],
+    State.ERROR: [State.OFF],
 }
 """Valid status transistions."""
 
@@ -45,7 +45,7 @@ class StarTrackerService(Service):
         super().__init__()
 
         self.mock_hw = mock_hw
-        self._status = State.BOOT
+        self._state = State.BOOT
 
         if self.mock_hw:
             logger.debug("mocking camera")
@@ -55,6 +55,22 @@ class StarTrackerService(Service):
         self._camera = Camera(self.mock_hw)
         self._solver = Solver()
         self._last_capture = None
+
+        self.status_obj: canopen.objectdictionary.Variable = None
+        self._right_ascension_obj: canopen.objectdictionary.Variable = None
+        self._declination_obj: canopen.objectdictionary.Variable = None
+        self._orientation_obj: canopen.objectdictionary.Variable = None
+        self._time_stamp_obj: canopen.objectdictionary.Variable = None
+        self._capture_delay_obj: canopen.objectdictionary.Variable = None
+        self._capture_duration_obj: canopen.objectdictionary.Variable = None
+        self._image_count_obj: canopen.objectdictionary.Variable = None
+        self._last_capture_time: canopen.objectdictionary.Variable = None
+        self._save_obj: canopen.objectdictionary.Variable = None
+        self._filter_enable_obj: canopen.objectdictionary.Variable = None
+        self._lower_bound_obj: canopen.objectdictionary.Variable = None
+        self._lower_percentage_obj: canopen.objectdictionary.Variable = None
+        self._upper_bound_obj: canopen.objectdictionary.Variable = None
+        self._upper_percentage_obj: canopen.objectdictionary.Variable = None
 
     def on_start(self):
         """Save references to OD objiables"""
@@ -90,7 +106,7 @@ class StarTrackerService(Service):
             "capture", "last_display_image", self._on_read_last_display_image, None
         )
 
-        self._status = State.STANDBY
+        self._state = State.STANDBY
 
     def on_stop(self):
         """When service stops clear star tracking data."""
@@ -101,7 +117,7 @@ class StarTrackerService(Service):
         self._time_stamp_obj.value = 0
         self._last_capture = None
         self._last_capture_time.value = 0
-        self._status = State.OFF
+        self._state = State.OFF
 
     def _encode(self, data: np.ndarray, ext: str = ".tiff") -> np.ndarray:
         """Wrap opencv's encode function to throw exception."""
@@ -112,7 +128,7 @@ class StarTrackerService(Service):
 
         return encoded
 
-    def _encode_compress_tiff(self, data: np.ndarray, meta: dict = None) -> np.ndarray:
+    def _encode_compress_tiff(self, data: np.ndarray, meta=None) -> np.ndarray:
         """Encode as an compress tiff."""
 
         buff = BytesIO()
@@ -197,8 +213,8 @@ class StarTrackerService(Service):
 
         # If the frequency is 0, star track once
         if self._capture_delay_obj.value == 0:
-            logger.info(f"changing status: {self._status.name} -> {State.STANDBY.name}")
-            self._status = State.STANDBY
+            logger.info(f"changing status: {self._state.name} -> {State.STANDBY.name}")
+            self._state = State.STANDBY
         else:
             self.sleep(self._capture_delay_obj.value)
 
@@ -233,13 +249,13 @@ class StarTrackerService(Service):
         if img_count == 0:
             logger.info("no images taken, check camera mode settings and filter")
 
-        logger.info(f"changing status: {self._status.name} -> {State.STANDBY.name}")
-        self._status = State.STANDBY
+        logger.info(f"changing status: {self._state.name} -> {State.STANDBY.name}")
+        self._state = State.STANDBY
 
     def on_loop(self):
-        if self._status == State.STAR_TRACK:
+        if self._state == State.STAR_TRACK:
             self._star_track()
-        elif self._status == State.CAPTURE_ONLY:
+        elif self._state == State.CAPTURE_ONLY:
             self._capture_only_mode()
         else:
             self.sleep(0.1)
@@ -247,48 +263,48 @@ class StarTrackerService(Service):
     def on_loop_error(self, error: Exception):
         if error is CameraError:
             logger.critical(error)
-            self._status = State.ERROR
+            self._state = State.ERROR
         elif error is SolverError:
             logger.error(error)
         elif error is ValueError:
             logger.error(error)
         else:
             logger.critical(f"Unkown error {error}")
-            self._status = State.ERROR
+            self._state = State.ERROR
 
     def on_read_status(self) -> int:
         """SDO read callback for star tracker status."""
 
-        return self._status.value
+        return self._state.value
 
     def on_write_status(self, value: int):
         """SDO write callback for star tracker status."""
 
+        new_status = State.BOOT
         try:
             new_status = State(value)
         except ValueError:
             logger.error(f"invalid state: {value}")
             return
 
-        if new_status == self._status:
+        if new_status == self._state:
             return  # nothing to change
 
-        if new_status in STATE_TRANSISTIONS[self._status]:
-            # When entering low power status, turn on low power mode
-            """
-            if new_status == State.LOW_POWER and self._status != State.LOW_POWER:
-                set_cpufreq_gov('powersave')
-                # TODO - Turn off PRUs/sensor
-            # When leaving power status, turn off low power mode
-            elif self._status == State.LOW_POWER and new_status != State.LOW_POWER:
-                set_cpufreq_gov('performance')
-                # TODO - Turn on PRUs/sensor
-            """
+        if new_status not in STATE_TRANSISTIONS[self._state]:
+            logger.error(f"invalid status change: {self._state.name} -> {new_status.name}")
+            return
 
-            logger.info(f"changing status: {self._status.name} -> {new_status.name}")
-            self._status = new_status
-        else:
-            logger.info(f"invalid status change: {self._status.name} -> {new_status.name}")
+        # When entering low power status, turn on low power mode
+        # if new_status == State.LOW_POWER and self._state != State.LOW_POWER:
+        #    set_cpufreq_gov('powersave')
+        #    # Turn off PRUs/sensor
+        # When leaving power status, turn off low power mode
+        # elif self._state == State.LOW_POWER and new_status != State.LOW_POWER:
+        #    set_cpufreq_gov('performance')
+        #    # Turn on PRUs/sensor
+
+        logger.info(f"changing status: {self._state.name} -> {new_status.name}")
+        self._state = new_status
 
     def _on_read_last_display_image(self) -> bytes:
         """SDO read callback for star tracker status."""

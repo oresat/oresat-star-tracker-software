@@ -90,17 +90,17 @@ class Solver:
                 self.S_FILTERED, 2 + beast.cvar.DB_REDUNDANCY, 0
             )  # 1 second
 
-        except Exception as exc:
-            raise SolverError(f"Startup sequence failed with {exc}")
+        except Exception as e:
+            raise SolverError(f"Startup sequence failed with {e}") from e
 
-    def _preprocess_img(self, orig_img, trace_id=None):
+    def _preprocess_img(self, orig_img: np.ndarray, trace_id: int) -> np.ndarray:
         """
         Preprocess an input image, resize it to expected size, blur it if required,
         subtract a calibrated median image, finally convert it to
         a grey scale image of expected dimensions.
 
-        Return
-        ------
+        Returns
+        -------
         Grey scale image of dimensions IMG_X x IMG_Y
         """
 
@@ -135,15 +135,15 @@ class Solver:
         Find the contors of the possible stars in the thresholded binary image. The
         thresholding limit depends on configured IMAGE_VARIANCE and THRESH_FACTOR.
 
-        Return
-        ------
+        Returns
+        -------
         List of contours for points which could be stars and meet our brightness threshold.
         """
         logger.debug(f"entry: solve():{beast.cvar.IMG_X}, {beast.cvar.IMG_Y}")
 
         # Remove areas of the image that don't meet our brightness threshold and then extract
         # contours
-        ret, thresh = cv2.threshold(
+        _, thresh = cv2.threshold(
             img_grey, beast.cvar.THRESH_FACTOR * beast.cvar.IMAGE_VARIANCE, 255, cv2.THRESH_BINARY
         )
 
@@ -160,15 +160,15 @@ class Solver:
         logger.debug(f"Number of  contours: {len(contours)}")
         return contours
 
-    def _find_stars(self, img_grey, contours):
+    def _find_stars(self, img_grey: np.ndarray, contours) -> list:
         """
         Convert the contour list into an array of stars with corresponding
         x,y positions of the stars and flux value for brightness of the star
         from the grey scale image generated.
 
-        Return
-        ------
-        np.array of shape (num_stars, 3) : [x, y, flux]
+        Returns
+        -------
+        list
             x - position of the star in image coordinates.
             y - position of the star in image coordinates.
             flux - luminosity of the star as it appears in grey scale image.
@@ -184,20 +184,27 @@ class Solver:
 
                 # Add the list to star_list
                 star_list.append([cx, cy, flux])
-        return np.array(star_list)
+        return star_list
 
-    def _star_list_to_beast_stars_db(self, star_list):
+    def _star_list_to_beast_stars_db(self, star_list: list):
         """
         Convert list of stars to beast internal representation of stars. Star image
         coordinates are translated to be relative to the center pixel of the image.
 
-        Return
-        ------
-        Returns beast star list.
+        Parameters
+        ----------
+        np.array
+            x - position of the star in image coordinates.
+            y - position of the star in image coordinates.
+            flux - luminosity of the star as it appears in grey scale image.
+
+        Returns
+        -------
+        beast star list.
         """
         img_stars = beast.star_db()
         image_center = (beast.cvar.IMG_X / 2.0, beast.cvar.IMG_Y / 2.0)
-        number_of_stars = star_list.shape[0]
+        number_of_stars = len(star_list)
 
         for idx in range(number_of_stars):
             cx, cy, flux = star_list[idx]
@@ -215,8 +222,8 @@ class Solver:
         SolverError
             No matches found.
 
-        Return
-        ------
+        Returns
+        -------
         match
         """
         x = lis.winner.R11
@@ -245,13 +252,13 @@ class Solver:
 
         raise SolverError("No match was found")
 
-    def _extract_match_orientation(self, match):
+    def _extract_match_orientation(self, match) -> tuple[float, float, float]:
         """
         Calculate and extract the oreintation from the top match after
         star database search.
 
-        Return
-        ------
+        Returns
+        -------
         float, float, float
             dec - rotation about the y-axis,
             ra  - rotation about the z-axis,
@@ -259,12 +266,12 @@ class Solver:
         """
 
         match.winner.calc_ori()
-        dec = match.winner.get_dec()
-        ra = match.winner.get_ra()
-        ori = match.winner.get_ori()
+        dec = float(match.winner.get_dec())
+        ra = float(match.winner.get_ra())
+        ori = float(match.winner.get_ori())
         return dec, ra, ori
 
-    def _solve_orientation(self, star_list) -> (float, float, float):
+    def _solve_orientation(self, star_list: list) -> tuple[float, float, float]:
         """
         Given a list of star positions with brightness values find the
         estimated orientation by search the star database.
@@ -274,7 +281,7 @@ class Solver:
         SolverError
             No matches found.
 
-        Return
+        Returns
         ------
         float, float, float
             dec - rotation about the y-axis,
@@ -312,10 +319,10 @@ class Solver:
 
         return orientation
 
-    def solve(self, orig_img) -> (float, float, float):
+    def solve(self, orig_img: np.ndarray) -> tuple[float, float, float]:
         """
-        Return
-        ------
+        Returns
+        -------
         float, float, float
             dec - rotation about the y-axis,
             ra  - rotation about the z-axis,
