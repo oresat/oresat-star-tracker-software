@@ -14,7 +14,13 @@ will only work on the custom OreSat Star Tracker board. See the
 
 ## Quickstart
 
-Install dependenies
+Install Linux dependenies
+
+```bash
+$ sudo apt install swig
+```
+
+Install Python dependenies
 
 ```bash
 $ pip3 install -r requirements.txt
