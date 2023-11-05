@@ -1,9 +1,9 @@
-'''solver.py
+"""solver.py
 
 by Umair Khan, from the Portland State Aerospace Society
 based on OpenStarTracker from Andrew Tennenbaum at the University of Buffalo
 openstartracker.org
-'''
+"""
 import time
 from os.path import abspath, dirname
 
@@ -15,11 +15,11 @@ from .beast import beast
 
 
 class SolverError(Exception):
-    '''An error has occur for the :py:class:`solver`'''
+    """An error has occur for the :py:class:`solver`"""
 
 
 class Solver:
-    '''Solve star trackr images'''
+    """Solve star trackr images"""
 
     def __init__(
         self,
@@ -38,10 +38,10 @@ class Solver:
         self.S_FILTERED = None
         self.C_DB = None
 
-        self.data_dir = dirname(abspath(__file__)) + '/data'
-        self.median_path = median_path if median_path else f'{self.data_dir}/median-image.png'
-        self.config_path = config_path if config_path else f'{self.data_dir}/configuration.txt'
-        self.db_path = db_path if db_path else f'{self.data_dir}/hipparcos.dat'
+        self.data_dir = dirname(abspath(__file__)) + "/data"
+        self.median_path = median_path if median_path else f"{self.data_dir}/median-image.png"
+        self.config_path = config_path if config_path else f"{self.data_dir}/configuration.txt"
+        self.db_path = db_path if db_path else f"{self.data_dir}/hipparcos.dat"
 
         # Load median image
         self.MEDIAN_IMAGE = cv2.imread(self.median_path)
@@ -57,12 +57,12 @@ class Solver:
             trace_intermediate_images if trace_intermediate_images else None
         )
 
-        logger.debug(f'Median Path: {self.median_path}')
-        logger.debug(f'DB Path: {self.db_path}')
-        logger.debug(f'Config Path: {self.config_path}')
+        logger.debug(f"Median Path: {self.median_path}")
+        logger.debug(f"DB Path: {self.db_path}")
+        logger.debug(f"Config Path: {self.config_path}")
 
     def startup(self):
-        '''
+        """
         Start up sequence. Loads median image, loads config file, and setups database.
 
         Seperate from :py:func:`__init__` as it take time to setup database.
@@ -71,7 +71,7 @@ class Solver:
         -------
         SolverError
             start up failed
-        '''
+        """
         try:
             # Load star database
             self.S_DB = beast.star_db()  # 0 seconds
@@ -91,10 +91,10 @@ class Solver:
             )  # 1 second
 
         except Exception as exc:
-            raise SolverError(f'Startup sequence failed with {exc}')
+            raise SolverError(f"Startup sequence failed with {exc}")
 
     def _preprocess_img(self, orig_img, trace_id=None):
-        '''
+        """
         Preprocess an input image, resize it to expected size, blur it if required,
         subtract a calibrated median image, finally convert it to
         a grey scale image of expected dimensions.
@@ -102,44 +102,44 @@ class Solver:
         Return
         ------
         Grey scale image of dimensions IMG_X x IMG_Y
-        '''
+        """
 
         if self.trace_intermediate_images:
-            cv2.imwrite(f'/tmp/solver-original-{trace_id}.png', orig_img)
+            cv2.imwrite(f"/tmp/solver-original-{trace_id}.png", orig_img)
 
         # Ensure images are always processed on calibration size.
         orig_img = cv2.resize(orig_img, (beast.cvar.IMG_X, beast.cvar.IMG_Y))
 
         if self.trace_intermediate_images:
-            cv2.imwrite(f'/tmp/solver-resized-{trace_id}.png', orig_img)
+            cv2.imwrite(f"/tmp/solver-resized-{trace_id}.png", orig_img)
 
         # Blur the image if a blur is specified.
         if self.blur_kernel_size:
             orig_img = cv2.blur(orig_img, (self.blur_kernel_size, self.blur_kernel_size))
             if self.trace_intermediate_images:
-                cv2.imwrite(f'/tmp/solver-blurred-{trace_id}.png', orig_img)
+                cv2.imwrite(f"/tmp/solver-blurred-{trace_id}.png", orig_img)
 
         # Process the image for solving
-        logger.debug(f'start image pre-processing-{trace_id}')
+        logger.debug(f"start image pre-processing-{trace_id}")
         tmp = orig_img.astype(np.int16) - self.MEDIAN_IMAGE
         img = np.clip(tmp, a_min=0, a_max=255).astype(np.uint8)
         img_grey = cv2.cvtColor(img, cv2.COLOR_RGB2GRAY)
 
         if self.trace_intermediate_images:
-            cv2.imwrite(f'/tmp/solver-grey-{trace_id}.png', img_grey)
+            cv2.imwrite(f"/tmp/solver-grey-{trace_id}.png", img_grey)
 
         return img_grey
 
     def _find_contours(self, img_grey, trace_id=None):
-        '''
+        """
         Find the contors of the possible stars in the thresholded binary image. The
         thresholding limit depends on configured IMAGE_VARIANCE and THRESH_FACTOR.
 
         Return
         ------
         List of contours for points which could be stars and meet our brightness threshold.
-        '''
-        logger.debug(f'entry: solve():{beast.cvar.IMG_X}, {beast.cvar.IMG_Y}')
+        """
+        logger.debug(f"entry: solve():{beast.cvar.IMG_X}, {beast.cvar.IMG_Y}")
 
         # Remove areas of the image that don't meet our brightness threshold and then extract
         # contours
@@ -148,20 +148,20 @@ class Solver:
         )
 
         if self.trace_intermediate_images:
-            cv2.imwrite(f'/tmp/solver-thresh-{trace_id}.png', thresh)
-        logger.debug('finished image pre-processing')
+            cv2.imwrite(f"/tmp/solver-thresh-{trace_id}.png", thresh)
+        logger.debug("finished image pre-processing")
 
         contours, _ = cv2.findContours(thresh, cv2.RETR_EXTERNAL, cv2.CHAIN_APPROX_SIMPLE)
 
         if self.trace_intermediate_images:
             contours_img = cv2.drawContours(img_grey, contours, -1, (0, 255, 0), 1)
-            cv2.imwrite(f'/tmp/solver-contours-{trace_id}.png', contours_img)
+            cv2.imwrite(f"/tmp/solver-contours-{trace_id}.png", contours_img)
 
-        logger.debug(f'Number of  contours: {len(contours)}')
+        logger.debug(f"Number of  contours: {len(contours)}")
         return contours
 
     def _find_stars(self, img_grey, contours):
-        '''
+        """
         Convert the contour list into an array of stars with corresponding
         x,y positions of the stars and flux value for brightness of the star
         from the grey scale image generated.
@@ -172,14 +172,14 @@ class Solver:
             x - position of the star in image coordinates.
             y - position of the star in image coordinates.
             flux - luminosity of the star as it appears in grey scale image.
-        '''
+        """
         star_list = []
         for c in contours:
             M = cv2.moments(c)
-            if M['m00'] > 0:
+            if M["m00"] > 0:
                 # this is how the x and y position are defined by cv2
-                cx = M['m10'] / M['m00']
-                cy = M['m01'] / M['m00']
+                cx = M["m10"] / M["m00"]
+                cy = M["m01"] / M["m00"]
                 flux = float(cv2.getRectSubPix(img_grey, (1, 1), (cx, cy))[0, 0])
 
                 # Add the list to star_list
@@ -187,14 +187,14 @@ class Solver:
         return np.array(star_list)
 
     def _star_list_to_beast_stars_db(self, star_list):
-        '''
+        """
         Convert list of stars to beast internal representation of stars. Star image
         coordinates are translated to be relative to the center pixel of the image.
 
         Return
         ------
         Returns beast star list.
-        '''
+        """
         img_stars = beast.star_db()
         image_center = (beast.cvar.IMG_X / 2.0, beast.cvar.IMG_Y / 2.0)
         number_of_stars = star_list.shape[0]
@@ -207,7 +207,7 @@ class Solver:
         return img_stars
 
     def _generate_match(self, lis, img_stars):
-        '''
+        """
         Returns the nearest match from the result of a db_match.
 
         Raises
@@ -218,7 +218,7 @@ class Solver:
         Return
         ------
         match
-        '''
+        """
         x = lis.winner.R11
         y = lis.winner.R21
         z = lis.winner.R31
@@ -228,9 +228,7 @@ class Solver:
         self.SQ_RESULTS.kdsearch(x, y, z, r, beast.cvar.THRESH_FACTOR * beast.cvar.IMAGE_VARIANCE)
 
         # Estimate density for constellation generation
-        self.C_DB.results.kdsearch(
-            x, y, z, r, beast.cvar.THRESH_FACTOR * beast.cvar.IMAGE_VARIANCE
-        )
+        self.C_DB.results.kdsearch(x, y, z, r, beast.cvar.THRESH_FACTOR * beast.cvar.IMAGE_VARIANCE)
 
         fov_stars = self.SQ_RESULTS.from_kdresults()
         fov_db = beast.constellation_db(fov_stars, self.C_DB.results.r_size(), 1)
@@ -245,10 +243,10 @@ class Solver:
         if nearest_match.p_match > self.P_MATCH_THRESH:
             return nearest_match
 
-        raise SolverError('No match was found')
+        raise SolverError("No match was found")
 
     def _extract_match_orientation(self, match):
-        '''
+        """
         Calculate and extract the oreintation from the top match after
         star database search.
 
@@ -258,7 +256,7 @@ class Solver:
             dec - rotation about the y-axis,
             ra  - rotation about the z-axis,
             ori - rotation about the camera axis
-        '''
+        """
 
         match.winner.calc_ori()
         dec = match.winner.get_dec()
@@ -267,7 +265,7 @@ class Solver:
         return dec, ra, ori
 
     def _solve_orientation(self, star_list) -> (float, float, float):
-        '''
+        """
         Given a list of star positions with brightness values find the
         estimated orientation by search the star database.
 
@@ -282,7 +280,7 @@ class Solver:
             dec - rotation about the y-axis,
             ra  - rotation about the z-axis,
             ori - rotation about the camera axis
-        '''
+        """
         img_stars = self._star_list_to_beast_stars_db(star_list)
 
         # Find the constellation matches
@@ -303,19 +301,19 @@ class Solver:
 
         if match is None:
             raise SolverError(
-                'Cannot extract orientation from empty match. Solution failed for image!'
+                "Cannot extract orientation from empty match. Solution failed for image!"
             )
 
         orientation = self._extract_match_orientation(match)
 
         if orientation is None:
-            logger.error('Unable to find orientation for image!')
-            raise SolverError('Solution failed for image')
+            logger.error("Unable to find orientation for image!")
+            raise SolverError("Solution failed for image")
 
         return orientation
 
     def solve(self, orig_img) -> (float, float, float):
-        '''
+        """
         Return
         ------
         float, float, float
@@ -327,7 +325,7 @@ class Solver:
         -------
         SolverError
             No matches found.
-        '''
+        """
 
         correlation_timestamp = scet_int_from_time(time.time())  # Record the timestamp
 

@@ -1,17 +1,17 @@
-'''Star Tracker App'''
+"""Star Tracker App"""
 
 import os
 
-from olaf import app, rest_api, olaf_setup, olaf_run, render_olaf_template
+from olaf import app, olaf_run, olaf_setup, render_olaf_template, rest_api
 from oresat_configs import NodeId
 
 from . import __version__
 from .star_tracker_service import StarTrackerService
 
 
-@rest_api.app.route('/star-tracker')
+@rest_api.app.route("/star-tracker")
 def star_tracker_template():
-    return render_olaf_template('star_tracker.html', name='Star Tracker')
+    return render_olaf_template("star_tracker.html", name="Star Tracker")
 
 
 def main():
@@ -19,16 +19,16 @@ def main():
 
     args, _ = olaf_setup(NodeId.STAR_TRACKER_1)
     mock_args = [i.lower() for i in args.mock_hw]
-    mock_camera = 'camera' in mock_args or 'all' in mock_args
+    mock_camera = "camera" in mock_args or "all" in mock_args
 
     app.od["versions"]["sw_version"].value = __version__
 
     app.add_service(StarTrackerService(mock_camera))
 
-    rest_api.add_template(f'{path}/templates/star_tracker.html')
+    rest_api.add_template(f"{path}/templates/star_tracker.html")
 
     olaf_run()
 
 
-if __name__ == '__main__':
+if __name__ == "__main__":
     main()

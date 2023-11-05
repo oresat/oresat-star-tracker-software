@@ -1,18 +1,19 @@
 import unittest
+from os.path import abspath, dirname
 from time import time
-from os.path import dirname, abspath
 
 import cv2
 import numpy as np
 from olaf import logger
+
 from oresat_star_tracker.solver import Solver, SolverError
 
 
 class TestSolver(unittest.TestCase):
     def setUp(self):
-        '''
+        """
         Create and startup a solver.
-        '''
+        """
         logger.remove()  # remove logging to not mess with unittest output
 
         self.test_data_folder = dirname(abspath(__file__)) + "/../misc/test-data"
@@ -40,25 +41,25 @@ class TestSolver(unittest.TestCase):
 
                 self.assertTrue(
                     np.isclose(ra, expected_ra, rtol=1e-01, atol=1e-01),
-                    f'ra: {ra} expected: {expected_ra} is not close',
+                    f"ra: {ra} expected: {expected_ra} is not close",
                 )
                 self.assertTrue(
                     np.isclose(dec, expected_dec, rtol=1e-01, atol=1e-01),
-                    f'dec {dec} expected:{expected_dec} is not close',
+                    f"dec {dec} expected:{expected_dec} is not close",
                 )
                 self.assertTrue(
                     np.isclose(ori, expected_ori, rtol=1e-01, atol=1e-01),
-                    f'ori {ori} expected:{expected_ori} is not close',
+                    f"ori {ori} expected:{expected_ori} is not close",
                 )
 
             return dec, ra, ori
 
     def test_exp1000(self):
-        '''
+        """
         Test solution of images are solved to close approximate of last known solution.
-        '''
-        config_path = f'{self.test_data_folder}/exp1000/calibration.txt'
-        median_path = f'{self.test_data_folder}/exp1000/median_image.png'
+        """
+        config_path = f"{self.test_data_folder}/exp1000/calibration.txt"
+        median_path = f"{self.test_data_folder}/exp1000/median_image.png"
 
         self._solver = Solver(config_path=config_path, median_path=median_path, blur_kernel_size=5)
         self._solver.startup()
@@ -79,14 +80,14 @@ class TestSolver(unittest.TestCase):
         ]
 
         image_paths = [
-            f'{self.test_data_folder}/exp1000/samples/1.bmp',
-            f'{self.test_data_folder}/exp1000/samples/2.bmp',
-            f'{self.test_data_folder}/exp1000/samples/3.bmp',
-            f'{self.test_data_folder}/exp1000/samples/4.bmp',
-            f'{self.test_data_folder}/exp1000/samples/5.bmp',
-            f'{self.test_data_folder}/exp1000/samples/6.bmp',
-            f'{self.test_data_folder}/exp1000/samples/7.bmp',
-            f'{self.test_data_folder}/exp1000/samples/8.bmp',
+            f"{self.test_data_folder}/exp1000/samples/1.bmp",
+            f"{self.test_data_folder}/exp1000/samples/2.bmp",
+            f"{self.test_data_folder}/exp1000/samples/3.bmp",
+            f"{self.test_data_folder}/exp1000/samples/4.bmp",
+            f"{self.test_data_folder}/exp1000/samples/5.bmp",
+            f"{self.test_data_folder}/exp1000/samples/6.bmp",
+            f"{self.test_data_folder}/exp1000/samples/7.bmp",
+            f"{self.test_data_folder}/exp1000/samples/8.bmp",
         ]
 
         failing_indexes = []
@@ -103,15 +104,13 @@ class TestSolver(unittest.TestCase):
             self.assertTrue(duration < 10)
 
     def test_run_2500(self):
-        '''
+        """
         Test solution of images are solved to close approximate of last known solution.
-        '''
-        config_path = f'{self.test_data_folder}/exp2500/calibration.txt'
-        median_path = f'{self.test_data_folder}/exp2500/median_image.png'
+        """
+        config_path = f"{self.test_data_folder}/exp2500/calibration.txt"
+        median_path = f"{self.test_data_folder}/exp2500/median_image.png"
 
-        self._solver = Solver(
-            config_path=config_path, median_path=median_path, blur_kernel_size=10
-        )
+        self._solver = Solver(config_path=config_path, median_path=median_path, blur_kernel_size=10)
         self._solver.startup()
 
         # dec, ra, ori
@@ -126,13 +125,13 @@ class TestSolver(unittest.TestCase):
         ]
 
         image_paths = [
-            f'{self.test_data_folder}/exp2500/samples/1.bmp',
-            f'{self.test_data_folder}/exp2500/samples/2.bmp',
-            f'{self.test_data_folder}/exp2500/samples/3.bmp',
-            f'{self.test_data_folder}/exp2500/samples/4.bmp',
-            f'{self.test_data_folder}/exp2500/samples/5.bmp',
-            f'{self.test_data_folder}/exp2500/samples/6.bmp',
-            f'{self.test_data_folder}/exp2500/samples/7.bmp',
+            f"{self.test_data_folder}/exp2500/samples/1.bmp",
+            f"{self.test_data_folder}/exp2500/samples/2.bmp",
+            f"{self.test_data_folder}/exp2500/samples/3.bmp",
+            f"{self.test_data_folder}/exp2500/samples/4.bmp",
+            f"{self.test_data_folder}/exp2500/samples/5.bmp",
+            f"{self.test_data_folder}/exp2500/samples/6.bmp",
+            f"{self.test_data_folder}/exp2500/samples/7.bmp",
         ]
 
         failing_indexes = []

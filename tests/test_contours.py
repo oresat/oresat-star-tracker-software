@@ -1,25 +1,26 @@
 import unittest
+from os.path import abspath, dirname
 from time import time
-from os.path import dirname, abspath
 
 import cv2
 import numpy as np
-from olaf import scet_int_from_time, logger
+from olaf import logger, scet_int_from_time
+
 from oresat_star_tracker.solver import Solver
 
 
 class TestContours(unittest.TestCase):
     def setUp(self):
-        '''
+        """
         Create and startup a solver.
-        '''
+        """
 
         logger.remove()  # remove logging to not mess with unittest output
 
         self.test_data_folder = dirname(abspath(__file__)) + "/../misc/test-data"
 
-        self.config_path = f'{self.test_data_folder}/exp1000/calibration.txt'
-        self.median_path = f'{self.test_data_folder}/exp1000/median_image.png'
+        self.config_path = f"{self.test_data_folder}/exp1000/calibration.txt"
+        self.median_path = f"{self.test_data_folder}/exp1000/median_image.png"
 
     def assert_is_valid_solution(self, solution, expected_solution):
         dec, ra, ori = solution
@@ -35,22 +36,22 @@ class TestContours(unittest.TestCase):
 
         self.assertTrue(
             np.isclose(ra, expected_ra, rtol=1e-01, atol=1e-01),
-            f'ra: {ra} expected: {expected_ra} is not close',
+            f"ra: {ra} expected: {expected_ra} is not close",
         )
         self.assertTrue(
             np.isclose(dec, expected_dec, rtol=1e-01, atol=1e-01),
-            f'dec {dec} expected:{expected_dec} is not close',
+            f"dec {dec} expected:{expected_dec} is not close",
         )
         self.assertTrue(
             np.isclose(ori, expected_ori, rtol=1e-01, atol=1e-01),
-            f'ori {ori} expected:{expected_ori} is not close',
+            f"ori {ori} expected:{expected_ori} is not close",
         )
 
     def _test_find_matches(self):
-        '''
+        """
 
         find_matches:
-        '''
+        """
         trace_id = scet_int_from_time(time())  # Record the timestamp
 
         solver = Solver(
@@ -69,14 +70,14 @@ class TestContours(unittest.TestCase):
         ]
 
         image_paths = [
-            f'{self.test_data_folder}/exp1000/samples/1.bmp',
-            f'{self.test_data_folder}/exp1000/samples/2.bmp',
-            f'{self.test_data_folder}/exp1000/samples/3.bmp',
-            f'{self.test_data_folder}/exp1000/samples/4.bmp',
-            f'{self.test_data_folder}/exp1000/samples/5.bmp',
-            f'{self.test_data_folder}/exp1000/samples/6.bmp',
-            f'{self.test_data_folder}/exp1000/samples/7.bmp',
-            f'{self.test_data_folder}/exp1000/samples/8.bmp',
+            f"{self.test_data_folder}/exp1000/samples/1.bmp",
+            f"{self.test_data_folder}/exp1000/samples/2.bmp",
+            f"{self.test_data_folder}/exp1000/samples/3.bmp",
+            f"{self.test_data_folder}/exp1000/samples/4.bmp",
+            f"{self.test_data_folder}/exp1000/samples/5.bmp",
+            f"{self.test_data_folder}/exp1000/samples/6.bmp",
+            f"{self.test_data_folder}/exp1000/samples/7.bmp",
+            f"{self.test_data_folder}/exp1000/samples/8.bmp",
         ]
 
         # initialized the db
@@ -112,14 +113,14 @@ class TestContours(unittest.TestCase):
         )
 
         image_paths = [
-            f'{self.test_data_folder}/exp1000/samples/1.bmp',
-            f'{self.test_data_folder}/exp1000/samples/2.bmp',
-            f'{self.test_data_folder}/exp1000/samples/3.bmp',
-            f'{self.test_data_folder}/exp1000/samples/4.bmp',
-            f'{self.test_data_folder}/exp1000/samples/5.bmp',
-            f'{self.test_data_folder}/exp1000/samples/6.bmp',
-            f'{self.test_data_folder}/exp1000/samples/7.bmp',
-            f'{self.test_data_folder}/exp1000/samples/8.bmp',
+            f"{self.test_data_folder}/exp1000/samples/1.bmp",
+            f"{self.test_data_folder}/exp1000/samples/2.bmp",
+            f"{self.test_data_folder}/exp1000/samples/3.bmp",
+            f"{self.test_data_folder}/exp1000/samples/4.bmp",
+            f"{self.test_data_folder}/exp1000/samples/5.bmp",
+            f"{self.test_data_folder}/exp1000/samples/6.bmp",
+            f"{self.test_data_folder}/exp1000/samples/7.bmp",
+            f"{self.test_data_folder}/exp1000/samples/8.bmp",
         ]
 
         expected_star_counts = [41, 36, 34, 44, 77, 46, 44, 48]
@@ -141,21 +142,21 @@ class TestContours(unittest.TestCase):
                 self.assertTrue(0 <= cy < img_height)
 
     def test_find_contours(self):
-        '''
+        """
         Given a starfiled test that the number of countours
         for the image match the number of stars in the image.
-        '''
+        """
         solver = Solver(config_path=self.config_path, median_path=self.median_path)
 
         image_paths = [
-            f'{self.test_data_folder}/exp1000/samples/1.bmp',
-            f'{self.test_data_folder}/exp1000/samples/2.bmp',
-            f'{self.test_data_folder}/exp1000/samples/3.bmp',
-            f'{self.test_data_folder}/exp1000/samples/4.bmp',
-            f'{self.test_data_folder}/exp1000/samples/5.bmp',
-            f'{self.test_data_folder}/exp1000/samples/6.bmp',
-            f'{self.test_data_folder}/exp1000/samples/7.bmp',
-            f'{self.test_data_folder}/exp1000/samples/8.bmp',
+            f"{self.test_data_folder}/exp1000/samples/1.bmp",
+            f"{self.test_data_folder}/exp1000/samples/2.bmp",
+            f"{self.test_data_folder}/exp1000/samples/3.bmp",
+            f"{self.test_data_folder}/exp1000/samples/4.bmp",
+            f"{self.test_data_folder}/exp1000/samples/5.bmp",
+            f"{self.test_data_folder}/exp1000/samples/6.bmp",
+            f"{self.test_data_folder}/exp1000/samples/7.bmp",
+            f"{self.test_data_folder}/exp1000/samples/8.bmp",
         ]
 
         expected_contours = [188, 220, 321, 249, 1243, 523, 758, 731]

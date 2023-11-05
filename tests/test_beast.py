@@ -11,10 +11,10 @@ class TestBeast(unittest.TestCase):
         cls.YEAR = 1991.25
         cls.MEDIAN_IMAGE = None
 
-        data_dir = dirname(abspath(__file__)) + '/../oresat_star_tracker/data'
-        config_path = f'{data_dir}/configuration.txt'
+        data_dir = dirname(abspath(__file__)) + "/../oresat_star_tracker/data"
+        config_path = f"{data_dir}/configuration.txt"
 
-        db_path = f'{data_dir}/hipparcos.dat'
+        db_path = f"{data_dir}/hipparcos.dat"
 
         # Load configuration
         beast.load_config(config_path)
@@ -46,11 +46,11 @@ class TestBeast(unittest.TestCase):
 
     @classmethod
     def setUpClass(cls):
-        ''' '''
+        """ """
         cls.beast_setup()
 
     def test_constellation_db_successfully_constructed(self):
-        self.assertTrue(TestBeast.C_DB is not None, 'constellation database was not constructed.')
+        self.assertTrue(TestBeast.C_DB is not None, "constellation database was not constructed.")
 
     def test_star_db_successfully_constructed(self):
-        self.assertTrue(TestBeast.S_DB is not None, 'star database was not constructed.')
+        self.assertTrue(TestBeast.S_DB is not None, "star database was not constructed.")

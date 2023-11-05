@@ -1,17 +1,17 @@
-import os
 import io
+import os
 from os.path import abspath, dirname
 
-import numpy as np
 import cv2
+import numpy as np
 
 
 class CameraError(Exception):
-    '''An error has occured with camera'''
+    """An error has occured with camera"""
 
 
 class Camera:
-    '''Star tracker AR013x camera'''
+    """Star tracker AR013x camera"""
 
     # these files are provide by the prucam-dkms debian package
 
@@ -19,29 +19,29 @@ class Camera:
         self._mock = mock
 
         if self._mock:
-            self._capture_path = f'{dirname(abspath(__file__))}/data/mock.bmp'
+            self._capture_path = f"{dirname(abspath(__file__))}/data/mock.bmp"
         else:
-            self._capture_path = '/dev/prucam'
+            self._capture_path = "/dev/prucam"
             self.image_size = self.read_image_size()
 
     def read_image_size(self):
-        '''Read dimensions of image from the camera'''
-        x_size = self.read_context_setting('x_size')
-        y_size = self.read_context_setting('y_size')
+        """Read dimensions of image from the camera"""
+        x_size = self.read_context_setting("x_size")
+        y_size = self.read_context_setting("y_size")
         return (y_size, x_size)
 
     def read_context_setting(self, name):
-        ''' 'Read a context setting.'''
+        """'Read a context setting."""
 
-        context_path = '/sys/devices/platform/prudev/context_settings'
+        context_path = "/sys/devices/platform/prudev/context_settings"
         try:
-            with open(f'{context_path}/{name}', 'r') as f:
+            with open(f"{context_path}/{name}", "r") as f:
                 return int(f.read())
         except FileNotFoundError:
-            raise CameraError(f'no sysfs attribute {name} for camera')
+            raise CameraError(f"no sysfs attribute {name} for camera")
 
     def capture(self, color=True) -> np.ndarray:
-        '''Capture an image
+        """Capture an image
 
         Parameters
         ----------
@@ -57,7 +57,7 @@ class Camera:
         -------
         numpy.ndarray
             image data in numpy array
-        '''
+        """
 
         if self._mock:
             img = cv2.imread(self._capture_path, cv2.IMREAD_COLOR)
@@ -80,4 +80,3 @@ class Camera:
                 img = cv2.cvtColor(img, cv2.COLOR_BayerBG2BGR)
 
         return img
-
