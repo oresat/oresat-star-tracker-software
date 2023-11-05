@@ -1,0 +1,68 @@
+[build-system]
+requires = ["setuptools"]
+build-backend = "setuptools.build_meta"
+
+[project]
+name = "oresat-star-tracker"
+description = "OreSat Star Tracker OLAF app"
+readme = "README.md"
+requires-python = ">=3.7"
+license = {text = "GPL-3.0"}
+classifiers = [
+    "License :: OSI Approved :: GNU General Public License v3 (GPLv3)",
+    "Operating System :: POSIX :: Linux",
+    "Programming Language :: Python :: 3",
+    "Programming Language :: Python :: 3.7",
+    "Programming Language :: Python :: 3.8",
+    "Programming Language :: Python :: 3.9",
+    "Programming Language :: Python :: 3.10",
+    "Programming Language :: Python :: 3.11",
+    "Topic :: Software Development :: Embedded Systems",
+]
+dependencies = [
+    "imagecodecs",
+    "numpy",
+    "opencv-python-headless==4.6.0.66",
+    "oresat-configs",
+    "oresat-olaf>=3.0.0",
+    "swig",
+    "tifffile",
+]
+dynamic = ["version"]
+
+[project.scripts]
+oresat-cfc = "oresat_star_tracker.__main__:main"
+
+[tool.setuptools.dynamic]
+version = {attr = "oresat_star_tracker.__version__"}
+
+[tool.setuptools.packages.find]
+exclude = ["docs*", "tests*"]
+
+[tool.setuptools.package-data]
+"*" = ["*.html", "*.so"]
+
+[tool.black]
+line_length = 100
+
+[tool.pylama]
+format = "pylint"
+skip = "*/.tox/*,*/.env/,*/.git/*,*/.github/*,*/build/*"
+linters = "pycodestyle,pyflakes,pylint,mccabe,mypy,radon"
+# C0103:    Arguments are not snake_case naming style or too short
+# E203:     Whitespace before ':' (black does this)
+# W0613:    Unused argument
+# R0902:    Too many instance attributes
+# R901:     Too complex
+# R0913:    Too many arguments
+# R0914:    Too many local variables
+ignore = "C0103,E203,W0613,R0902,R901,R0913,R0914"
+max_line_length = 100
+
+[[tool.mypy.overrides]]
+module = "canopen,olaf,tifffile,oresat_configs,cv2"
+ignore_missing_imports = true
+
+[tool.isort]
+profile = "black"
+line_length = 100

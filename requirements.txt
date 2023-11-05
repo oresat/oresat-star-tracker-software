@@ -1,8 +1,12 @@
+black
 build
-flake8
+imagecodecs
+isort
 numpy
 opencv-python-headless==4.6.0.66
+oresat-configs
 oresat-olaf
 setuptools
 swig
+tifffile
 wheel
