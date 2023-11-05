@@ -82,3 +82,4 @@ extension-pkg-whitelist = ["cv2"]
 [tool.isort]
 profile = "black"
 line_length = 100
+skip = ["beast.py"] # generated file
