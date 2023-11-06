@@ -35,7 +35,7 @@ class Camera:
     def read_context_setting(self, name: str) -> int:
         """'Read a context setting."""
 
-        context_path = "/sys/devices/platform/prudev/context_settings"
+        context_path = "/sys/devices/platform/prucam/context_settings"
         try:
             with open(f"{context_path}/{name}", "r") as f:
                 value = int(f.read())
