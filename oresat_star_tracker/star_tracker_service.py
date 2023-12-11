@@ -137,8 +137,6 @@ class StarTrackerService(Service):
             data,
             dtype=data.dtype,
             metadata=meta,
-            compression="zstd",
-            compressionargs={"level": 1},
         )
 
         # Get the encoded TIFF data from the memory file
