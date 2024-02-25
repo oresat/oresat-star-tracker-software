@@ -136,3 +136,12 @@ beast_wrap.*
 # web app
 /data
 .vscode/launch.json
+
+# Vim
+*.swp
+
+# MacOS
+.DS_Store
+
+# setuptools-scm
+_version.py

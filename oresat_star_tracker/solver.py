@@ -4,6 +4,7 @@ by Umair Khan, from the Portland State Aerospace Society
 based on OpenStarTracker from Andrew Tennenbaum at the University of Buffalo
 openstartracker.org
 """
+
 import time
 from os.path import abspath, dirname
 
