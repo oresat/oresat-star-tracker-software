@@ -1,6 +1,5 @@
 black
 build
-imagecodecs
 isort
 numpy
 opencv-python-headless==4.6.0.66
@@ -9,3 +8,4 @@ oresat-olaf
 setuptools
 tifffile
 wheel
+./external/lost-0.0.0-py3-none-any.whl

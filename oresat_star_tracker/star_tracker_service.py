@@ -9,9 +9,10 @@ import cv2
 import numpy as np
 import tifffile as tiff
 from olaf import Service, logger, new_oresat_file  # , set_cpufreq_gov
+import lost
 
-from .camera import Camera, CameraError
-from .solver import Solver, SolverError
+from camera import Camera, CameraError
+#from .solver import Solver, SolverError
 
 
 class State(IntEnum):
@@ -53,7 +54,7 @@ class StarTrackerService(Service):
             logger.debug("not mocking camera")
 
         self._camera = Camera(self.mock_hw)
-        self._solver = Solver()
+        #self._solver = Solver()
         self._last_capture = None
 
         self.status_obj: canopen.objectdictionary.Variable = None
@@ -99,7 +100,7 @@ class StarTrackerService(Service):
         self._upper_bound_obj = image_filter_rec["upper_bound"]
         self._upper_percentage_obj = image_filter_rec["upper_percentage"]
 
-        self._solver.startup()  # DB takes awhile to initialize
+        #self._solver.startup()  # DB takes awhile to initialize
 
         self.node.add_sdo_callbacks("status", None, self.on_read_status, self.on_write_status)
         self.node.add_sdo_callbacks(
@@ -191,19 +192,32 @@ class StarTrackerService(Service):
 
         # Take the image
         ts = time()
-        data = self._camera.capture()
+        #data = self._camera.capture()
 
-        # Solver takes a single shot image and returns an orientation
-        dec, ra, ori = self._solver.solve(data)  # run the solver
-        logger.debug(f"solved: ra:{ra}, dec:{dec}, ori:{ori}")
+        '''LOST testing'''
+        ####################################
+
+        test_img = './samples/img_7660.png'
+        test_data = lost.imread(test_img)
+
+        lost_args = lost.identify_args(algo='tetra')
+        lost_data = lost.identify(test_data, lost_args)
+
+        ra = lost_data["attitude_ra"]
+        dec = lost_data["attitude_de"]
+        roll = lost_data["attitude_roll"]
+
+        print(ra, dec, roll)
+
+        ####################################
 
         self._right_ascension_obj.value = int(ra)
         self._declination_obj.value = int(dec)
-        self._orientation_obj.value = int(ori)
+        self._orientation_obj.value = int(roll)
 
         self._time_stamp_obj.value = int(ts)
         self._last_capture_time.value = int(ts)
-        self._last_capture = data
+        self._last_capture = test_data
 
         # Send the star tracker data TPDOs
         self.node.send_tpdo(3)
