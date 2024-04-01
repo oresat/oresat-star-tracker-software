@@ -1,5 +1,5 @@
 [build-system]
-requires = ["setuptools"]
+requires = ["setuptools", "setuptools_scm"]
 build-backend = "setuptools.build_meta"
 
 [project]
@@ -30,16 +30,16 @@ dependencies = [
 dynamic = ["version"]
 
 [project.scripts]
-oresat-cfc = "oresat_star_tracker.__main__:main"
-
-[tool.setuptools.dynamic]
-version = {attr = "oresat_star_tracker.__version__"}
+oresat-star-tracker = "oresat_star_tracker.__main__:main"
 
 [tool.setuptools.packages.find]
 exclude = ["docs*", "tests*"]
 
 [tool.setuptools.package-data]
 "*" = ["*.html", "*.so", "*.h", "*.i", "Makefile"]
+
+[tool.setuptools_scm]
+write_to = "oresat_star_tracker/_version.py"
 
 [tool.black]
 line_length = 100
