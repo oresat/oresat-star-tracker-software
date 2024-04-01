@@ -1,0 +1,3 @@
+[submodule "COTS-Star-Tracker"]
+	path = COTS-Star-Tracker
+	url = https://github.com/oresat/COTS-Star-Tracker.git

@@ -3,20 +3,6 @@
 from setuptools import Extension, setup  # type: ignore
 from setuptools.command.build_py import build_py  # type: ignore
 
-BEAST_EXT = Extension(
-    name="_beast",
-    swig_opts=["-c++"],
-    sources=[
-        "oresat_star_tracker/beast/beast.i",
-    ],
-    include_dirs=[
-        "oresat_star_tracker/beast",
-    ],
-    extra_compile_args=[
-        "-std=c++11",
-    ],
-)
-
 
 # Build extensions before python modules,
 # or the generated SWIG python files will be missing.

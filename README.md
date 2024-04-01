@@ -1,9 +1,5 @@
 # OreSat Star Tracker Software
 
-This is a modified version of [OpenStarTracker], originally developed by
-Andrew Tennenbaum at the University at Buffalo. Some of the information
-below comes from the original README file in the [OpenStarTracker repo].
-
 Like all OreSat software projects it is built using OLAF (OreSat Linux App
 Framework), which it built ontop of [CANopen for Python]. See the
 [oresat-olaf repo] for more info about OLAF.
@@ -24,12 +20,6 @@ Install Python dependenies
 
 ```bash
 $ pip3 install -r requirements.txt
-```
-
-Compile the cpp backend
-
-```bash
-make -C oresat_star_tracker/beast
 ```
 
 Make a virtual CAN bus

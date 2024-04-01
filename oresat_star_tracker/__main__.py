@@ -3,7 +3,6 @@
 import os
 
 from olaf import app, olaf_run, olaf_setup, render_olaf_template, rest_api
-from oresat_configs import NodeId
 
 from . import __version__
 from .star_tracker_service import StarTrackerService
@@ -19,7 +18,7 @@ def main():
     """Star Tracker OLAF app main."""
     path = os.path.dirname(os.path.abspath(__file__))
 
-    args, _ = olaf_setup(NodeId.STAR_TRACKER_1)
+    args, _ = olaf_setup("star_tracker_1")
     mock_args = [i.lower() for i in args.mock_hw]
     mock_camera = "camera" in mock_args or "all" in mock_args
 
