@@ -11,8 +11,7 @@ import tifffile as tiff
 from olaf import Service, logger, new_oresat_file  # , set_cpufreq_gov
 import lost
 
-from camera import Camera, CameraError
-#from .solver import Solver, SolverError
+from .camera import Camera, CameraError
 
 
 class State(IntEnum):
@@ -54,7 +53,6 @@ class StarTrackerService(Service):
             logger.debug("not mocking camera")
 
         self._camera = Camera(self.mock_hw)
-        #self._solver = Solver()
         self._last_capture = None
 
         self.status_obj: canopen.objectdictionary.Variable = None
@@ -99,8 +97,6 @@ class StarTrackerService(Service):
         self._lower_percentage_obj = image_filter_rec["lower_percentage"]
         self._upper_bound_obj = image_filter_rec["upper_bound"]
         self._upper_percentage_obj = image_filter_rec["upper_percentage"]
-
-        #self._solver.startup()  # DB takes awhile to initialize
 
         self.node.add_sdo_callbacks("status", None, self.on_read_status, self.on_write_status)
         self.node.add_sdo_callbacks(
@@ -192,28 +188,15 @@ class StarTrackerService(Service):
 
         # Take the image
         ts = time()
-        #data = self._camera.capture()
+        data = self._camera.capture()
 
-        '''LOST testing'''
-        ####################################
-
-        test_img = './samples/img_7660.png'
-        test_data = lost.imread(test_img)
-
+        # NOTE: Lost currently writes the capture to disk temporarily
         lost_args = lost.identify_args(algo='tetra')
-        lost_data = lost.identify(test_data, lost_args)
+        lost_data = lost.identify(data, lost_args)
 
-        ra = lost_data["attitude_ra"]
-        dec = lost_data["attitude_de"]
-        roll = lost_data["attitude_roll"]
-
-        print(ra, dec, roll)
-
-        ####################################
-
-        self._right_ascension_obj.value = int(ra)
-        self._declination_obj.value = int(dec)
-        self._orientation_obj.value = int(roll)
+        self._right_ascension_obj.value = int(lost_data["attitude_ra"])
+        self._declination_obj.value = int(lost_data["attitude_de"])
+        self._orientation_obj.value = int(lost_data["attitude_roll"])
 
         self._time_stamp_obj.value = int(ts)
         self._last_capture_time.value = int(ts)
