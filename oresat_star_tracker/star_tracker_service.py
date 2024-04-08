@@ -6,10 +6,10 @@ from time import time
 
 import canopen
 import cv2
+import lost
 import numpy as np
 import tifffile as tiff
 from olaf import Service, logger, new_oresat_file  # , set_cpufreq_gov
-import lost
 
 from .camera import Camera, CameraError
 
@@ -191,7 +191,7 @@ class StarTrackerService(Service):
         data = self._camera.capture()
 
         # NOTE: Lost currently writes the capture to disk temporarily
-        lost_args = lost.identify_args(algo='tetra')
+        lost_args = lost.identify_args(algo="tetra")
         lost_data = lost.identify(data, lost_args)
 
         self._right_ascension_obj.value = int(lost_data["attitude_ra"])
