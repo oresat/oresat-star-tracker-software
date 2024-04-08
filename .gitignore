@@ -128,10 +128,6 @@ dmypy.json
 # Pyre type checker
 .pyre/
 
-# beast files
-_beast.so
-beast.py
-beast_wrap.*
 
 # web app
 /data
