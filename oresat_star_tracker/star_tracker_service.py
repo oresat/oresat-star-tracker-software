@@ -200,7 +200,7 @@ class StarTrackerService(Service):
 
         self._time_stamp_obj.value = int(ts)
         self._last_capture_time.value = int(ts)
-        self._last_capture = test_data
+        self._last_capture = data
 
         # Send the star tracker data TPDOs
         self.node.send_tpdo(3)
@@ -259,8 +259,6 @@ class StarTrackerService(Service):
         if error is CameraError:
             logger.critical(error)
             self._state = State.ERROR
-        elif error is SolverError:
-            logger.error(error)
         elif error is ValueError:
             logger.error(error)
         else:

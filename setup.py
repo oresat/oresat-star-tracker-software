@@ -1,6 +1,5 @@
 """Package setup file. Only used for SWIG."""
 
-from setuptools import Extension, setup  # type: ignore
 from setuptools.command.build_py import build_py  # type: ignore
 
 
@@ -15,7 +14,6 @@ class BuildPy(build_py):
 
 
 setup(
-    ext_modules=[BEAST_EXT],
     cmdclass={
         "build_py": BuildPy,
     },
