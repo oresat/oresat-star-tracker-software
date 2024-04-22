@@ -20,11 +20,6 @@ class TestLost(unittest.TestCase):
     lost_args = lost.identify_args(algo="tetra")
     lost_data = lost.identify(data, lost_args)
 
-    print(lost_data["attitude_ra"])
-    print(lost_data["attitude_de"])
-    print(lost_data["attitude_roll"])
-
-
-if __name__ == "__main__":
-    # unittest.main()
-    unittest.main(verbosity=2)
+    assert int(lost_data["attitude_ra"]) == 77.4829
+    assert int(lost_data["attitude_de"]) == 83.44
+    assert int(lost_data["attitude_roll"]) == 238.376
