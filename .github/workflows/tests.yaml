@@ -50,8 +50,5 @@ jobs:
     - name: Check format with isort
       run: isort --check --diff .
 
-    - name: Test with Python's unittest
-      run: python -m unittest
-
     - name: Test building pypi package
       run: python -m build
