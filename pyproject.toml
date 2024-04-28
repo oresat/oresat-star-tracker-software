@@ -22,6 +22,7 @@ classifiers = [
 dependencies = [
     "imagecodecs",
     "numpy",
+    "imageio",
     "opencv-python-headless==4.6.0.66",
     "oresat-configs",
     "oresat-olaf>=3.0.0",
@@ -46,7 +47,7 @@ line_length = 100
 
 [tool.pylama]
 format = "pylint"
-skip = "*/.tox/*,*/.env/,*/.git/*,*/.github/*,*/build/*,*/beast/*"
+skip = "*/.tox/*,*/.env/,*/.git/*,*/.github/*,*/build/*"
 linters = "pycodestyle,pyflakes,pylint,mccabe,mypy,radon"
 # C0103:    Arguments are not snake_case naming style or too short
 # E203:     Whitespace before ':' (black does this)
@@ -81,4 +82,3 @@ extension-pkg-whitelist = ["cv2"]
 [tool.isort]
 profile = "black"
 line_length = 100
-skip = ["beast.py"] # generated file

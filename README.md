@@ -1,12 +1,11 @@
 # OreSat Star Tracker Software
 
-This is a modified version of [OpenStarTracker], originally developed by
-Andrew Tennenbaum at the University at Buffalo. Some of the information
-below comes from the original README file in the [OpenStarTracker repo].
-
 Like all OreSat software projects it is built using OLAF (OreSat Linux App
 Framework), which it built ontop of [CANopen for Python]. See the
 [oresat-olaf repo] for more info about OLAF.
+
+Algorithmic solving implemented with University of Washington HuskySat's [LOST] 
+star tracker program.
 
 **NOTE:** The prucam-ar013x kernel module is required to use the camera and
 will only work on the custom OreSat Star Tracker board. See the
@@ -14,22 +13,10 @@ will only work on the custom OreSat Star Tracker board. See the
 
 ## Quickstart
 
-Install Linux dependenies
-
-```bash
-$ sudo apt install swig
-```
-
 Install Python dependenies
 
 ```bash
 $ pip3 install -r requirements.txt
-```
-
-Compile the cpp backend
-
-```bash
-make -C oresat_star_tracker/beast
 ```
 
 Make a virtual CAN bus
@@ -66,9 +53,8 @@ Run the unit tests
 $ python3 -m unittest
 ```
 
-[OpenStarTracker]: https://openstartracker.org
-[OpenStarTracker repo]: https://github.com/UBNanosatLab/openstartracker
-[Flask]: https://flask.palletsprojects.com/en/latest/
+[LOST]: https://github.com/UWCubeSat/lost
+[NASA-COTS]: https://github.com/nasa/COTS-Star-Tracker
 [oresat-olaf repo]: https://github.com/oresat/oresat-olaf
 [CANopen for Python]: https://github.com/christiansandberg/canopen
 [oresat-prucam-ar013x repo]: https://github.com/oresat/oresat-prucam-ar013x

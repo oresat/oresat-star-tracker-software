@@ -6,12 +6,12 @@ from time import time
 
 import canopen
 import cv2
+import lost
 import numpy as np
 import tifffile as tiff
 from olaf import Service, logger, new_oresat_file  # , set_cpufreq_gov
 
 from .camera import Camera, CameraError
-from .solver import Solver, SolverError
 
 
 class State(IntEnum):
@@ -53,7 +53,6 @@ class StarTrackerService(Service):
             logger.debug("not mocking camera")
 
         self._camera = Camera(self.mock_hw)
-        self._solver = Solver()
         self._last_capture = None
 
         self.status_obj: canopen.objectdictionary.Variable = None
@@ -98,8 +97,6 @@ class StarTrackerService(Service):
         self._lower_percentage_obj = image_filter_rec["lower_percentage"]
         self._upper_bound_obj = image_filter_rec["upper_bound"]
         self._upper_percentage_obj = image_filter_rec["upper_percentage"]
-
-        self._solver.startup()  # DB takes awhile to initialize
 
         self.node.add_sdo_callbacks("status", None, self.on_read_status, self.on_write_status)
         self.node.add_sdo_callbacks(
@@ -193,13 +190,13 @@ class StarTrackerService(Service):
         ts = time()
         data = self._camera.capture()
 
-        # Solver takes a single shot image and returns an orientation
-        dec, ra, ori = self._solver.solve(data)  # run the solver
-        logger.debug(f"solved: ra:{ra}, dec:{dec}, ori:{ori}")
+        # NOTE: Lost currently writes the capture to disk temporarily
+        lost_args = lost.identify_args(algo="tetra")
+        lost_data = lost.identify(data, lost_args)
 
-        self._right_ascension_obj.value = int(ra)
-        self._declination_obj.value = int(dec)
-        self._orientation_obj.value = int(ori)
+        self._right_ascension_obj.value = int(lost_data["attitude_ra"])
+        self._declination_obj.value = int(lost_data["attitude_de"])
+        self._orientation_obj.value = int(lost_data["attitude_roll"])
 
         self._time_stamp_obj.value = int(ts)
         self._last_capture_time.value = int(ts)
@@ -262,8 +259,6 @@ class StarTrackerService(Service):
         if error is CameraError:
             logger.critical(error)
             self._state = State.ERROR
-        elif error is SolverError:
-            logger.error(error)
         elif error is ValueError:
             logger.error(error)
         else:
