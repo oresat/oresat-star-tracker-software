@@ -1,11 +1,14 @@
 """Star tracker AR013x camera"""
 
+import sys
 import io
 import os
 from os.path import abspath, dirname
+from enum import Enum
 
 import cv2
 import numpy as np
+from olaf import logger
 
 
 class CameraError(Exception):
@@ -19,12 +22,19 @@ class Camera:
 
     def __init__(self, mock: bool = False):
         self._mock = mock
-
+        
         if self._mock:
+            self.state = CameraState.MOCK
             self._capture_path = f"{dirname(abspath(__file__))}/data/mock.bmp"
         else:
             self._capture_path = "/dev/prucam"
-            self.image_size = self.read_image_size()
+            try:
+                self.image_size = self.read_image_size()
+            except FileNotFoundError:
+                self.state = CameraState.NOT_FOUND
+                logger.debug("Camera device not found")
+            else:
+                self.state = CameraState.RUNNING
 
     def read_image_size(self):
         """Read dimensions of image from the camera"""
@@ -34,14 +44,10 @@ class Camera:
 
     def read_context_setting(self, name: str) -> int:
         """'Read a context setting."""
-
         context_path = "/sys/devices/platform/prucam/context_settings"
-        try:
-            with open(f"{context_path}/{name}", "r") as f:
-                value = int(f.read())
-        except FileNotFoundError:
-            raise CameraError(f"no sysfs attribute {name} for camera")
-        return value
+        with open(f"{context_path}/{name}", "r") as f:
+            value = int(f.read())
+            return value
 
     def capture(self, color: bool = True) -> np.ndarray:
         """Capture an image
