@@ -24,7 +24,7 @@ class Camera:
             self._capture_path = f"{dirname(abspath(__file__))}/data/mock.bmp"
         else:
             self._capture_path = "/dev/prucam"
-            self.image_size = self.read_image_size()
+            self.image_size = (-1, -1)
 
     def read_image_size(self):
         """Read dimensions of image from the camera"""
@@ -61,6 +61,9 @@ class Camera:
         numpy.ndarray
             image data in numpy array
         """
+
+        if self.image_size == (-1, -1):
+            self.image_size = self.read_image_size()
 
         if self._mock:
             img = cv2.imread(self._capture_path, cv2.IMREAD_COLOR)

@@ -2,7 +2,7 @@
 
 from enum import IntEnum
 from io import BytesIO
-from time import time
+from time import monotonic, time
 
 import canopen
 import cv2
@@ -103,7 +103,7 @@ class StarTrackerService(Service):
             "capture", "last_display_image", self._on_read_last_display_image, None
         )
 
-        self._state = State.STANDBY
+        self._state = State.BOOT
 
     def on_stop(self):
         """When service stops clear star tracking data."""
@@ -248,7 +248,9 @@ class StarTrackerService(Service):
         self._state = State.STANDBY
 
     def on_loop(self):
-        if self._state == State.STAR_TRACK:
+        if self._state == State.BOOT and monotonic() > 70:
+            self._state = State.STANDBY
+        elif self._state == State.STAR_TRACK:
             self._star_track()
         elif self._state == State.CAPTURE_ONLY:
             self._capture_only_mode()
@@ -282,6 +284,10 @@ class StarTrackerService(Service):
 
         if new_status == self._state:
             return  # nothing to change
+
+        if self._state == State.BOOT:
+            logger.error("cannot transfer out of BOOT state by command")
+            return
 
         if new_status not in STATE_TRANSISTIONS[self._state]:
             logger.error(f"invalid status change: {self._state.name} -> {new_status.name}")
