@@ -60,7 +60,8 @@ class Camera:
             logger.error("Camera module not found")
             return
 
-        if mod_check.stdout == "":
+        if mod_check.stdout.strip() == "":
+            logger.info("building & installing kernel module")
             # if kernel module is not loaded; compile and insert it
             temp_path = glob.glob("/usr/src/prucam*")
             if len(temp_path) != 1:
