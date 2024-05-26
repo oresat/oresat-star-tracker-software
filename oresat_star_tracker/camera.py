@@ -140,6 +140,7 @@ class Camera:
 
         if self._state != CameraState.RUNNING:
             raise CameraError(f"Camera error; state is {self._state}")
+
         if self._mock:
             return self._mock_data
         # Read raw data
