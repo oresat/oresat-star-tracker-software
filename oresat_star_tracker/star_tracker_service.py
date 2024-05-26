@@ -286,9 +286,9 @@ class StarTrackerService(Service):
         """SDO write callback for star tracker status."""
         new_status = self._state
 
-        if self.camera.state == CameraState.LOCKOUT:
+        if self._camera.state == CameraState.LOCKOUT:
             logger.error("Cannot transition camera to lockout state")
-        elif self.camera.state == CameraState.ERROR:
+        elif self._camera.state == CameraState.ERROR:
             logger.error("Camera is in error state")
             new_status = State.ERROR
         else:

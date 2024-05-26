@@ -5,10 +5,10 @@ import io
 import os
 import platform
 import subprocess
-import time
 from enum import Enum
 from pathlib import Path
 from threading import Timer
+from time import monotonic, sleep
 
 import cv2
 import numpy as np
@@ -43,7 +43,7 @@ class Camera:
         self._image_size = (self.MAX_COLS, self.MAX_ROWS)
         self._mock_data = np.zeros(self._image_size, dtype=np.uint8)
 
-        uptimer = Timer(90.0, self.unlock)
+        uptimer = Timer(monotonic() - 90.0, self.unlock)
         uptimer.start()
 
     def unlock(self):
@@ -88,7 +88,7 @@ class Camera:
                 logger.error("Error building/inserting kernel module")
                 return
 
-        time.sleep(0.5)
+        sleep(0.5)
         if not self.CAPTURE_PATH.exists():
             self._state = CameraState.NOT_FOUND
             logger.error("Could not find capture path")
@@ -97,6 +97,7 @@ class Camera:
         # no errors; attempt to read image
         self._state = CameraState.RUNNING
         self._image_size = self.read_image_size()
+        logger.info("Camera is unlocked")
 
     def read_image_size(self):
         """Read dimensions of image from the camera"""
