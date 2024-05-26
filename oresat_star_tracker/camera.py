@@ -55,7 +55,7 @@ class Camera:
         mod_check = subprocess.run(
             "lsmod | grep prucam", capture_output=True, shell=True, check=False
         )
-        if mod_check.returncode != 0:  # error
+        if mod_check.returncode not in [0, 1]:  # error
             self._state = CameraState.ERROR
             logger.error("Camera module not found")
             return
