@@ -188,7 +188,13 @@ class StarTrackerService(Service):
 
         # Take the image
         ts = time()
-        data = self._camera.capture()
+        try:
+            data = self._camera.capture()
+        except Exception:
+            self._state = State.ERROR
+            logger.error("Camera capture failure")
+            logger.info(f"changing status: {self._state.name} -> {State.STANDBY.name}")
+            return
 
         # NOTE: Lost currently writes the capture to disk temporarily
         lost_args = lost.identify_args(algo="tetra")
@@ -224,7 +230,13 @@ class StarTrackerService(Service):
             self._image_count_obj.value == 0 or img_count < self._image_count_obj.value
         ):
             ts = time()
-            data = self._camera.capture()  # Take the image
+            try:
+                data = self._camera.capture()
+            except Exception:
+                self._state = State.ERROR
+                logger.error("Camera capture failure")
+                logger.info(f"changing status: {self._state.name} -> {State.STANDBY.name}")
+                return
 
             # Check if image passes filter
             if not self._filter_enable_obj.value or not self._filter(data):

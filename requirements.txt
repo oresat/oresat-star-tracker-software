@@ -9,4 +9,3 @@ setuptools
 setuptools-scm
 tifffile
 wheel
-./external/lost-0.0.0-py3-none-any.whl
