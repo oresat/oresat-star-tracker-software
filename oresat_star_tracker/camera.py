@@ -43,7 +43,7 @@ class Camera:
         self._image_size = (self.MAX_COLS, self.MAX_ROWS)
         self._mock_data = np.zeros(self._image_size, dtype=np.uint8)
 
-        uptimer = Timer(monotonic() - 90.0, self.unlock)
+        uptimer = Timer(90.0 - monotonic(), self.unlock)
         uptimer.start()
 
     def unlock(self):
