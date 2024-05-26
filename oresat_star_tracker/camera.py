@@ -61,7 +61,7 @@ class Camera:
             return
 
         if not mod_check.stdout:
-            logger.info("building & installing kernel module")
+            logger.info("Building & installing kernel module")
             # if kernel module is not loaded; compile and insert it
             temp_path = glob.glob("/usr/src/prucam*")
             if len(temp_path) != 1:
