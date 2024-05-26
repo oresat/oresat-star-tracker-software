@@ -2,6 +2,7 @@ black
 build
 isort
 numpy
+imageio
 opencv-python-headless==4.6.0.66
 oresat-configs
 oresat-olaf

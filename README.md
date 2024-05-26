@@ -4,7 +4,11 @@ Like all OreSat software projects it is built using OLAF (OreSat Linux App
 Framework), which it built ontop of [CANopen for Python]. See the
 [oresat-olaf repo] for more info about OLAF.
 
+<<<<<<< HEAD
 Algorithmic solving implemented with University of Washington HuskySat's LOST 
+=======
+Algorithmic solving implemented with University of Washington HuskySat's [LOST] 
+>>>>>>> master
 star tracker program.
 
 **NOTE:** The prucam-ar013x kernel module is required to use the camera and
@@ -12,12 +16,6 @@ will only work on the custom OreSat Star Tracker board. See the
 [oresat-prucam-ar013x repo] for more info.
 
 ## Quickstart
-
-Install Linux dependenies
-
-```bash
-$ sudo apt install swig
-```
 
 Install Python dependenies
 
@@ -61,7 +59,10 @@ $ python3 -m unittest
 
 [LOST]: https://github.com/UWCubeSat/lost
 [NASA-COTS]: https://github.com/nasa/COTS-Star-Tracker
+<<<<<<< HEAD
 [Flask]: https://flask.palletsprojects.com/en/latest/
+=======
+>>>>>>> master
 [oresat-olaf repo]: https://github.com/oresat/oresat-olaf
 [CANopen for Python]: https://github.com/christiansandberg/canopen
 [oresat-prucam-ar013x repo]: https://github.com/oresat/oresat-prucam-ar013x
