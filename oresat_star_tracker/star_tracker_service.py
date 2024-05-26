@@ -11,7 +11,7 @@ import numpy as np
 import tifffile as tiff
 from olaf import Service, logger, new_oresat_file  # , set_cpufreq_gov
 
-from .camera import Camera, CameraError
+from .camera import Camera, CameraError, CameraState
 
 
 class State(IntEnum):
@@ -188,7 +188,13 @@ class StarTrackerService(Service):
 
         # Take the image
         ts = time()
-        data = self._camera.capture()
+        try:
+            data = self._camera.capture()
+        except Exception:
+            self._state = State.ERROR
+            logger.error("Camera capture failure")
+            logger.info(f"changing status: {self._state.name} -> {State.STANDBY.name}")
+            return
 
         # NOTE: Lost currently writes the capture to disk temporarily
         lost_args = lost.identify_args(algo="tetra")
@@ -224,7 +230,13 @@ class StarTrackerService(Service):
             self._image_count_obj.value == 0 or img_count < self._image_count_obj.value
         ):
             ts = time()
-            data = self._camera.capture()  # Take the image
+            try:
+                data = self._camera.capture()
+            except Exception:
+                self._state = State.ERROR
+                logger.error("Camera capture failure")
+                logger.info(f"changing status: {self._state.name} -> {State.STANDBY.name}")
+                return
 
             # Check if image passes filter
             if not self._filter_enable_obj.value or not self._filter(data):
@@ -265,7 +277,7 @@ class StarTrackerService(Service):
             logger.error(error)
         else:
             logger.critical(f"Unkown error {error}")
-            self._state = State.ERROR
+        self._state = State.ERROR
 
     def on_read_status(self) -> int:
         """SDO read callback for star tracker status."""
@@ -274,13 +286,19 @@ class StarTrackerService(Service):
 
     def on_write_status(self, value: int):
         """SDO write callback for star tracker status."""
+        new_status = self._state
 
-        new_status = State.BOOT
-        try:
-            new_status = State(value)
-        except ValueError:
-            logger.error(f"invalid state: {value}")
-            return
+        if self._camera.state == CameraState.LOCKOUT:
+            logger.error("Cannot transition camera to lockout state")
+        elif self._camera.state == CameraState.ERROR:
+            logger.error("Camera is in error state")
+            new_status = State.ERROR
+        else:
+            try:
+                new_status = State(value)
+            except ValueError:
+                logger.error(f"invalid state: {value}")
+                return
 
         if new_status == self._state:
             return  # nothing to change
