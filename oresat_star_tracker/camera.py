@@ -53,14 +53,14 @@ class Camera:
 
         # check if kernel module is loaded
         mod_check = subprocess.run(
-            "lsmod | grep prucam", capture_output=True, shell=True, check=False
+            "lsmod | grep prucam", capture_output=True, shell=True, check=False, text=True
         )
         if mod_check.returncode not in [0, 1]:  # error
             self._state = CameraState.ERROR
             logger.error("Camera module not found")
             return
 
-        if mod_check.stdout.strip() == "":
+        if not mod_check.stdout:
             logger.info("building & installing kernel module")
             # if kernel module is not loaded; compile and insert it
             temp_path = glob.glob("/usr/src/prucam*")
