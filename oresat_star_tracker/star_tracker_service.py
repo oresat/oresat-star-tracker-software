@@ -284,13 +284,19 @@ class StarTrackerService(Service):
 
     def on_write_status(self, value: int):
         """SDO write callback for star tracker status."""
+        new_status = self._state
 
-        new_status = State.BOOT
-        try:
-            new_status = State(value)
-        except ValueError:
-            logger.error(f"invalid state: {value}")
-            return
+        if self.camera.state == CameraState.LOCKOUT:
+            logger.error("Cannot transition camera to lockout state")
+        elif self.camera.state == CameraState.ERROR:
+            logger.error("Camera is in error state")
+            new_status = State.ERROR
+        else:
+            try:
+                new_status = State(value)
+            except ValueError:
+                logger.error(f"invalid state: {value}")
+                return
 
         if new_status == self._state:
             return  # nothing to change
