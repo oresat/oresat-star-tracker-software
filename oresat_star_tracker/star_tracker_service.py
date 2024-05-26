@@ -11,7 +11,7 @@ import numpy as np
 import tifffile as tiff
 from olaf import Service, logger, new_oresat_file  # , set_cpufreq_gov
 
-from .camera import Camera, CameraError
+from .camera import Camera, CameraError, CameraState
 
 
 class State(IntEnum):
@@ -275,7 +275,7 @@ class StarTrackerService(Service):
             logger.error(error)
         else:
             logger.critical(f"Unkown error {error}")
-            self._state = State.ERROR
+        self._state = State.ERROR
 
     def on_read_status(self) -> int:
         """SDO read callback for star tracker status."""
