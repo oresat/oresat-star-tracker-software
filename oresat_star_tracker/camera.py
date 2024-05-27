@@ -60,7 +60,7 @@ class Camera:
             logger.error("Camera module not found")
             return
 
-        if not mod_check.stdout:
+        def load_kernel_module():
             logger.info("Building & installing kernel module")
             # if kernel module is not loaded; compile and insert it
             temp_path = glob.glob("/usr/src/prucam*")
@@ -87,6 +87,16 @@ class Camera:
                 self._state = CameraState.ERROR
                 logger.error("Error building/inserting kernel module")
                 return
+
+        if not mod_check.stdout:
+            load_kernel_module()
+            sleep(5)
+            rm_mod = subprocess.run("rmmod prucam", capture_output=True, shell=True, check=False)
+            if rm_mod.returncode != 0:
+                self._state = CameraState.ERROR
+                logger.error("Error removing kernel module")
+                return
+            load_kernel_module()
 
         sleep(0.5)
         if not self.CAPTURE_PATH.exists():
