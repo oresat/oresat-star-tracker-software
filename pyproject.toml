@@ -23,7 +23,7 @@ dependencies = [
     "imagecodecs",
     "numpy",
     "imageio",
-    "opencv-python-headless==4.6.0.66",
+    "opencv-python-headless==4.8.1.78",
     "oresat-configs",
     "oresat-olaf>=3.0.0",
     "tifffile",
