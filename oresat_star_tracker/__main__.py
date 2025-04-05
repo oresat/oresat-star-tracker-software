@@ -1,34 +1,40 @@
-"""Star Tracker App"""
+import logging
+from argparse import ArgumentParser
 
-import os
+from oresat_cand import NodeClient
 
-from olaf import app, olaf_run, olaf_setup, render_olaf_template, rest_api
-
-from . import __version__
-from .star_tracker_service import StarTrackerService
-
-
-@rest_api.app.route("/star-tracker")
-def star_tracker_template():
-    """Render the star tracker web page."""
-    return render_olaf_template("star_tracker.html", name="Star Tracker")
+from .ar013x import Ar013x
+from .gen.star_tracker_od import StarTrackerEntry
+from .star_tracker import StarTracker
+from .ui import Ui
 
 
 def main():
-    """Star Tracker OLAF app main."""
-    path = os.path.dirname(os.path.abspath(__file__))
+    parser = ArgumentParser()
+    parser.add_argument("-m", "--mock-hw", action="store_true", help="mock hardware")
+    parser.add_argument("-v", "--verbose", action="store_true", help="verbose logging")
+    args = parser.parse_args()
 
-    args, _ = olaf_setup("star_tracker_1")
-    mock_args = [i.lower() for i in args.mock_hw]
-    mock_camera = "camera" in mock_args or "all" in mock_args
+    LOG_FMT = "%(levelname)s: %(filename)s:%(lineno)s - %(message)s"
+    logging.basicConfig(format=LOG_FMT)
+    if args.verbose:
+        logging.getLogger().setLevel(logging.DEBUG)
+    else:
+        logging.getLogger().setLevel(logging.INFO)
 
-    app.od["versions"]["sw_version"].value = __version__
+    node = NodeClient(StarTrackerEntry)
 
-    app.add_service(StarTrackerService(mock_camera))
+    camera = Ar013x(args.mock_hw)
 
-    rest_api.add_template(f"{path}/templates/star_tracker.html")
+    star_tracker = StarTracker(node, camera)
 
-    olaf_run()
+    ui = Ui(node, star_tracker)
+
+    star_tracker.run(thread=True)
+    try:
+        ui.run()
+    except KeyboardInterrupt:
+        pass
 
 
 if __name__ == "__main__":

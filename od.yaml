@@ -1,0 +1,152 @@
+name: star_tracker
+nice_name: Star Tracker
+
+objects:
+  - index: 0x4000
+    name: status
+    data_type: uint8
+    value_descriptions:
+      'off': 0
+      boot: 1
+      standby: 2
+      low_power: 3
+      star_track: 4
+      capture: 5
+      error: 0xff
+
+  - index: 0x4001
+    name: capture
+    object_type: record
+    subindexes:
+      - subindex: 0x1
+        name: num_of_images
+        data_type: uint8
+        description: number of images to capture in camera mode or 0 for endless
+        default: 1
+
+      - subindex: 0x2
+        name: delay
+        data_type: uint32
+        description: delay between captures
+        default: 1000
+        unit: ms
+
+      - subindex: 0x3
+        name: duration
+        data_type: uint32
+        description: how long to try to capture for
+        default: 1
+        unit: s
+
+      - subindex: 0x4
+        name: last_capture
+        data_type: domain
+        description: the last raw capture
+        access_type: ro
+
+      - subindex: 0x5
+        name: last_display_image
+        data_type: domain
+        description: the last capture convert to a nice display image
+        access_type: ro
+
+      - subindex: 0x6
+        name: last_capture_time
+        data_type: uint64
+        description: timestamp of last raw capture
+        access_type: ro
+
+      - subindex: 0x7
+        name: images_captured
+        data_type: uint32
+        description: number of images capture during capture mode
+        access_type: ro
+
+      - subindex: 0x8
+        name: save_captures
+        data_type: bool
+        description: save the captures
+        default: true
+
+  - index: 0x4002
+    name: orientation
+    object_type: record
+    description: last solve calculations
+    subindexes:
+      - subindex: 0x1
+        name: right_ascension
+        data_type: int16
+        description: the right ascension of the satellite
+        access_type: ro
+        unit: deg
+
+      - subindex: 0x2
+        name: declination
+        data_type: int16
+        description: the delination of the satellite
+        access_type: ro
+        unit: deg
+
+      - subindex: 0x3
+        name: roll
+        data_type: int16
+        description: the roll of the satellite
+        access_type: ro
+        unit: deg
+
+      - subindex: 0x4
+        name: time_since_midnight
+        data_type: uint32
+        description: time since midnight when the image was captured
+        access_type: ro
+        unit: ms
+
+  - index: 0x4003
+    name: capture_filter
+    object_type: record
+    description: settings use to accept or reject the capture
+    subindexes:
+      - subindex: 0x1
+        name: enable
+        data_type: bool
+        description: enable/disable all capture filters
+        access_type: rw
+        default: true
+
+      - subindex: 0x2
+        name: lower_bound
+        data_type: uint8
+        description: intensity threshold for a pixel to be considered bright enough
+        access_type: rw
+
+      - subindex: 0x3
+        name: lower_percentage
+        data_type: uint8
+        description: percentage of pixels must be above lower bound
+        access_type: rw
+        high_limit: 100
+
+      - subindex: 0x4
+        name: upper_bound
+        data_type: uint8
+        description: intensity threshold for a pixel to be considered too bright
+        access_type: rw
+
+      - subindex: 0x5
+        name: upper_percentage
+        data_type: uint8
+        description: percentage of pixels must be above upper bound
+        access_type: rw
+        high_limit: 100
+
+tpdos:
+  - num: 3
+    fields:
+      - [status]
+      - [orientation, right_ascension]
+      - [orientation, declination]
+      - [orientation, roll]
+
+  - num: 4
+    fields:
+      - [orientation, time_since_midnight]
