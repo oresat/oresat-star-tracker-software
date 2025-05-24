@@ -43,7 +43,7 @@ oresat-star-tracker = "oresat_star_tracker.__main__:main"
 exclude = ["tests*"]
 
 [tool.setuptools.package-data]
-"*" = ["*.tpl"]
+"*" = ["*.tpl", "*.csv"]
 
 [tool.setuptools_scm]
 version_file = "oresat_star_tracker/_version.py"
