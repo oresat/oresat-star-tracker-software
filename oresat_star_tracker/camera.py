@@ -169,7 +169,7 @@ class Camera:
 
         # Convert to color
         if color is True:
-            img = cv2.cvtColor(img, cv2.COLOR_BayerBG2BGR)
+            return cv2.cvtColor(img, cv2.COLOR_BayerBG2BGR)
 
         return img
 

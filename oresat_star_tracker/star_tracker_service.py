@@ -4,7 +4,6 @@ from enum import IntEnum
 from io import BytesIO
 from time import monotonic, time
 
-import canopen
 import cv2
 import lost
 import numpy as np
@@ -54,22 +53,6 @@ class StarTrackerService(Service):
 
         self._camera = Camera(self.mock_hw)
         self._last_capture = None
-
-        self.status_obj: canopen.objectdictionary.Variable = None
-        self._right_ascension_obj: canopen.objectdictionary.Variable = None
-        self._declination_obj: canopen.objectdictionary.Variable = None
-        self._orientation_obj: canopen.objectdictionary.Variable = None
-        self._time_stamp_obj: canopen.objectdictionary.Variable = None
-        self._capture_delay_obj: canopen.objectdictionary.Variable = None
-        self._capture_duration_obj: canopen.objectdictionary.Variable = None
-        self._image_count_obj: canopen.objectdictionary.Variable = None
-        self._last_capture_time: canopen.objectdictionary.Variable = None
-        self._save_obj: canopen.objectdictionary.Variable = None
-        self._filter_enable_obj: canopen.objectdictionary.Variable = None
-        self._lower_bound_obj: canopen.objectdictionary.Variable = None
-        self._lower_percentage_obj: canopen.objectdictionary.Variable = None
-        self._upper_bound_obj: canopen.objectdictionary.Variable = None
-        self._upper_percentage_obj: canopen.objectdictionary.Variable = None
 
     def on_start(self):
         """Save references to OD objiables"""
