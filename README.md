@@ -4,7 +4,7 @@ Like all OreSat software projects it is built using OLAF (OreSat Linux App
 Framework), which it built ontop of [CANopen for Python]. See the
 [oresat-olaf repo] for more info about OLAF.
 
-Algorithmic solving implemented with University of Washington HuskySat's [LOST] 
+Algorithmic solving implemented with University of Washington HuskySat's [LOST]
 star tracker program.
 
 **NOTE:** The prucam-ar013x kernel module is required to use the camera and
@@ -16,7 +16,7 @@ will only work on the custom OreSat Star Tracker board. See the
 Install Python dependenies
 
 ```bash
-$ pip3 install -r requirements.txt
+$ pip3 install -e .[dev]
 ```
 
 Make a virtual CAN bus
@@ -54,7 +54,6 @@ $ python3 -m unittest
 ```
 
 [LOST]: https://github.com/UWCubeSat/lost
-[NASA-COTS]: https://github.com/nasa/COTS-Star-Tracker
 [Flask]: https://flask.palletsprojects.com/en/latest/
 [oresat-olaf repo]: https://github.com/oresat/oresat-olaf
 [CANopen for Python]: https://github.com/christiansandberg/canopen
