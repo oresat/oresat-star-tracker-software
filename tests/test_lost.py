@@ -1,75 +1,68 @@
-"""
-Tests for the LOST attitude solver functionality.
-
-This file contains unit tests for the functions intended to integrate with 
-the LOST (Lost-in-Space Star Tracker) star identification algorithm. 
-Note: The imported 'lost' module currently uses mock placeholders.
-*must use sudo for Lost program to work
-"""
-
 import os
-import unittest
+import pytest
 import lost
+import numpy as np
 
-
-class TestLost(unittest.TestCase):
+# Define a fixture to provide the necessary path for the test.
+@pytest.fixture(scope="module")
+def image_path():
     """
-    Test suite for the star attitude solving process provided by the 'lost' module.
-    
-    This suite verifies that the data flow and function outputs (using mock data 
-    from lost.py) are correct and as expected by the system.
+    **Why a fixture?** This fixture ensures the mock image file path is constructed
+    in an environment-independent way and is consistent across all tests in this
+    module, avoiding path-related issues between different systems or execution
+    environments.
+
+    Provides the full, absolute path to the mock image file for testing.
+    This fixture ensures the file path is constructed correctly regardless
+    of where the test is executed from.
     """
-    def setUp(self):
+    img_file = "images/capture-2022-09-25-09-40-25.png"
+    # The actual image file is not required to exist, as 'lost.py' is mocked
+    # to return a placeholder dataset. We construct the path as intended for
+    # consistency with the actual execution environment.
+    current_dir = os.path.dirname(os.path.abspath(__file__))
+    # Assuming 'images' is a sibling directory to 'tests' or a child of the root project
+    return os.path.join(current_dir, img_file)
+
+
+# Convert the unittest.TestCase class to a standard pytest class
+class TestLost:
+    """Test the LOST star tracker solving algo"""
+
+    # The setup logic (getting the image path) is now handled by the 'image_path' fixture.
+    # **Why not a setup method?** Using fixtures is the idiomatic pytest way to
+    # manage resources (like the path) that multiple tests rely on.
+
+    def test_star_identification(self, image_path):
         """
-        Setup method to prepare mock input data and execute the target functions 
-        before each test case is run.
+        Tests the end-to-end star identification process using the public interface:
+        lost.imread(), lost.identify_args(), and lost.identify().
+
+        The test asserts the calculated attitude values against expected results
+        using pytest.approx for accurate floating-point comparison.
         """
-        # --- Arrange: Setup necessary file path ---
-        # Define a mock image file path for the imread function to consume.
-        # Define path
-        self.img_file = "./images/capture-2022-09-25-09-40-25.png"
-        self.current_dir = os.path.dirname(__file__)
-        self.path = os.path.join(self.current_dir, self.img_file)
-
-        # --- Act: Execute the LOST pipeline functions with mock data ---
-
-        # 1. Read Image: Simulate loading the star-tracker image.
-        self.data = lost.imread(self.path)
-    
-        # 2. Get Arguments: Simulate configuring the star identification algorithm.
-        self.lost_args = lost.identify_args(algo="tetra")
-
-        # 3. Identify Attitude: Execute the core identification function. 
-        self.lost_data = lost.identify(self.data, self.lost_args)
-
-    def test_identify_attritude_values(self):
-        """
-        Tests that the Lost identify function returns the expected mock attitude values 
-        (Right Ascension, Declination, and Roll) from the core processing pipeline.
+        # --- Public Interface Usage ---
+        # The 'image_path' is provided by the fixture, ensuring path correctness.
+        data = lost.imread(image_path)
         
-        Since 'lost.py' uses hardcoded mock return values, this test verifies 
-        the integration and the structure of the data returned by 'identify'.
-        """
-        # --- Assert: Verify the results from the setup execution ---
+        # Verify imread returns expected mock data type
+        assert isinstance(data, np.ndarray)
+
+        lost_args = lost.identify_args(algo="tetra")
         
-        # Check Right Ascension (RA): attitude_ra
-        # The test checks the integer part to tolerate minor floating-point errors 
-        # or differences in precision, verifying the core value (77.4829 -> 77).
-   
-        expected_ra_int = 77
-        actual_ra_int = int(self.lost_data.get("attitude_ra", 0))
-        self.assertEqual(actual_ra_int, expected_ra_int, "RA integer value mismatch")
+        # Verify identify_args returns expected mock arguments
+        assert lost_args["algorithm"] == "tetra"
 
-        # Check Declination (Dec): attitude_dec
-        # Verifies the integer part of the Declination value (83.0 -> 83).
+        lost_data = lost.identify(data, lost_args)
 
-        expected_dec_int = 83
-        actual_dec_int = int(self.lost_data.get("attitude_dec", 0))
-        self.assertEqual(actual_dec_int, expected_dec_int, "Dec integer value mismatch")
-
-        # Check Roll Angle: attitude_roll
-        # Verifies the integer part of the Roll Angle (238.376 -> 238).
-
-        expected_roll_int = 238
-        actual_roll_int = int(self.lost_data.get("attitude_roll", 0))
-        self.assertEqual(actual_roll_int, expected_roll_int, "Roll integer value mismatch")
+        # --- Assertions using pytest.approx ---
+        # **Why pytest.approx?** Floating-point values (like attitude) are inherently
+        # subject to small computational errors. We use pytest.approx to ensure
+        # the comparison is numerically robust against these minor discrepancies.
+        assert lost_data["attitude_ra"] == pytest.approx(77.4829)
+        assert lost_data["attitude_dec"] == pytest.approx(83.0) # The mock implementation sets this to exactly 83
+        assert lost_data["attitude_roll"] == pytest.approx(238.376)
+        
+        # Optionally test other returned keys
+        assert "star_id" in lost_data
+        assert "q_body_eci" in lost_data

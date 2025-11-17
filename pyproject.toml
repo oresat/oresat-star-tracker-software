@@ -30,6 +30,18 @@ dependencies = [
 ]
 dynamic = ["version"]
 
+[project.optional-dependencies]
+dev = [
+    "build >= 1.3.0",
+    "mypy >= 1.18.2",
+    "pytest >= 9.0.1",
+    "pytest-cov >= 7.0.0",
+    "pytest-mock >= 3.15.1",
+    "ruff >= 0.14.0",
+    "setuptools",
+    "setuptools-scm",
+]
+
 [project.scripts]
 oresat-star-tracker = "oresat_star_tracker.__main__:main"
 
@@ -39,8 +51,12 @@ exclude = ["docs*", "tests*"]
 [tool.setuptools.package-data]
 "*" = ["*.html", "*.so", "*.h", "*.i", "Makefile"]
 
-[tool.setuptools_scm]
-write_to = "oresat_star_tracker/_version.py"
+[tool.coverage.run]
+source = ["oresat_star_tracker"]
+
+[tool.pytest.ini_options]
+addopts = "--cov=oresat_star_tracker --cov-report=term-missing"
+python_files = "tests/test_*.py"
 
 [tool.black]
 line_length = 100
@@ -73,7 +89,7 @@ path = "tests/*"
 ignore = "W0212"
 
 [[tool.mypy.overrides]]
-module = "canopen,olaf,tifffile,oresat_configs,cv2"
+module = "canopen,lost,olaf,tifffile,oresat_configs,cv2"
 ignore_missing_imports = true
 
 [tool.pylint.main]
@@ -82,3 +98,6 @@ extension-pkg-whitelist = ["cv2"]
 [tool.isort]
 profile = "black"
 line_length = 100
+
+[tool.setuptools_scm]
+write_to = "oresat_star_tracker/_version.py"
