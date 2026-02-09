@@ -41,25 +41,10 @@ class Camera:
         self._image_size = (self.MAX_COLS, self.MAX_ROWS)
         self._mock_data = np.zeros((self.MAX_COLS, self.MAX_ROWS, 3), dtype=np.uint8)
 
-        uptimer = Timer(90.0 - monotonic(), self.unlock)
-        uptimer.start()
-
-    def unlock(self):
-        """This function checks if the camera module is running and loaded"""
         if self._mock:
             self._state = CameraState.RUNNING
             return
 
-        # check if kernel module is loaded
-        mod_check = subprocess.run(
-            "lsmod | grep prucam", capture_output=True, shell=True, check=False, text=True
-        )
-        if mod_check.returncode not in [0, 1]:  # error
-            self._state = CameraState.ERROR
-            logger.error("Camera module not found")
-            return
-
-        sleep(0.5)
         if not self.CAPTURE_PATH.exists():
             self._state = CameraState.NOT_FOUND
             logger.error("Could not find capture path")
