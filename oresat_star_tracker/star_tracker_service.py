@@ -10,7 +10,7 @@ import numpy as np
 import tifffile as tiff
 from olaf import Service, logger, new_oresat_file  # , set_cpufreq_gov
 
-from .camera import Camera, CameraError, CameraState
+from .camera import Camera, CameraError, CameraState, MockCamera
 
 
 class State(IntEnum):
@@ -43,15 +43,15 @@ class StarTrackerService(Service):
     def __init__(self, mock_hw: bool = False):
         super().__init__()
 
-        self.mock_hw = mock_hw
         self._state = State.BOOT
 
-        if self.mock_hw:
-            logger.debug("mocking camera")
-        else:
+        if not mock_hw:
             logger.debug("not mocking camera")
+            self._camera = Camera()
+        else:
+            logger.debug("mocking camera")
+            self._camera = MockCamera()
 
-        self._camera = Camera(self.mock_hw)
         self._last_capture = None
 
     def on_start(self):
