@@ -1,15 +1,9 @@
 """Star tracker AR013x camera"""
 
-import glob
 import io
 import os
-import platform
-import subprocess
 from enum import Enum
 from pathlib import Path
-from threading import Timer
-from time import monotonic, sleep
-
 import cv2
 import numpy as np
 from olaf import logger
@@ -43,62 +37,10 @@ class Camera:
         self._image_size = (self.MAX_COLS, self.MAX_ROWS)
         self._mock_data = np.zeros((self.MAX_COLS, self.MAX_ROWS, 3), dtype=np.uint8)
 
-        uptimer = Timer(90.0 - monotonic(), self.unlock)
-        uptimer.start()
-
-    def unlock(self):
         if self._mock:
             self._state = CameraState.RUNNING
             return
 
-        # check if kernel module is loaded
-        mod_check = subprocess.run(
-            "lsmod | grep prucam", capture_output=True, shell=True, check=False, text=True
-        )
-        if mod_check.returncode not in [0, 1]:  # error
-            self._state = CameraState.ERROR
-            logger.error("Camera module not found")
-            return
-
-        def load_kernel_module():
-            logger.info("Building & installing kernel module")
-            # if kernel module is not loaded; compile and insert it
-            temp_path = glob.glob("/usr/src/prucam*")
-            if len(temp_path) != 1:
-                self._state = CameraState.ERROR
-                logger.error("Kernel module install path not found")
-                return
-            install_path = temp_path[0]
-
-            base_path = os.path.basename(install_path)
-            dkms_module = base_path.replace("-", "/")
-            release = platform.release()
-            build_path = f"/var/lib/dkms/{dkms_module}/{release}/armv7l/module/prucam.ko.xz"
-            build_mod = subprocess.run(
-                f"dkms build {dkms_module}",
-                capture_output=True,
-                shell=True,
-                check=False,
-            )
-            ins_mod = subprocess.run(
-                f"insmod {build_path}", capture_output=True, shell=True, check=False
-            )
-            if build_mod.returncode != 0 or ins_mod.returncode != 0:
-                self._state = CameraState.ERROR
-                logger.error("Error building/inserting kernel module")
-                return
-
-        if not mod_check.stdout:
-            load_kernel_module()
-            sleep(5)
-            rm_mod = subprocess.run("rmmod prucam", capture_output=True, shell=True, check=False)
-            if rm_mod.returncode != 0:
-                self._state = CameraState.ERROR
-                logger.error("Error removing kernel module")
-                return
-            load_kernel_module()
-
-        sleep(0.5)
         if not self.CAPTURE_PATH.exists():
             self._state = CameraState.NOT_FOUND
             logger.error("Could not find capture path")
