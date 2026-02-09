@@ -2,12 +2,8 @@
 
 import io
 import os
-import subprocess
 from enum import Enum
 from pathlib import Path
-from threading import Timer
-from time import monotonic, sleep
-
 import cv2
 import numpy as np
 from olaf import logger
