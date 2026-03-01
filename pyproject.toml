@@ -19,7 +19,8 @@ dependencies = [
     #LOST star tracker isn't on pypi, it's on a branch in the main LOST repo
     "lost @ https://github.com/UWCubeSat/lost/archive/refs/heads/alniss-basic-python-interface.zip",
     "numpy",
-    "opencv-python-headless",
+    "pillow",
+    "colour-demosaicing",
     "oresat-olaf>=3.6.5",
     "tifffile",
 ]
