@@ -2,7 +2,7 @@
 
 from enum import Enum
 from pathlib import Path
-import cv2
+from colour_demosaicing import demosaicing_CFA_Bayer_bilinear
 import numpy as np
 from olaf import logger
 
@@ -67,11 +67,24 @@ class Camera:
             raise CameraError(f"Camera error; state is {self._state}")
 
         img = np.fromfile(self.CAPTURE_PATH, dtype=(np.uint8, self._image_size), count=1)[0]
+        raw = img if img.ndim == 2 else img[..., 0]
 
-        # Convert to color
-        if color is True:
-            return cv2.cvtColor(img, cv2.COLOR_BayerBG2BGR)
-        return img
+        # normalize
+        raw = raw.astype(np.float32)
+        raw /= raw.max()
+
+        # demosaic
+        rgb = demosaicing_CFA_Bayer_bilinear(raw)
+
+        # apply white balancing
+        rgb[..., 0] *= 1.4  # R gain
+        rgb[..., 1] *= 1.0  # G gain
+        rgb[..., 2] *= 1.7  # B gain
+
+        # clip
+        rgb = np.clip(rgb, 0, 1)
+
+        return (rgb * 255).astype(np.uint8)
 
     @property
     def state(self) -> CameraState:
