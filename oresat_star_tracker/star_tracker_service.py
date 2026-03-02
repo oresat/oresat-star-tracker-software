@@ -307,7 +307,7 @@ class StarTrackerService(Service):
 
         # downscale image
         img = Image.fromarray(data)
-        img.thumbnail((640, 480), Image.Resampling.LANCZOS) # High-quality downscaling
+        img.thumbnail((640, 480), Image.Resampling.LANCZOS)
 
         buff = BytesIO()
         img.save(buff, format="PNG")

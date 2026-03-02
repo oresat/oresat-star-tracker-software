@@ -2,7 +2,7 @@
 
 from enum import Enum
 from pathlib import Path
-from colour_demosaicing import demosaicing_CFA_Bayer_Malvar2004 
+from colour_demosaicing import demosaicing_CFA_Bayer_Malvar2004
 import numpy as np
 from olaf import logger
 
@@ -65,21 +65,14 @@ class Camera:
 
         if self._state != CameraState.RUNNING:
             raise CameraError(f"Camera error; state is {self._state}")
-        
-        try:
-            with open(self.CAPTURE_PATH, "rb") as f:
-                # read one 1280x960 frame
-                raw_bytes = f.read(self.PIXEL_BYTES)
 
-                raw = np.frombuffer(raw_bytes, dtype=np.uint8).reshape((self.MAX_ROWS,self.MAX_COLS))
-                logger.info(f"Successfuly captured {raw.shape}")
-        except Exception as e:
-            logger.error(f"Error: {e}")
+        raw = np.fromfile(self.CAPTURE_PATH, dtype=(np.uint8, self._image_size), count=1)[0]
 
-        # normalize
+        # normalize, demosaicing expects float
         raw = raw.astype(np.float32) / 255
 
-        # demosaic
+        # demosaicing, reconstruct color full color
+        # image from samples overlaid with a bayer filter
         rgb = demosaicing_CFA_Bayer_Malvar2004(raw)
 
         return np.clip(rgb * 255, 0, 255).astype(np.uint8)
