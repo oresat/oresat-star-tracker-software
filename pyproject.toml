@@ -16,8 +16,6 @@ classifiers = [
 ]
 dynamic = ["version"]
 dependencies = [
-    #LOST star tracker isn't on pypi, it's on a branch in the main LOST repo
-    "lost @ https://github.com/UWCubeSat/lost/archive/refs/heads/alniss-basic-python-interface.zip",
     "numpy",
     "pillow",
     "colour-demosaicing",
@@ -37,6 +35,9 @@ dev = [
 
 [project.scripts]
 oresat-star-tracker = "oresat_star_tracker.__main__:main"
+
+[tool.setuptools]
+packages = ['oresat_star_tracker']
 
 [tool.setuptools.package-data]
 "*" = ["*.html"]
