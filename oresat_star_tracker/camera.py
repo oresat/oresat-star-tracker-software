@@ -2,7 +2,7 @@
 
 from enum import Enum
 from pathlib import Path
-import cv2
+from colour_demosaicing import demosaicing_CFA_Bayer_Malvar2004
 import numpy as np
 from olaf import logger
 
@@ -37,20 +37,15 @@ class Camera:
             return
 
         # no errors; attempt to read image
-        context_path = Path("/sys/devices/platform/prucam/context_settings")
+        context_path = Path("/sys/devices/platform/prudev/context_settings")
         x_size = int((context_path / "x_size").read_text())
         y_size = int((context_path / "y_size").read_text())
         self._image_size = (y_size, x_size)
         self._state = CameraState.RUNNING
         logger.info("Camera is unlocked")
 
-    def capture(self, color: bool = True) -> np.ndarray:
+    def capture(self) -> np.ndarray:
         """Capture an image
-
-        Parameters
-        ----------
-        color: bool
-            enable color
 
         Raises
         ------
@@ -66,12 +61,16 @@ class Camera:
         if self._state != CameraState.RUNNING:
             raise CameraError(f"Camera error; state is {self._state}")
 
-        img = np.fromfile(self.CAPTURE_PATH, dtype=(np.uint8, self._image_size), count=1)[0]
+        raw = np.fromfile(self.CAPTURE_PATH, dtype=(np.uint8, self._image_size), count=1)[0]
 
-        # Convert to color
-        if color is True:
-            return cv2.cvtColor(img, cv2.COLOR_BayerBG2BGR)
-        return img
+        # normalize, demosaicing expects float
+        raw = raw.astype(np.float32) / 255
+
+        # demosaicing, reconstruct full color
+        # image from samples overlaid with a bayer filter
+        rgb = demosaicing_CFA_Bayer_Malvar2004(raw)
+
+        return np.clip(rgb * 255, 0, 255).astype(np.uint8)
 
     @property
     def state(self) -> CameraState:
@@ -83,7 +82,7 @@ class MockCamera(Camera):
         self._mock_data = np.zeros((self.MAX_COLS, self.MAX_ROWS, 3), dtype=np.uint8)
         self._state = CameraState.RUNNING
 
-    def capture(self, color: bool = True) -> np.ndarray:
+    def capture(self) -> np.ndarray:
         if self._state != CameraState.RUNNING:
             raise CameraError(f"Camera error; state is {self._state}")
         return self._mock_data

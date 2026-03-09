@@ -3,8 +3,7 @@
 from enum import IntEnum
 from io import BytesIO
 from time import monotonic, time
-
-import cv2
+from PIL import Image
 import lost
 import numpy as np
 import tifffile as tiff
@@ -99,15 +98,6 @@ class StarTrackerService(Service):
         self._last_capture_time.value = 0
         self._state = State.OFF
 
-    def _encode(self, data: np.ndarray, ext: str = ".tiff") -> np.ndarray:
-        """Wrap opencv's encode function to throw exception."""
-
-        ok, encoded = cv2.imencode(ext, data)
-        if not ok:
-            raise ValueError(f"{ext} encode error")
-
-        return encoded
-
     def _encode_compress_tiff(self, data: np.ndarray, meta=None) -> np.ndarray:
         """Encode as an compress tiff."""
 
@@ -123,7 +113,7 @@ class StarTrackerService(Service):
         encoded_data = buff.getvalue()
 
         # Convert the encoded TIFF data to a NumPy array
-        return np.frombuffer(encoded_data, dtype=np.uint8)
+        return np.frombuffer(encoded_data, dtype=data.dtype)
 
     def _save_to_cache(self, file_keyword: str, encoded_data: np.ndarray, ext: str = ".tiff"):
         # save capture
@@ -141,7 +131,8 @@ class StarTrackerService(Service):
             return True
 
         # Convert the BGR image to grayscale
-        gray_img = cv2.cvtColor(img, cv2.COLOR_BGR2GRAY)
+        r, g, b = img[..., 0], img[..., 1], img[..., 2]
+        gray_img = (0.114 * b + 0.587 * g + 0.299 * r).astype(np.uint8)
 
         # Check that enough pixels are bright enough
         if self._lower_bound_obj.value != 0:
@@ -315,11 +306,10 @@ class StarTrackerService(Service):
         data = np.copy(self._last_capture)
 
         # downscale image
-        downscale_factor = 2
-        data = data[::downscale_factor, ::downscale_factor]
+        img = Image.fromarray(data)
+        img.thumbnail((640, 480), Image.Resampling.LANCZOS)
 
-        ok, encoded = cv2.imencode(".jpg", data)
-        if not ok:
-            raise ValueError("failed encode display image")
+        buff = BytesIO()
+        img.save(buff, format="PNG")
 
-        return bytes(encoded)
+        return buff.getvalue()
