@@ -1,6 +1,7 @@
 import subprocess
 from PIL import Image
 from pathlib import Path
+from typing import Union
 import numpy as np
 
 from .utils import find_cli, dict_flatten
@@ -140,7 +141,7 @@ def estimate(image: np.ndarray, args: dict = estimate_args()) -> dict:
     with open(tmp_dir / 'attitude.txt') as f:
         read_data = f.read()
 
-    result = {}
+    result: dict[str, Union[int, float]] = {}
     rows = read_data.split('\n')
     for row in rows:
         if row == '':
