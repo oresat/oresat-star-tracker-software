@@ -44,13 +44,8 @@ class Camera:
         self._state = CameraState.RUNNING
         logger.info("Camera is unlocked")
 
-    def capture(self, color: bool = True) -> np.ndarray:
+    def capture(self) -> np.ndarray:
         """Capture an image
-
-        Parameters
-        ----------
-        color: bool
-            enable color
 
         Raises
         ------
@@ -71,7 +66,7 @@ class Camera:
         # normalize, demosaicing expects float
         raw = raw.astype(np.float32) / 255
 
-        # demosaicing, reconstruct color full color
+        # demosaicing, reconstruct full color
         # image from samples overlaid with a bayer filter
         rgb = demosaicing_CFA_Bayer_Malvar2004(raw)
 
@@ -87,7 +82,7 @@ class MockCamera(Camera):
         self._mock_data = np.zeros((self.MAX_COLS, self.MAX_ROWS, 3), dtype=np.uint8)
         self._state = CameraState.RUNNING
 
-    def capture(self, color: bool = True) -> np.ndarray:
+    def capture(self) -> np.ndarray:
         if self._state != CameraState.RUNNING:
             raise CameraError(f"Camera error; state is {self._state}")
         return self._mock_data
