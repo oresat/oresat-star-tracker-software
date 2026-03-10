@@ -1,4 +1,5 @@
 import subprocess
+from importlib.resources import files, as_file
 from PIL import Image
 from pathlib import Path
 from typing import Union
@@ -6,15 +7,15 @@ import numpy as np
 
 from .utils import find_cli, dict_flatten
 
-cli = find_cli()
-cli_dir = cli.parent
+cli = files('lost_py_wrapper').joinpath('bin/lost') 
 tmp_dir = Path(__file__).parent / 'tmp'
 data_dir = Path(__file__).parent / 'data'
 
 
 def lost_runner(args: dict) -> None:
     stringified_args = [str(arg) for arg in dict_flatten(args)]
-    subprocess.run([str(cli), *stringified_args], cwd=cli_dir)
+    with as_file(cli) as cli_path:
+        subprocess.run([cli_path, *stringified_args], cwd=cli_path.parent)
 
 
 def database_args(overrides: dict = {}, algo: str = 'py') -> dict:
