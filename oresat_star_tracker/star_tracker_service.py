@@ -54,14 +54,16 @@ class StarTrackerService(Service):
         self._last_capture = None
 
     def on_start(self):
-        """Save references to OD objiables"""
+        """Save references to OD"""
 
         self.status_obj = self.node.od["status"]
 
         orientation_rec = self.node.od["orientation"]
-        self._right_ascension_obj = orientation_rec["right_ascension"]
-        self._declination_obj = orientation_rec["declination"]
-        self._orientation_obj = orientation_rec["roll"]
+        self._attitude_i_obj = orientation_rec["attitude_i"]
+        self._attitude_j_obj = orientation_rec["attitude_j"]
+        self._attitude_k_obj = orientation_rec["attitude_k"]
+        self._attitude_real_obj = orientation_rec["attitude_real"]
+        self._attitude_known_obj = orientation_rec["attitude_known"]
         self._time_stamp_obj = orientation_rec["time_since_midnight"]
 
         capture_rec = self.node.od["capture"]
@@ -90,9 +92,11 @@ class StarTrackerService(Service):
     def on_stop(self):
         """When service stops clear star tracking data."""
 
-        self._right_ascension_obj.value = 0
-        self._declination_obj.value = 0
-        self._orientation_obj.value = 0
+        self._attitude_i_obj = 0
+        self._attitude_j_obj = 0
+        self._attitude_k_obj = 0
+        self._attitude_real_obj = 0
+        self._attitude_known_obj = 0
         self._time_stamp_obj.value = 0
         self._last_capture = None
         self._last_capture_time.value = 0
@@ -171,18 +175,20 @@ class StarTrackerService(Service):
             return
 
         # NOTE: Lost currently writes the capture to disk temporarily
-        lost_args = lost.identify_args(algo="tetra")
-        lost_data = lost.identify(data, lost_args)
+        attitude_estimate = lost.identify(data)
 
-        self._right_ascension_obj.value = int(lost_data["attitude_ra"])
-        self._declination_obj.value = int(lost_data["attitude_de"])
-        self._orientation_obj.value = int(lost_data["attitude_roll"])
+        self._attitude_i_obj = attitude_estimate["attitude_i"]
+        self._attitude_j_obj = attitude_estimate["attitude_j"]
+        self._attitude_k_obj = attitude_estimate["attitude_k"]
+        self._attitude_real_obj = attitude_estimate["attitude_real"]
+        self._attitude_known_obj = attitude_estimate["attitude_known"]
 
         self._time_stamp_obj.value = int(ts)
         self._last_capture_time.value = int(ts)
         self._last_capture = data
 
         # Send the star tracker data TPDOs
+        # TODO: This will need to change with the CAN configs
         self.node.send_tpdo(3)
         self.node.send_tpdo(4)
 
