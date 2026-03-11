@@ -25,22 +25,17 @@ class Camera:
     # these files are provided by the prucam-dkms debian package
 
     CAPTURE_PATH = Path("/dev/prucam")
+    CONTEXT_PATH = Path("/sys/devices/platform/prudev/context_settings")
     MAX_COLS = 1280
     MAX_ROWS = 960
     PIXEL_BYTES = MAX_COLS * MAX_ROWS
 
     def __init__(self):
         if not self.CAPTURE_PATH.exists():
-            self._image_size = (self.MAX_COLS, self.MAX_ROWS)
             self._state = CameraState.NOT_FOUND
             logger.error("Could not find capture path")
             return
 
-        # no errors; attempt to read image
-        context_path = Path("/sys/devices/platform/prudev/context_settings")
-        x_size = int((context_path / "x_size").read_text())
-        y_size = int((context_path / "y_size").read_text())
-        self._image_size = (y_size, x_size)
         self._state = CameraState.RUNNING
         logger.info("Camera is unlocked")
 
@@ -60,17 +55,22 @@ class Camera:
 
         if self._state != CameraState.RUNNING:
             raise CameraError(f"Camera error; state is {self._state}")
+        logger.info("capturing image")
 
-        raw = np.fromfile(self.CAPTURE_PATH, dtype=(np.uint8, self._image_size), count=1)[0]
-
-        # normalize, demosaicing expects float
-        raw = raw.astype(np.float32) / 255
-
-        # demosaicing, reconstruct full color
-        # image from samples overlaid with a bayer filter
-        rgb = demosaicing_CFA_Bayer_Malvar2004(raw)
+        raw = self._read_raw()
+        rgb = self._demosaic(raw)
 
         return np.clip(rgb * 255, 0, 255).astype(np.uint8)
+
+    def _read_raw(self) -> np.ndarray:
+        with open(self.CAPTURE_PATH, 'rb') as cam:
+            data = cam.read(self.PIXEL_BYTES)
+
+        return np.frombuffer(data, np.uint8).reshape(self.MAX_ROWS, self.MAX_COLS)
+
+    def _demosaic(self, raw: np.ndarray) -> np.ndarray:
+        raw = raw.astype(np.float32) / 255
+        return demosaicing_CFA_Bayer_Malvar2004(raw)
 
     @property
     def state(self) -> CameraState:
