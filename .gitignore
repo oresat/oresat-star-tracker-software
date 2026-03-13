@@ -141,3 +141,6 @@ dmypy.json
 
 # setuptools-scm
 _version.py
+
+# lost database
+*.dat
