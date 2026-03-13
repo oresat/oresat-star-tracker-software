@@ -19,10 +19,12 @@
 # OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE
 # SOFTWARE.
 
+from enum import Enum
 import subprocess
 from PIL import Image
 from pathlib import Path
 from typing import Union
+from dataclasses import dataclass
 import numpy as np
 
 from .utils import find_cli, dict_flatten
@@ -33,42 +35,101 @@ tmp_dir = Path(__file__).parent / 'tmp'
 data_dir = Path(__file__).parent / 'data'
 
 
-def lost_runner(args: dict) -> None:
+class CentroidAlgo(Enum):
+    cog = 'cog'
+    dummy = 'dummy'
+    iwcog = 'iwcog'
+
+
+class StarIdAlgo(Enum):
+    py = 'py'
+    dummy = 'dummy'
+    gv = 'dv'
+    tetra = 'tetra'
+
+
+@dataclass
+class PyDbConfig:
+    max_stars: int = 5000
+    kvector_min_distance: float = 2e-1
+    kvector_max_distance: float = 15e0
+    kvector_distance_bins: int = 10_000
+    output: Path = data_dir / 'database.dat'
+
+
+@dataclass
+class TetraDbConfig:
+    min_mag: int = 7
+    tetra_max_angle: int = 12
+    output: Path = data_dir / 'database.dat'
+
+
+@dataclass
+class PyEstimateConfig:
+    focal_length: int = 49
+    pixel_size: float = 22.2e0
+    centroid_algo: Enum = CentroidAlgo['cog']
+    centroid_mag_filter: int = 5
+    database: Path = data_dir / 'py-database.dat'
+    star_id_algo: Enum = StarIdAlgo['py']
+    angular_tolerance: float = 5e-2
+    false_stars: int = 1000
+    max_mismatch_prob: float = 1e-4
+    attitude_algo: str = 'dqm'
+
+
+@dataclass
+class TetraEstimateConfig:
+    fov: int = 17
+    CentroidAlgo: Enum = CentroidAlgo['cog']
+    centroid_filter_brightest: int = 4
+    database: Path = data_dir / 'tetra-database.dat'
+    star_id_algo: Enum = StarIdAlgo['tetra']
+    false_stars: int = 0
+    attitude_algo: str = 'dqm'
+
+
+def _lost_runner(args: dict) -> None:
     stringified_args = [str(arg) for arg in dict_flatten(args)]
     subprocess.run([str(cli), *stringified_args], cwd=cli_dir)
 
 
-def database_args(overrides: dict = {}, algo: str = 'py') -> dict:
+def _py_db_args(cfg: PyDbConfig) -> dict:
+    return {
+        'database': None,
+        '--max-stars': cfg.max_stars,
+        '--kvector': None,
+        '--kvector-min-distance': cfg.kvector_min_distance,
+        '--kvector-max-distance': cfg.kvector_max_distance,
+        '--kvector-distance-bins': cfg.kvector_distance_bins,
+        '--output': cfg.output,
+    }
+
+
+def _tetra_db_args(cfg: TetraDbConfig) -> dict:
+    return {
+        'database': None,
+        '--min-mag': cfg.min_mag,
+        '--tetra': None,
+        '--tetra-max-angle': cfg.tetra_max_angle,
+        '--output': cfg.output,
+    }
+
+
+def database_args(cfg: PyDbConfig | TetraDbConfig | None = None) -> dict:
     '''
     Returns dictionary of default arguments for :func:`lost.database`.
 
     Applies `overrides` dict over generated/default values. For example,
     `database_args({'--max-stars': 4000})` will result in '--max-stars' mapping
     to 4000 in the returned dict.
-
-    Sets up for pyramidal if `algo` is `'py'`, or tetra if `algo` is `'tetra'`.
     '''
-    if algo == 'py':
-        args = {
-            'database': None,
-            '--max-stars': 5000,
-            '--kvector': None,
-            '--kvector-min-distance': 0.2,
-            '--kvector-max-distance': 15.0,
-            '--kvector-distance-bins': 10_000,
-            '--output': data_dir / 'py-database.dat',
-        }
-    elif algo == 'tetra':
-        args = {
-            'database': None,
-            '--min-mag': 7,
-            '--tetra': None,
-            '--tetra-max-angle': 12,
-            '--output': data_dir / 'tetra-database.dat',
-        }
-    else:
-        raise Exception(f"Invalid database algo {algo}. Must be 'py' or 'tetra'.")
-    args.update(overrides)
+    cfg = cfg or PyDbConfig()
+    if isinstance(cfg, PyDbConfig):
+        args = _py_db_args(cfg)
+    elif isinstance(cfg, TetraDbConfig):
+        args = _tetra_db_args(cfg)
+
     return args
 
 
@@ -76,56 +137,61 @@ def database(args: dict = database_args()) -> None:
     '''
     Calls LOST's database generation command.
 
-    Must be called before :func:`lost.identify` to initialize LOST.
+    Must be called before :func:`lost.estimate` to initialize LOST.
 
     See :func:`lost.database_args` for arguments.
     '''
 
-    lost_runner(args)
+    _lost_runner(args)
 
 
-def estimate_args(overrides: dict = {}, algo: str = 'py') -> dict:
+def _py_estimate_args(cfg: PyEstimateConfig) -> dict:
+    return {
+        'pipeline': None,
+        '--png': tmp_dir / 'temp_image.png',
+        '--focal-length': cfg.focal_length,
+        '--pixel-size': cfg.pixel_size,
+        '--centroid-algo': cfg.centroid_algo,
+        '--centroid-mag-filter': cfg.centroid_mag_filter,
+        '--database': cfg.database,
+        '--star-id-algo': cfg.star_id_algo,
+        '--angular-tolerance': cfg.angular_tolerance,
+        '--false-stars': cfg.false_stars,
+        '--max-mismatch-prob': cfg.max_mismatch_prob,
+        '--attitude-algo': cfg.attitude_algo,  # 'dqm' (Davenport Q), 'triad', 'quest'
+        '--print-attitude': tmp_dir / 'attitude.txt',
+    }
+
+
+def _tetra_estimate_args(cfg: TetraEstimateConfig) -> dict:
+    return {
+        'pipeline': None,
+        '--png': tmp_dir / 'temp_image.png',
+        '--fov': cfg.fov,
+        '--centroid-algo': cfg.CentroidAlgo,
+        '--centroid-filter-brightest': cfg.centroid_filter_brightest,
+        '--database': cfg.database,
+        '--star-id-algo': cfg.star_id_algo,
+        '--false-stars': cfg.false_stars,
+        '--attitude-algo': cfg.attitude_algo,
+        '--print-attitude': tmp_dir / 'attitude.txt',
+    }
+
+
+def estimate_args(cfg: PyEstimateConfig | TetraEstimateConfig | None = None) -> dict:
     '''
-    Returns `dict` of default arguments for :func:`lost.identify`.
+    Returns `dict` of default arguments for :func:`lost.estimate`.
 
     Applies `overrides` dict over generated/default values. For example,
     `identify_args({'--fov': 18})` will result in
     `'--fov'` mapping to `18` in the returned dict.
-
-    Sets up for pyramidal if `algo` is `'py'`,s or tetra if `algo` is `'tetra'`.
     '''
-    if algo == 'py':
-        args = {
-            'pipeline': None,
-            '--png': tmp_dir / 'temp_image.png',
-            '--focal-length': 49,
-            '--pixel-size': 22.2,
-            '--centroid-algo': 'cog',  # 'cog', 'dummy', 'iwcog'
-            '--centroid-mag-filter': 5,
-            '--database': data_dir / 'py-database.dat',
-            '--star-id-algo': 'py',  # 'dummy', 'gv', 'py', 'tetra'
-            '--angular-tolerance': 0.05,
-            '--false-stars': 1000,
-            '--max-mismatch-prob': 0.0001,
-            '--attitude-algo': 'dqm',  # 'dqm' (Davenport Q), 'triad', 'quest'
-            '--print-attitude': tmp_dir / 'attitude.txt',
-        }
-    elif algo == 'tetra':
-        args = {
-            'pipeline': None,
-            '--png': tmp_dir / 'temp_image.png',
-            '--fov': 17,
-            '--centroid-algo': 'cog',
-            '--centroid-filter-brightest': 4,
-            '--database': data_dir / 'tetra-database.dat',
-            '--star-id-algo': 'tetra',
-            '--false-stars': 0,
-            '--attitude-algo': 'dqm',
-            '--print-attitude': tmp_dir / 'attitude.txt',
-        }
-    else:
-        raise Exception(f"Invalid identification algo {algo}. Must be 'py' or 'tetra'.")
-    args.update(overrides)
+
+    cfg = cfg or PyEstimateConfig()
+    if isinstance(cfg, PyEstimateConfig):
+        args = _py_estimate_args(cfg)
+    elif isinstance(cfg, TetraEstimateConfig):
+        args = _tetra_estimate_args(cfg)
     return args
 
 
@@ -156,7 +222,7 @@ def estimate(image: np.ndarray, args: dict = estimate_args()) -> dict:
     im.save(str(tmp_dir / 'temp_image.png'))
 
     # identify image
-    lost_runner(args)
+    _lost_runner(args)
 
     # parse/load attitude file
     with open(tmp_dir / 'attitude.txt') as f:
