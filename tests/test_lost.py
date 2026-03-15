@@ -4,14 +4,14 @@ import unittest
 
 from pathlib import Path
 
-from oresat_star_tracker.lost_py_wrapper import lost
+from oresat_star_tracker.lost.wrapper import estimate, database_args, database, estimate_args
 
 
 class TestLost(unittest.TestCase):
     test_root = Path(__file__).resolve().parent
     proj_root = test_root.parent
     images_root = test_root / 'images'
-    lpw_root = proj_root / 'oresat_star_tracker' / 'lost_py_wrapper'
+    lpw_root = proj_root / 'oresat_star_tracker' / 'lost'
     db_def_path = lpw_root / 'data' / 'py-database.dat'
 
     db_def_args = {
@@ -29,15 +29,20 @@ class TestLost(unittest.TestCase):
             raise AssertionError("File does not exist: %s" % str(path))
 
     def testDatabaseArgs(self):
-        args = lost.database_args()
+        args = database_args()
 
         self.assertEqual(args, self.db_def_args)
 
     def testDatabase(self):
         # generate a database for the LOST solver
-        lost.database()
+        database()
 
         self.assertIsFile(self.db_def_path)
+
+    def testEstimateArgs(self):
+        args = estimate_args()
+
+        print(args)
 
     def testEstimation(self):
 
@@ -46,7 +51,7 @@ class TestLost(unittest.TestCase):
 
         # convert to np.ndarry
         im = np.array(Image.open(str(img_path)))
-        estimation = lost.estimate(im)
+        estimation = estimate(im)
 
         self.assertAlmostEqual(estimation['attitude_ra'], 17.9868, places=4)
         self.assertAlmostEqual(estimation['attitude_de'], 63.4233, places=4)
