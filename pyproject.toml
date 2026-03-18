@@ -39,7 +39,7 @@ dev = [
 oresat-star-tracker = "oresat_star_tracker.__main__:main"
 
 [tool.setuptools.package-data]
-"*" = ["*.html"]
+"*" = ["*.html", "*.png"]
 
 [tool.setuptools_scm]
 write_to = "oresat_star_tracker/_version.py"
