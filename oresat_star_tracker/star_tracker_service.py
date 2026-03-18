@@ -4,10 +4,10 @@ from enum import IntEnum
 from io import BytesIO
 from time import monotonic, time
 from PIL import Image
-import lost
 import numpy as np
 import tifffile as tiff
 from olaf import Service, logger, new_oresat_file  # , set_cpufreq_gov
+from oresat_star_tracker.lost.wrapper import estimate
 
 from .camera import Camera, CameraError, CameraState, MockCamera
 
@@ -175,22 +175,23 @@ class StarTrackerService(Service):
             return
 
         # NOTE: Lost currently writes the capture to disk temporarily
-        attitude_estimate = lost.identify(data)
+        attitude_estimate = estimate(data)
+        logger.info(attitude_estimate)
 
-        self._attitude_i_obj = attitude_estimate["attitude_i"]
-        self._attitude_j_obj = attitude_estimate["attitude_j"]
-        self._attitude_k_obj = attitude_estimate["attitude_k"]
-        self._attitude_real_obj = attitude_estimate["attitude_real"]
-        self._attitude_known_obj = attitude_estimate["attitude_known"]
+        self._attitude_i_obj.value = attitude_estimate["attitude_i"]
+        self._attitude_j_obj.value = attitude_estimate["attitude_j"]
+        self._attitude_k_obj.value = attitude_estimate["attitude_k"]
+        self._attitude_real_obj.value = attitude_estimate["attitude_real"]
+        self._attitude_known_obj.value = attitude_estimate["attitude_known"]
 
         self._time_stamp_obj.value = int(ts)
         self._last_capture_time.value = int(ts)
         self._last_capture = data
 
         # Send the star tracker data TPDOs
-        # TODO: This will need to change with the CAN configs
         self.node.send_tpdo(3)
         self.node.send_tpdo(4)
+        self.node.send_tpdo(5)
 
         # If the frequency is 0, star track once
         if self._capture_delay_obj.value == 0:
