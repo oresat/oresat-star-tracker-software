@@ -191,7 +191,7 @@ class StarTrackerService(Service):
             logger.info(f"changing status: {self._state.name} -> {State.STANDBY.name}")
             self._state = State.STANDBY
         else:
-            self.sleep(self._capture_delay_obj.value)
+            self.sleep_ms(self._capture_delay_obj.value)
 
     def _capture_only_mode(self):
         """Use camera for some amount of time."""
