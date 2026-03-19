@@ -6,7 +6,8 @@ from time import monotonic, time
 from PIL import Image
 import numpy as np
 import tifffile as tiff
-from olaf import Service, logger, new_oresat_file  # , set_cpufreq_gov
+import json
+from olaf import Service, logger, new_oresat_file, Node
 from oresat_star_tracker.lost.wrapper import estimate
 
 from .camera import Camera, CameraError, CameraState, MockCamera
@@ -38,6 +39,8 @@ STATE_TRANSISTIONS = {
 
 class StarTrackerService(Service):
     """Star Tracker service."""
+
+    node: Node
 
     def __init__(self, mock_hw: bool = False):
         super().__init__()
@@ -176,7 +179,7 @@ class StarTrackerService(Service):
 
         # NOTE: Lost currently writes the capture to disk temporarily
         attitude_estimate = estimate(data)
-        logger.info(attitude_estimate)
+        logger.debug(json.dumps(attitude_estimate, indent=4))
 
         self._attitude_i_obj.value = attitude_estimate["attitude_i"]
         self._attitude_j_obj.value = attitude_estimate["attitude_j"]
@@ -199,6 +202,7 @@ class StarTrackerService(Service):
             self._state = State.STANDBY
         else:
             self.sleep_ms(self._capture_delay_obj.value)
+            logger.debug(f"sleeping for {self._capture_delay_obj.value}")
 
     def _capture_only_mode(self):
         """Use camera for some amount of time."""
@@ -227,7 +231,6 @@ class StarTrackerService(Service):
             self._last_capture_time.value = int(ts)
             self._last_capture = data
             img_count += 1
-            logger.info(f"capture {img_count}")
 
             if self._save_obj.value:
                 self._save_to_cache("img", self._encode_compress_tiff(data))  # Save image
