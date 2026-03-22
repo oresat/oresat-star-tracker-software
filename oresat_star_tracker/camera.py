@@ -2,6 +2,9 @@
 
 from enum import Enum
 from pathlib import Path
+from importlib.resources import path
+
+from PIL import Image
 from colour_demosaicing import demosaicing_CFA_Bayer_Malvar2004
 import numpy as np
 from olaf import logger
@@ -78,11 +81,20 @@ class Camera:
 
 
 class MockCamera(Camera):
+    _mock_img: np.ndarray
+    _bayered_mock_img: np.ndarray
+
     def __init__(self):
-        self._mock_data = np.zeros((self.MAX_COLS, self.MAX_ROWS, 3), dtype=np.uint8)
+
+        with path("oresat_star_tracker.data", "mock_img.png") as mock_img:
+            self._mock_img = np.array(Image.open(mock_img))
+
+        with path("oresat_star_tracker.data", "bayered_mock_img.png") as bayered_mock_img:
+            self._bayered_mock_img = np.array(Image.open(bayered_mock_img))
+
         self._state = CameraState.RUNNING
 
     def capture(self) -> np.ndarray:
         if self._state != CameraState.RUNNING:
             raise CameraError(f"Camera error; state is {self._state}")
-        return self._mock_data
+        return self._mock_img
