@@ -22,22 +22,31 @@ class CameraError(Exception):
 class Camera:
     """Star tracker AR013x camera"""
 
-    # these files are provided by the prucam-dkms debian package
+    cap_dev = Path("/dev/prucam")
 
-    CAPTURE_PATH = Path("/dev/prucam")
-    CONTEXT_PATH = Path("/sys/devices/platform/prudev/context_settings")
-    MAX_COLS = 1280
-    MAX_ROWS = 960
-    PIXEL_BYTES = MAX_COLS * MAX_ROWS
+    # defaults to the resolution of the AR013x image sensor
+    x_size = 1280
+    y_size = 960
+
+    # assumes one pixel corresponds to one byte
+    n_pixels = x_size * y_size
 
     def __init__(self):
-        if not self.CAPTURE_PATH.exists():
+        if not self.cap_dev.exists():
             self._state = CameraState.NOT_FOUND
-            logger.error("Could not find capture path")
+            logger.error("Could not find capture device")
             return
 
         self._state = CameraState.RUNNING
         logger.info("Camera is unlocked")
+
+        # read camera paramaters from sysfs
+        dev_ctx = Path("/sys/devices/platform/prudev/context_settings")
+        self.x_size = int((dev_ctx / "x_size").read_text())
+        self.y_size = int((dev_ctx / "y_size").read_text())
+        self.n_pixels = self.x_size * self.y_size
+
+        logger.debug(f"Camera resolution is {self.x_size}x{self.y_size}")
 
     def capture(self) -> np.ndarray:
         """Capture an image
@@ -63,10 +72,10 @@ class Camera:
         return np.clip(rgb * 255, 0, 255).astype(np.uint8)
 
     def _read_raw(self) -> np.ndarray:
-        with open(self.CAPTURE_PATH, 'rb') as cam:
-            data = cam.read(self.PIXEL_BYTES)
+        with open(self.cap_dev, 'rb') as cam:
+            data = cam.read(self.n_pixels)
 
-        return np.frombuffer(data, np.uint8).reshape(self.MAX_ROWS, self.MAX_COLS)
+        return np.frombuffer(data, np.uint8).reshape(self.x_size, self.y_size)
 
     def _demosaic(self, raw: np.ndarray) -> np.ndarray:
         raw = raw.astype(np.float32) / 255
