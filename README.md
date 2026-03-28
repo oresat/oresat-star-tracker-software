@@ -45,13 +45,19 @@ See other options with `-h` flag.
 A basic [Flask]-based website for development and integration can be found at
 `http://localhost:8000` when the software is running.
 
-## Unit Test
+## Unit Test and Coverage
 
-Run the unit tests
+Unit tests are managed using PyTest. The total number of test cases executed (currently over 25) includes parameterized tests which check multiple scenarios with a single function definition.
+
+Run the unit tests and generate a report showing missing code lines:
 
 ```bash
-$ python3 -m unittest
+$ PYTHONPATH=. python3 -m pytest --cov=oresat_star_tracker --cov-report=term-missing
 ```
+| Command | Purpose |
+| :--- | :--- |
+| `--cov=oresat_star_tracker` | Enables **code coverage** collection for the main package. |
+| `--cov-report=term-missing`| Prints a summary to the terminal, including lines of code not covered by tests. |
 
 [LOST]: https://github.com/UWCubeSat/lost
 [Flask]: https://flask.palletsprojects.com/en/latest/
