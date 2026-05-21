@@ -44,3 +44,16 @@ target_compile_definitions(
           "ORESAT_LOST_BSC_PATH=\"${ORESAT_LOST_BSC}\"")
 
 install(TARGETS _lost_core LIBRARY DESTINATION oresat_star_tracker)
+
+file(
+  GLOB_RECURSE PACKAGE_DATA
+  "${CMAKE_SOURCE_DIR}/oresat_star_tracker/*.html"
+  "${CMAKE_SOURCE_DIR}/oresat_star_tracker/*.png"
+)
+
+foreach(DATA_FILE ${PACKAGE_DATA})
+  file(RELATIVE_PATH REL_PATH "${CMAKE_SOURCE_DIR}/oresat_star_tracker/" "${DATA_FILE}")
+  get_filename_component(REL_DIR "${REL_PATH}" DIRECTORY)
+  install(FILES ${DATA_FILE}
+          DESTINATION "${Python_SITELIB}/oresat_star_tracker/${REL_DIR}")
+endforeach()
