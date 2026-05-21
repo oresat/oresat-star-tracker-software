@@ -23,8 +23,7 @@ dynamic = ["version"]
 dependencies = [
     "numpy",
     "pillow",
-    "colour-demosaicing",
-    "oresat-olaf==3.6.5",
+    "oresat-olaf>=3.7.2",
     "tifffile",
 ]
 

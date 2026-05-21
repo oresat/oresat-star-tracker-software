@@ -54,7 +54,7 @@ set(ORESAT_LOST_DB
 set(ORESAT_LOST_BSC
     "${Python_SITELIB}/oresat_star_tracker/data/bright-star-catalog.tsv")
 
-pybind11_add_module(_lost_core MODULE native/bindings.cpp $<TARGET_OBJECTS:lost_objects>)
+pybind11_add_module(_lost_core MODULE oresat_star_tracker/_lost_core.cpp $<TARGET_OBJECTS:lost_objects>)
 target_include_directories(_lost_core PRIVATE "${LOST_SRC_DIR}" "${LOST_VENDOR_DIR}")
 target_compile_definitions(
   _lost_core
