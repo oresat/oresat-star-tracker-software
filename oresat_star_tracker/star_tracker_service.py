@@ -179,15 +179,17 @@ class StarTrackerService(Service):
             logger.info(f"changing status: {self._state.name} -> {State.STANDBY.name}")
             return
 
-        attitude_estimate = estimate(data)
+        r, g, b = data[..., 0], data[..., 1], data[..., 2]
+        gray_img = (0.114 * b + 0.587 * g + 0.299 * r).astype(np.uint8)
+        attitude_estimate = estimate(gray_img)
         if not np.isnan(attitude_estimate[0]):
-            logger.debug(json.dumps(attitude_estimate, indent=4))
+            logger.debug(attitude_estimate)
 
-            self._attitude_i_obj.value = attitude_estimate["attitude_i"]
-            self._attitude_j_obj.value = attitude_estimate["attitude_j"]
-            self._attitude_k_obj.value = attitude_estimate["attitude_k"]
-            self._attitude_real_obj.value = attitude_estimate["attitude_real"]
-            self._attitude_known_obj.value = attitude_estimate["attitude_known"]
+            self._attitude_i_obj.value = attitude_estimate[0]
+            self._attitude_j_obj.value = attitude_estimate[1]
+            self._attitude_k_obj.value = attitude_estimate[2]
+            self._attitude_real_obj.value = attitude_estimate[3]
+            self._attitude_known_obj.value = True
 
             self._time_stamp_obj.value = int(ts)
             self._last_capture_time.value = int(ts)
