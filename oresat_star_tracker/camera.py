@@ -1,13 +1,13 @@
 """Star tracker AR013x camera"""
 
 from enum import Enum
-from pathlib import Path
 from importlib.resources import path
+from pathlib import Path
 
-from PIL import Image
 import numpy as np
 import numpy.typing as npt
 from olaf import logger
+from PIL import Image
 
 
 class CameraState(Enum):
