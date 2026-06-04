@@ -73,9 +73,8 @@ private:
 PipelineOptions mission_pipeline_options() {
   PipelineOptions o;
   o.png = "";
-  o.focalLength = 49; // 49
-  o.pixelSize = DECIMAL(22.2);
-  o.fov = 20; // 20
+  o.focalLength = 16;
+  o.pixelSize = DECIMAL(3.75);
   o.centroidAlgo = "cog";
   o.centroidMagFilter = 5;
   o.databasePath = std::string{LOST_DB_PATH};

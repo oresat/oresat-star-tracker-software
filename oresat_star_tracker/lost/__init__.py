@@ -1,8 +1,8 @@
-"""LOST star identification integration."""
+"""Minimal wrapper to LOST for generating databases"""
 
-try:
-    from oresat_star_tracker._lost_core import estimate as estimate_native
-except ImportError:
-    estimate_native = None  # type: ignore[misc, assignment]
+from .utils import find_cli
+from .wrapper import prepare_db_args, generate_db
+from .types import TetraDbConfig, PyDbConfig
 
-__all__ = ["estimate_native"]
+if not find_cli().exists():
+    raise FileNotFoundError("LOST executable is missing. Did you compile it?")

@@ -15,6 +15,8 @@ jobs:
     steps:
       - name: Clone oresat-star-tracker repository
         uses: actions/checkout@v6
+        with:
+          submodules: "recursive"
 
       - name: Set up Python 3.10
         uses: actions/setup-python@v6
@@ -25,7 +27,7 @@ jobs:
       - name: Install LOST dependencies
         run: |
           sudo apt update
-          sudo apt install -y libcairo2-dev
+          sudo apt install -y libcairo2-dev libeigen3-dev
 
       - name: Install Python dependencies
         run: |
