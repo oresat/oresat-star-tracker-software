@@ -21,11 +21,11 @@ dependencies = [
     "numpy",
     "pillow",
     "colour-demosaicing",
-    "oresat-olaf>=3.6.5",
+    "oresat-olaf==3.6.5",
     "tifffile",
 ]
 
-[project.optional-dependencies]
+[dependency-groups]
 dev = [
     "build >= 1.3.0",
     "mypy >= 1.18.2",

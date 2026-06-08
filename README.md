@@ -16,7 +16,7 @@ will only work on the custom OreSat Star Tracker board. See the
 Install Python dependenies
 
 ```bash
-$ pip3 install -e .[dev]
+$ pip3 install -e . --group dev
 ```
 
 Make a virtual CAN bus
