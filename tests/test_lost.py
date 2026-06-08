@@ -1,25 +1,65 @@
-"""
-test LOST attitude solver
-*must use sudo for Lost program to work
-"""
-
-import os
+import numpy as np
+from PIL import Image
 import unittest
 
-import lost
+from pathlib import Path
+
+from oresat_star_tracker.lost.wrapper import estimate, database_args, database, estimate_args
 
 
 class TestLost(unittest.TestCase):
-    """Test the LOST star tracker solving algo"""
+    test_root = Path(__file__).resolve().parent
+    proj_root = test_root.parent
+    images_root = test_root / 'images'
+    lpw_root = proj_root / 'oresat_star_tracker' / 'lost'
+    db_def_path = lpw_root / 'data' / 'py-database.dat'
 
-    img_file = "./images/capture-2022-09-25-09-40-25.png"
-    current_dir = os.path.dirname(__file__)
-    path = os.path.join(current_dir, img_file)
+    db_def_args = {
+        'database': None,
+        '--max-stars': 5000,
+        '--kvector': None,
+        '--kvector-min-distance': 0.2,
+        '--kvector-max-distance': 15.0,
+        '--kvector-distance-bins': 10000,
+        '--output': db_def_path,
+    }
 
-    data = lost.imread(path)
-    lost_args = lost.identify_args(algo="tetra")
-    lost_data = lost.identify(data, lost_args)
+    def assertIsFile(self, path):
+        if not Path(path).resolve().is_file():
+            raise AssertionError("File does not exist: %s" % str(path))
 
-    assert int(lost_data["attitude_ra"]) == 77.4829
-    assert int(lost_data["attitude_de"]) == 83.44
-    assert int(lost_data["attitude_roll"]) == 238.376
+    def testDatabaseArgs(self):
+        args = database_args()
+
+        self.assertEqual(args, self.db_def_args)
+
+    def testDatabase(self):
+        # generate a database for the LOST solver
+        database()
+
+        self.assertIsFile(self.db_def_path)
+
+    def testEstimateArgs(self):
+        args = estimate_args()
+
+        print(args)
+
+    def testEstimation(self):
+
+        # get path to test image
+        img_path = self.images_root / 'img_7660.png'
+
+        # convert to np.ndarry
+        im = np.array(Image.open(str(img_path)))
+        estimation = estimate(im)
+
+        self.assertAlmostEqual(estimation['attitude_ra'], 17.9868, places=4)
+        self.assertAlmostEqual(estimation['attitude_de'], 63.4233, places=4)
+        self.assertAlmostEqual(estimation['attitude_roll'], 12.238, places=4)
+        self.assertAlmostEqual(estimation['attitude_i'], 0.00786371, places=4)
+        self.assertAlmostEqual(estimation['attitude_j'], 0.5304, places=4)
+        self.assertAlmostEqual(estimation['attitude_k'], -0.0768838, places=4)
+        self.assertAlmostEqual(estimation['attitude_real'], 0.844218, places=4)
+
+    if __name__ == '__main__':
+        unittest.main()
