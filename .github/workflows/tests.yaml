@@ -14,10 +14,10 @@ jobs:
 
     steps:
       - name: Clone oresat-star-tracker repository
-        uses: actions/checkout@v4
+        uses: actions/checkout@v6
 
       - name: Set up Python 3.10
-        uses: actions/setup-python@v5
+        uses: actions/setup-python@v6
         with:
           python-version: "3.10"
           cache: "pip"
@@ -25,7 +25,7 @@ jobs:
       - name: Install Python dependencies
         run: |
           python -m pip install --upgrade pip
-          python -m pip install .[dev]
+          python -m pip install . --group dev
 
       - name: Check format with Ruff
         run: ruff format --check --diff .
@@ -34,7 +34,7 @@ jobs:
         run: ruff check
 
       - name: Typecheck with mypy
-        run: mypy oresat_star_tracker
+        run: mypy oresat_star_tracker tests
 
       - name: Test building pypi package
         run: python -m build
