@@ -1,6 +1,11 @@
 [build-system]
-requires = ["setuptools", "setuptools_scm"]
-build-backend = "setuptools.build_meta"
+requires = [
+    "scikit-build-core>=0.9.0",
+    "pybind11>=2.12",
+    "numpy",
+    "setuptools_scm>=8",
+]
+build-backend = "scikit_build_core.build"
 
 [project]
 name = "oresat-star-tracker"
@@ -12,34 +17,42 @@ classifiers = [
     "Operating System :: POSIX :: Linux",
     "Programming Language :: Python :: 3.10",
     "Programming Language :: Python :: 3.11",
+    "Programming Language :: Python :: 3.13",
     "Topic :: Software Development :: Embedded Systems",
 ]
 dynamic = ["version"]
 dependencies = [
-    #LOST star tracker isn't on pypi, it's on a branch in the main LOST repo
-    "lost @ https://github.com/UWCubeSat/lost/archive/refs/heads/alniss-basic-python-interface.zip",
     "numpy",
     "pillow",
-    "colour-demosaicing",
-    "oresat-olaf==3.6.5",
+    "oresat-olaf>=3.7.2",
     "tifffile",
 ]
 
 [dependency-groups]
 dev = [
-    "build >= 1.3.0",
+    "build",
     "mypy >= 1.18.2",
     "ruff >= 0.14.0",
-    "setuptools",
-    "setuptools-scm",
 ]
 
 
 [project.scripts]
 oresat-star-tracker = "oresat_star_tracker.__main__:main"
 
-[tool.setuptools.package-data]
-"*" = ["*.html", "*.png"]
+[tool.scikit-build]
+minimum-version = "0.9"
+
+[tool.scikit-build.cmake]
+version = ">=3.20"
+
+[tool.scikit-build.metadata.version]
+provider = "scikit_build_core.metadata.setuptools_scm"
+
+[tool.scikit-build.sdist]
+include = ["oresat_star_tracker/_version.py"]
+
+[tool.scikit-build.wheel]
+packages = ["oresat_star_tracker"]
 
 [tool.setuptools_scm]
 write_to = "oresat_star_tracker/_version.py"
@@ -51,5 +64,5 @@ line-length = 100
 quote-style = "preserve"
 
 [[tool.mypy.overrides]]
-module = "olaf,lost"
+module = "olaf,lost,_lost_core"
 ignore_missing_imports = true

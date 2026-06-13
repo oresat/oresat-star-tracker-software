@@ -3,11 +3,13 @@
 from enum import IntEnum
 from io import BytesIO
 from time import monotonic, time
-from PIL import Image
-import lost
+
 import numpy as np
 import tifffile as tiff
-from olaf import Service, logger, new_oresat_file  # , set_cpufreq_gov
+from olaf import Node, Service, logger, new_oresat_file
+from PIL import Image
+
+from oresat_star_tracker._lost_core import estimate  # type: ignore[import-untyped]
 
 from .camera import Camera, CameraError, CameraState, MockCamera
 
@@ -39,6 +41,8 @@ STATE_TRANSISTIONS = {
 class StarTrackerService(Service):
     """Star Tracker service."""
 
+    node: Node
+
     def __init__(self, mock_hw: bool = False):
         super().__init__()
 
@@ -54,14 +58,16 @@ class StarTrackerService(Service):
         self._last_capture = None
 
     def on_start(self):
-        """Save references to OD objiables"""
+        """Save references to OD"""
 
         self.status_obj = self.node.od["status"]
 
         orientation_rec = self.node.od["orientation"]
-        self._right_ascension_obj = orientation_rec["right_ascension"]
-        self._declination_obj = orientation_rec["declination"]
-        self._orientation_obj = orientation_rec["roll"]
+        self._attitude_i_obj = orientation_rec["attitude_i"]
+        self._attitude_j_obj = orientation_rec["attitude_j"]
+        self._attitude_k_obj = orientation_rec["attitude_k"]
+        self._attitude_real_obj = orientation_rec["attitude_real"]
+        self._attitude_known_obj = orientation_rec["attitude_known"]
         self._time_stamp_obj = orientation_rec["time_since_midnight"]
 
         capture_rec = self.node.od["capture"]
@@ -90,9 +96,11 @@ class StarTrackerService(Service):
     def on_stop(self):
         """When service stops clear star tracking data."""
 
-        self._right_ascension_obj.value = 0
-        self._declination_obj.value = 0
-        self._orientation_obj.value = 0
+        self._attitude_i_obj = 0
+        self._attitude_j_obj = 0
+        self._attitude_k_obj = 0
+        self._attitude_real_obj = 0
+        self._attitude_known_obj = 0
         self._time_stamp_obj.value = 0
         self._last_capture = None
         self._last_capture_time.value = 0
@@ -170,21 +178,26 @@ class StarTrackerService(Service):
             logger.info(f"changing status: {self._state.name} -> {State.STANDBY.name}")
             return
 
-        # NOTE: Lost currently writes the capture to disk temporarily
-        lost_args = lost.identify_args(algo="tetra")
-        lost_data = lost.identify(data, lost_args)
+        r, g, b = data[..., 0], data[..., 1], data[..., 2]
+        gray_img = (0.114 * b + 0.587 * g + 0.299 * r).astype(np.uint8)
+        attitude_estimate = estimate(gray_img)
+        if not np.isnan(attitude_estimate[0]):
+            logger.debug(attitude_estimate)
 
-        self._right_ascension_obj.value = int(lost_data["attitude_ra"])
-        self._declination_obj.value = int(lost_data["attitude_de"])
-        self._orientation_obj.value = int(lost_data["attitude_roll"])
+            self._attitude_i_obj.value = attitude_estimate[0]
+            self._attitude_j_obj.value = attitude_estimate[1]
+            self._attitude_k_obj.value = attitude_estimate[2]
+            self._attitude_real_obj.value = attitude_estimate[3]
+            self._attitude_known_obj.value = True
 
-        self._time_stamp_obj.value = int(ts)
-        self._last_capture_time.value = int(ts)
-        self._last_capture = data
+            self._time_stamp_obj.value = int(ts)
+            self._last_capture_time.value = int(ts)
+            self._last_capture = data
 
-        # Send the star tracker data TPDOs
-        self.node.send_tpdo(3)
-        self.node.send_tpdo(4)
+            # Send the star tracker data TPDOs
+            self.node.send_tpdo(3)
+            self.node.send_tpdo(4)
+            self.node.send_tpdo(5)
 
         # If the frequency is 0, star track once
         if self._capture_delay_obj.value == 0:
@@ -192,6 +205,7 @@ class StarTrackerService(Service):
             self._state = State.STANDBY
         else:
             self.sleep_ms(self._capture_delay_obj.value)
+            logger.debug(f"sleeping for {self._capture_delay_obj.value}")
 
     def _capture_only_mode(self):
         """Use camera for some amount of time."""
@@ -220,7 +234,6 @@ class StarTrackerService(Service):
             self._last_capture_time.value = int(ts)
             self._last_capture = data
             img_count += 1
-            logger.info(f"capture {img_count}")
 
             if self._save_obj.value:
                 self._save_to_cache("img", self._encode_compress_tiff(data))  # Save image
