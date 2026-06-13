@@ -94,7 +94,6 @@ class MockCamera(Camera):
     _bayered_mock_img: np.ndarray
 
     def __init__(self):
-
         with path("oresat_star_tracker.data", "mock_img.png") as mock_img:
             self._mock_img = np.array(Image.open(mock_img))
 
