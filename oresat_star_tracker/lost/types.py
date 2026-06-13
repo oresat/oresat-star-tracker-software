@@ -3,6 +3,7 @@ from pathlib import Path
 
 data_dir = Path(__file__).parents[1] / "data"
 
+
 @dataclass
 class PyDbConfig:
     max_stars: int = 5000

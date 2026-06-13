@@ -118,9 +118,8 @@ def _demosaicing_CFA_Bayer_bilinear(CFA: npt.NDArray[np.uint8]) -> npt.NDArray[n
         Comparison of Color Demosaicing Methods. In Advances in Imaging and
         Electron Physics (Vol. 162, pp. 173-265). doi:10.1016/S1076-5670(10)62005-8
     """
-
-    __copyright__ = "Copyright 2015 Colour Developers"
-    __license__ = "BSD-3-Clause - https://opensource.org/licenses/BSD-3-Clause"
+    __copyright__ = "Copyright 2015 Colour Developers"  # noqa: F841
+    __license__ = "BSD-3-Clause - https://opensource.org/licenses/BSD-3-Clause"  # noqa: F841
 
     # increase width to prevent overflow
     cfa_int = CFA.astype(np.int32)

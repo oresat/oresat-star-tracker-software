@@ -1,6 +1,5 @@
 """Star Tracker service"""
 
-import json
 from enum import IntEnum
 from io import BytesIO
 from time import monotonic, time
@@ -10,7 +9,7 @@ import tifffile as tiff
 from olaf import Node, Service, logger, new_oresat_file
 from PIL import Image
 
-from oresat_star_tracker._lost_core import estimate
+from oresat_star_tracker._lost_core import estimate  # type: ignore[import-untyped]
 
 from .camera import Camera, CameraError, CameraState, MockCamera
 
