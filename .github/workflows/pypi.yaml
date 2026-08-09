@@ -8,10 +8,15 @@ on:
 jobs:
   build_wheels:
     name: Build ${{ matrix.arch }} wheels
-    runs-on: ubuntu-latest
     strategy:
       matrix:
-        arch: [x86_64, armv7l]
+        include:
+          - arch: x86_64
+            runner: ubuntu-latest
+          - arch: armv7l
+            runner: ubuntu-24.04-arm
+
+    runs-on: ${{ matrix.runner }}
 
     steps:
       - uses: actions/checkout@v6
@@ -23,10 +28,10 @@ jobs:
         uses: docker/setup-qemu-action@v3
 
       - name: Build wheels
-        uses: pypa/cibuildwheel@v2.21.0
+        uses: pypa/cibuildwheel@v4.2.0
         env:
           CIBW_ARCHS_LINUX: ${{ matrix.arch }}
-          CIBW_BUILD: "cp310-manylinux*"
+          CIBW_BUILD: "cp311-manylinux*"
           CIBW_BEFORE_ALL_LINUX: >
             yum install -y cairo-devel eigen3-devel || 
             (apt-get update && apt-get install -y libcairo2-dev libeigen3-dev)
