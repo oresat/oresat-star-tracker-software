@@ -64,5 +64,8 @@ line-length = 100
 quote-style = "preserve"
 
 [[tool.mypy.overrides]]
-module = "olaf,lost,_lost_core"
+module = [
+  "olaf",
+  "oresat_star_tracker._lost_core"
+]
 ignore_missing_imports = true

@@ -9,7 +9,7 @@ import tifffile as tiff
 from olaf import Node, Service, logger, new_oresat_file
 from PIL import Image
 
-from oresat_star_tracker._lost_core import estimate  # type: ignore[import-untyped]
+from oresat_star_tracker._lost_core import estimate
 
 from .camera import Camera, CameraError, CameraState, MockCamera
 
@@ -172,7 +172,7 @@ class StarTrackerService(Service):
         ts = time()
         try:
             data = self._camera.capture()
-        except Exception:
+        except FileNotFoundError:
             self._state = State.ERROR
             logger.error("Camera capture failure")
             logger.info(f"changing status: {self._state.name} -> {State.STANDBY.name}")
@@ -220,7 +220,7 @@ class StarTrackerService(Service):
             ts = time()
             try:
                 data = self._camera.capture()
-            except Exception:
+            except CameraError:
                 self._state = State.ERROR
                 logger.error("Camera capture failure")
                 logger.info(f"changing status: {self._state.name} -> {State.STANDBY.name}")
