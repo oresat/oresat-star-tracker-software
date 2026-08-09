@@ -5,7 +5,7 @@ from .utils import find_cli
 if not find_cli().exists():
     raise FileNotFoundError("LOST executable is missing. Did you compile it?")
 
-from .wrapper import prepare_db_args, generate_db
-from .types import TetraDbConfig, PyDbConfig
+from .types import PyDbConfig, TetraDbConfig
+from .wrapper import generate_db, prepare_db_args
 
-__all__ = ["prepare_db_args", "generate_db", "TetraDbConfig", "PyDbConfig"]
+__all__ = ["PyDbConfig", "TetraDbConfig", "generate_db", "prepare_db_args"]

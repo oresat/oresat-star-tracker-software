@@ -50,7 +50,7 @@ class Camera:
 
         logger.debug(f"Camera resolution is {self.x_size}x{self.y_size}")
 
-    def capture(self) -> np.ndarray:
+    def capture(self) -> npt.NDArray[np.uint8]:
         """Capture an image
 
         Raises
@@ -71,7 +71,7 @@ class Camera:
         raw = self._read_raw()
         return _demosaicing_CFA_Bayer_bilinear(raw)
 
-    def _read_raw(self) -> np.ndarray:
+    def _read_raw(self) -> npt.NDArray[np.uint8]:
         with open(self.cap_dev, 'rb') as cam:
             data = cam.read(self.n_pixels)
 
@@ -95,7 +95,7 @@ class MockCamera(Camera):
 
         self._state = CameraState.RUNNING
 
-    def capture(self) -> np.ndarray:
+    def capture(self) -> npt.NDArray[np.uint8]:
         if self._state != CameraState.RUNNING:
             raise CameraError(f"Camera error; state is {self._state}")
         return self._mock_img
