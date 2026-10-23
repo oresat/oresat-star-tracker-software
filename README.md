@@ -13,6 +13,15 @@ will only work on the custom OreSat Star Tracker board. See the
 
 ## Quickstart
 
+Make sure that you have cloned the lost package as a submodule and can compile it (use `git clone --recursive`).
+
+If you have already cloned this repository, install submodules with
+```bash
+git submodule update --init --recursive
+```
+
+Compile the lost executable.
+
 Install Python dependenies
 
 ```bash
