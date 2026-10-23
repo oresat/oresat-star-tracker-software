@@ -144,6 +144,7 @@ class StarTrackerService(Service):
 
         # Check that enough pixels are bright enough
         if self._lower_bound_obj.value != 0:
+            logger.debug("There are not enough bright pixels.")
             # Threshold the grayscale image for brightness check
             bright_binary_image = np.where(gray_img > self._lower_bound_obj.value, 1, 0)
             # Calculate the mean of lit pixels in the original grayscale image
@@ -178,10 +179,13 @@ class StarTrackerService(Service):
             logger.info(f"changing status: {self._state.name} -> {State.STANDBY.name}")
             return
 
+        logger.debug("Data successfully retreived from camera.")
+
         r, g, b = data[..., 0], data[..., 1], data[..., 2]
         gray_img = (0.114 * b + 0.587 * g + 0.299 * r).astype(np.uint8)
         attitude_estimate = estimate(gray_img)
         if not np.isnan(attitude_estimate[0]):
+            logger.debug("Successfully performed attitude estimate")
             logger.debug(attitude_estimate)
 
             self._attitude_i_obj.value = attitude_estimate[0]
@@ -210,6 +214,7 @@ class StarTrackerService(Service):
     def _capture_only_mode(self):
         """Use camera for some amount of time."""
 
+        logger.debug("Entering capture only mode")
         img_count = 0
         start_timestamp = time()
 
@@ -223,27 +228,32 @@ class StarTrackerService(Service):
             except Exception:
                 self._state = State.ERROR
                 logger.error("Camera capture failure")
-                logger.info(f"changing status: {self._state.name} -> {State.STANDBY.name}")
+                logger.info(f"Changing status: {self._state.name} -> {State.STANDBY.name}")
                 return
+
+            logger.debug("Data successfully retreived from camera.")
 
             # Check if image passes filter
             if not self._filter_enable_obj.value or not self._filter(data):
-                logger.debug("capture did not pass filter")
+                logger.debug("Capture did not pass filter.")
                 continue
 
             self._last_capture_time.value = int(ts)
             self._last_capture = data
             img_count += 1
+            logger.debug(f"Image count: {img_count}")
+            logger.debug(f"Last capture time: {self._last_capture_time.value}")
 
             if self._save_obj.value:
                 self._save_to_cache("img", self._encode_compress_tiff(data))  # Save image
+                logger.debug("Saved image to cache")
 
             self.sleep_ms(self._capture_delay_obj.value)
 
         if img_count == 0:
-            logger.info("no images taken, check camera mode settings and filter")
+            logger.info("No images taken, check camera mode settings and filter")
 
-        logger.info(f"changing status: {self._state.name} -> {State.STANDBY.name}")
+        logger.info(f"Changing status: {self._state.name} -> {State.STANDBY.name}")
         self._state = State.STANDBY
 
     def on_loop(self):
@@ -313,7 +323,10 @@ class StarTrackerService(Service):
     def _on_read_last_display_image(self) -> bytes:
         """SDO read callback for star tracker status."""
 
+        logger.debug("Attempting to read captured image...")
+        
         if self._last_capture is None:
+            logger.debug("Last capture not found")
             return b""
 
         data = np.copy(self._last_capture)
@@ -321,8 +334,10 @@ class StarTrackerService(Service):
         # downscale image
         img = Image.fromarray(data)
         img.thumbnail((640, 480), Image.Resampling.LANCZOS)
+        logger.debug("Successfully downscaled image to 640x480")
 
         buff = BytesIO()
         img.save(buff, format="PNG")
+        logger.debug("Image saved to buffer")
 
         return buff.getvalue()
