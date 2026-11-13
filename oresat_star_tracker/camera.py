@@ -44,10 +44,11 @@ class Camera:
         logger.info("Camera is unlocked")
         # read camera paramaters from sysfs
         dev_ctx = Path("/sys/devices/platform/prudev/context_settings")
+        logger.debug(f"Context settings path is set to {dev_ctx}")
+
         self.x_size = int((dev_ctx / "x_size").read_text())
         self.y_size = int((dev_ctx / "y_size").read_text())
         self.n_pixels = self.x_size * self.y_size
-
         logger.debug(f"Camera resolution is {self.x_size}x{self.y_size}")
 
     def capture(self) -> np.ndarray:
@@ -66,14 +67,18 @@ class Camera:
 
         if self._state != CameraState.RUNNING:
             raise CameraError(f"Camera error; state is {self._state}")
-        logger.info("capturing image")
+        logger.info("Capturing image...")
 
         raw = self._read_raw()
+        logger.debug("Raw data retrieved from camera.")
+
         return _demosaicing_CFA_Bayer_bilinear(raw)
 
     def _read_raw(self) -> np.ndarray:
         with open(self.cap_dev, 'rb') as cam:
+            logger.debug("Successfully opened camera.")
             data = cam.read(self.n_pixels)
+            logger.debug(f"Read {len(data)} from camera.")
 
         return np.frombuffer(data, np.uint8).reshape(self.x_size, self.y_size)
 
