@@ -324,7 +324,7 @@ class StarTrackerService(Service):
         """SDO read callback for star tracker status."""
 
         logger.debug("Attempting to read captured image...")
-        
+
         if self._last_capture is None:
             logger.debug("Last capture not found")
             return b""

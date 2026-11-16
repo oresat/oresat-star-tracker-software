@@ -22,6 +22,104 @@ class CameraError(Exception):
     """An error has occured with camera"""
 
 
+class BasicCamera:
+    def __init__(
+        self,
+        cap_dev: str = "/dev/prucam",
+        dev_ctx: str = "/sys/devices/plaform/prudev/context_settings",
+        x_size: int = 1280,
+        y_size: int = 960,
+    ):
+        """
+        Parameters
+        ----------
+        cap_dev: path for image capture
+        dev_ctx: path for camera context settings
+        x_size: expected image x size in pixels
+        y_size: expected image y size in pixels
+        """
+
+        # Check that the camera exists
+        self.cap_dev = Path(cap_dev)
+        if not self.cap_dev.exists():
+            self._state = CameraState.NOT_FOUND
+            logger.error(f"Could not find capture device at {self.cap_dev}")
+            return
+
+        self._state = CameraState.RUNNING
+        logger.info("Camera is unlocked")
+
+        # Read camera paramaters
+        self.dev_ctx = Path(dev_ctx)
+        if not self.dev_ctx.exists():
+            # If the context path does not exist for some reason, use the default values
+            logger.warning(f"Camera context {dev_ctx} does not exist, using default values.")
+            self.x_size = x_size
+            self.y_size = y_size
+        else:
+            # If the context does exist, read the x and y pixels from there instead
+            logger.debug(f"Context settings path is set to {self.dev_ctx}")
+            self.x_size = int((self.dev_ctx / "x_size").read_text())
+            self.y_size = int((self.dev_ctx / "y_size").read_text())
+            if x_size != self.x_size:
+                logger.warning(f"Context x-size is {self.x_size}, does not match {x_size}.")
+            if y_size != self.y_size:
+                logger.warning(f"Context y-size is {self.y_size}, does not match {y_size}.")
+
+        self.n_pixels = self.x_size * self.y_size
+        logger.debug(f"Camera resolution is {self.x_size}x{self.y_size}, {self.n_pixels} total.")
+
+    def _read_raw(self) -> np.ndarray:
+        """Read the raw data from the capture path."""
+
+        with open(self.cap_dev, 'rb') as capture_fd:
+            logger.debug("Successfully accessed capture.")
+            data = capture_fd.read(self.n_pixels)
+            logger.debug(f"Read {len(data)} from capture.")
+
+        return np.frombuffer(data, np.uint8).reshape(self.x_size, self.y_size)
+
+    def _filter(self, raw: npt.NDArray[np.uint8]) -> np.ndarray:
+        """Filter and postprocess the image into RGB color channels."""
+        # Convert the raw values to three channels.
+        return np.dstack([raw, raw, raw])
+
+    def capture(self) -> np.ndarray:
+        """Capture an image
+
+        Raises
+        ------
+        CameraError
+            failed to capture image
+
+        Returns
+        -------
+        numpy.ndarray[np.uint8]
+            image data in numpy array
+        """
+
+        if self._state != CameraState.RUNNING:
+            raise CameraError(f"Camera error; state is {self._state}")
+
+        raw = self._read_raw()
+        logger.debug("Raw data retrieved from camera.")
+
+        filtered = self._filter(raw)
+        logger.debug("Capture data sucessfully filtered.")
+
+        return filtered
+
+    @property
+    def state(self) -> CameraState:
+        return self._state
+
+
+class ColorCamera(BasicCamera):
+    def _filter(self, raw: npt.NDArray[np.uint8]) -> np.ndarray:
+        """Filter and postprocess the image into RGB color channels."""
+        return _demosaicing_CFA_Bayer_bilinear(raw)
+
+
 class Camera:
     """Star tracker AR013x camera"""
 

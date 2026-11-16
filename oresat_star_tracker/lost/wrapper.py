@@ -23,7 +23,7 @@ import subprocess
 from pathlib import Path
 
 from .types import PyDbConfig, TetraDbConfig
-from .utils import find_cli, dict_flatten
+from .utils import dict_flatten, find_cli
 
 cli = find_cli()
 cli_dir = cli.parent
