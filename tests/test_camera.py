@@ -5,10 +5,13 @@ Do tests with images that are NOT a star field
 
 import os
 import shutil
-
+import numpy as np
 from oresat_star_tracker import camera
+from PIL import Image
 
 
+
+# SETUP AND TEARDOWN
 def setup_module(module):
     """Sets up dev/prucam to be an image that is NOT a star field"""
     # TODO: if directory does not exist, stop
@@ -32,6 +35,9 @@ def teardown_module(module):
     os.remove(prucam_dir)
 
 
+
+# FIXTURES
+
 def test_setup():
     """Ensures"""
     prucam_dir = os.path.join(os.path.dirname(__file__), "dev", "prucam")
@@ -47,8 +53,13 @@ def test_basic_camera():
     test_cam = camera.BasicCamera(
         cap_dev=prucam_dir,
     )
-    test_cam._read_raw()
-    test_cam.capture()
+    super_raw = test_cam._read_raw()
+    print(super_raw.shape)
+
+    raw = test_cam.capture()
+    print(raw.shape)
+    img = Image.fromarray(raw)
+    print(img.size)
 
 
 def test_color_camera():
@@ -58,3 +69,6 @@ def test_color_camera():
         cap_dev=prucam_dir,
     )
     test_cam.capture()
+
+
+
