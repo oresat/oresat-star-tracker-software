@@ -3,19 +3,14 @@
 Do tests with images that are NOT a star field
 """
 
-import pytest
-
 import os
 import shutil
-import numpy as np
 
-from oresat_star_tracker import camera
-from oresat_star_tracker.star_tracker_service import StarTrackerService
-
+import pytest
 from olaf import CanNetwork, Node
 from oresat_configs import Mission, OreSatConfig
 
-from PIL import Image
+from oresat_star_tracker.star_tracker_service import StarTrackerService
 
 
 def setup_module(module):
@@ -31,8 +26,8 @@ def setup_module(module):
     # move the binary to `dev/prucam`
     # TODO: check that file exists before trying to copy it
     shutil.copy(os.path.join(images_dir, "not_stars_img.bin"), os.path.join(work_dir, "prucam"))
-    
-    prucam_dir = os.path.join(os.path.dirname(__file__), "dev", "prucam")
+
+    os.path.join(os.path.dirname(__file__), "dev", "prucam")
 
 
 def teardown_module(module):
@@ -41,7 +36,6 @@ def teardown_module(module):
 
     # TODO: check that file exists
     os.remove(prucam_dir)
-
 
 
 @pytest.fixture
@@ -77,7 +71,6 @@ def test_file_setup():
 def test_service_capture_only_mode(st_service):
     st_service._capture_only_mode()
 
+
 def test_service_star_track_mode(st_service):
     st_service._star_track()
-
-

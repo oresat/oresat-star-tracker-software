@@ -10,7 +10,7 @@ from olaf import Node, Service, logger, new_oresat_file
 from PIL import Image
 
 from ._lost_core import estimate  # type: ignore[import-untyped]
-from .camera import BasicCamera, CameraError, CameraState
+from .camera import CameraError, CameraState, GrayscaleCamera
 
 
 class State(IntEnum):
@@ -35,6 +35,7 @@ STATE_TRANSISTIONS = {
     State.ERROR: [State.OFF],
 }
 """Valid status transistions."""
+# TODO: implement and modify state transitions
 
 
 class StarTrackerService(Service):
@@ -47,17 +48,9 @@ class StarTrackerService(Service):
 
         self._state = State.BOOT
 
-        # Move the mock_hw to another place
-        # if not mock_hw:
-        #    logger.debug("not mocking camera")
-        #    self._camera = Camera()
-        # else:
-        #     logger.debug("mocking camera")
-        #     self._camera = MockCamera()
-
         # TODO: determine if the camera
         # should be a color camera.
-        self._camera = BasicCamera(cap_dev=cap_dev)
+        self._camera = GrayscaleCamera(cap_dev=cap_dev)
 
         self._last_capture = None
 
@@ -176,7 +169,8 @@ class StarTrackerService(Service):
         # Take the image
         ts = time()
         try:
-            data = self._camera.capture()
+            # capture specifically the grayscale image
+            gray_img = self._camera.capture_l()
         except Exception as e:
             self._state = State.ERROR
             logger.error("Camera capture failure")
@@ -186,8 +180,6 @@ class StarTrackerService(Service):
 
         logger.debug("Data successfully retreived from camera.")
 
-        r, g, b = data[..., 0], data[..., 1], data[..., 2]
-        gray_img = (0.114 * b + 0.587 * g + 0.299 * r).astype(np.uint8)
         attitude_estimate = estimate(gray_img)
         if not np.isnan(attitude_estimate[0]):
             logger.debug("Successfully performed attitude estimate")
@@ -201,12 +193,14 @@ class StarTrackerService(Service):
 
             self._time_stamp_obj.value = int(ts)
             self._last_capture_time.value = int(ts)
-            self._last_capture = data
+            self._last_capture = gray_img
 
             # Send the star tracker data TPDOs
             self.node.send_tpdo(3)
             self.node.send_tpdo(4)
             self.node.send_tpdo(5)
+        else:
+            logger.warning("Attitude estimate was not successful!")
 
         # If the frequency is 0, star track once
         if self._capture_delay_obj.value == 0:
@@ -214,7 +208,7 @@ class StarTrackerService(Service):
             self._state = State.STANDBY
         else:
             self.sleep_ms(self._capture_delay_obj.value)
-            logger.debug(f"sleeping for {self._capture_delay_obj.value}")
+            logger.debug(f"Sleeping for {self._capture_delay_obj.value} ms")
 
     def _capture_only_mode(self):
         """Use camera for some amount of time."""
@@ -229,28 +223,28 @@ class StarTrackerService(Service):
         ):
             ts = time()
             try:
-                data = self._camera.capture()
+                gray_img = self._camera.capture_l()
             except Exception:
                 self._state = State.ERROR
                 logger.error("Camera capture failure")
-                logger.info(f"Changing status: {self._state.name} -> {State.STANDBY.name}")
+                # logger.info(f"Changing status: {self._state.name} -> {State.STANDBY.name}")
                 return
 
             logger.debug("Data successfully retreived from camera.")
 
             # Check if image passes filter
-            if not self._filter_enable_obj.value or not self._filter(data):
+            if not self._filter_enable_obj.value or not self._filter(gray_img):
                 logger.debug("Capture did not pass filter.")
                 continue
 
             self._last_capture_time.value = int(ts)
-            self._last_capture = data
+            self._last_capture = gray_img
             img_count += 1
             logger.debug(f"Image count: {img_count}")
             logger.debug(f"Last capture time: {self._last_capture_time.value}")
 
             if self._save_obj.value:
-                self._save_to_cache("img", self._encode_compress_tiff(data))  # Save image
+                self._save_to_cache("img", self._encode_compress_tiff(gray_img))  # Save image
                 logger.debug("Saved image to cache")
 
             self.sleep_ms(self._capture_delay_obj.value)
@@ -337,7 +331,7 @@ class StarTrackerService(Service):
         data = np.copy(self._last_capture)
 
         # downscale image
-        img = Image.fromarray(data)
+        img = Image.fromarray(data, mode="L")
         img.thumbnail((640, 480), Image.Resampling.LANCZOS)
         logger.debug("Successfully downscaled image to 640x480")
 

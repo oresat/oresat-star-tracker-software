@@ -1,6 +1,7 @@
 """Star Tracker App"""
 
 import os
+from importlib.resources import files
 
 from olaf import app, olaf_run, olaf_setup, render_olaf_template, rest_api
 
@@ -24,7 +25,12 @@ def main():
 
     app.od["versions"]["sw_version"].value = __version__
 
-    cap_dev = "/dev/prucam"
+    if mock_camera:
+        # when mocking the camera, use the package data
+        cap_dev = str(files("oresat_star_tracker.data").joinpath("mock_img.bin"))
+    else:
+        # when not mocking the camera, use the prucam path
+        cap_dev = "/dev/prucam"
 
     app.add_service(StarTrackerService(cap_dev, mock_camera))
 

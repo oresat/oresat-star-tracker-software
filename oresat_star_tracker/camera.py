@@ -115,10 +115,56 @@ class BasicCamera:
         return self._state
 
 
+class GrayscaleCamera(BasicCamera):
+    def capture_l(self):
+        """Capture a grayscale image (y by x by 1)"""
+
+        if self._state != CameraState.RUNNING:
+            raise CameraError(f"Camera error; state is {self._state}")
+
+        # read raw pixel array
+        raw = self._read_raw()
+        logger.debug("Raw data retrieved from camera.")
+
+        # for a grayscale camera, the grayscale is the raw pixel readout.
+        return raw
+
+    def capture_rgb(self):
+        """Capture an rgb image (y by x by 3)"""
+        # For RGB channels, just duplicate the grayscale image
+        gray_img = self.capture_l()
+        return np.dstack([gray_img, gray_img, gray_img])
+
+
 class ColorCamera(BasicCamera):
     def _filter(self, raw: npt.NDArray[np.uint8]) -> np.ndarray:
         """Filter and postprocess the image into RGB color channels."""
         return _demosaicing_CFA_Bayer_bilinear(raw)
+
+    def capture_l(self):
+        """Capture a grayscale image (y by x by 1)"""
+
+        color = self.capture_rgb()
+
+        r, g, b = color[..., 0], color[..., 1], color[..., 2]
+        # TODO: cite where these magic numbers come from
+        gray_img = (0.114 * b + 0.587 * g + 0.299 * r).astype(np.uint8)
+
+        return gray_img
+
+    def capture_rgb(self):
+        """Capture an rgb image (y by x by 3)"""
+
+        if self._state != CameraState.RUNNING:
+            raise CameraError(f"Camera error; state is {self._state}")
+
+        raw = self._read_raw()
+        logger.debug("Raw data retrieved from camera.")
+
+        filtered = self._filter(raw)
+        logger.debug("Capture data sucessfully filtered.")
+
+        return filtered
 
 
 class Camera:
