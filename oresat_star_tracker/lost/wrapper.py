@@ -32,7 +32,7 @@ data_dir = Path(__file__).parents[2] / "data"
 
 def _lost_runner(args: dict) -> None:
     stringified_args = [str(arg) for arg in dict_flatten(args)]
-    subprocess.run([str(cli), *stringified_args], cwd=cli_dir)
+    subprocess.run([str(cli), *stringified_args], check=False, cwd=cli_dir)
 
 
 def _py_db_args(cfg: PyDbConfig) -> dict:
@@ -70,7 +70,7 @@ def prepare_db_args(cfg: PyDbConfig | TetraDbConfig | None = None) -> dict:
     return args
 
 
-def generate_db(args: dict = prepare_db_args()) -> None:
+def generate_db(args: dict | None = None) -> None:
     """
     Call LOST's database generation command.
 
@@ -79,4 +79,7 @@ def generate_db(args: dict = prepare_db_args()) -> None:
     lost.PyDbConfig : Pyramid database configuration object.
     lost.TetraDbconfig : Tetra database configuration object
     """
+    if args is None:
+        args = prepare_db_args()
+
     _lost_runner(args)

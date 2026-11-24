@@ -77,7 +77,8 @@ class BasicCamera:
             data = capture_fd.read(self.n_pixels)
             logger.debug(f"Read {len(data)} from capture.")
 
-        return np.frombuffer(data, np.uint8).reshape(self.x_size, self.y_size)
+        # Note: the camera reads the array as size (Y, X), NOT (X, Y)
+        return np.frombuffer(data, np.uint8).reshape(self.y_size, self.x_size)
 
     def _filter(self, raw: npt.NDArray[np.uint8]) -> np.ndarray:
         """Filter and postprocess the image into RGB color channels."""

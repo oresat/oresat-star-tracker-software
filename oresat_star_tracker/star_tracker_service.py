@@ -9,9 +9,8 @@ import tifffile as tiff
 from olaf import Node, Service, logger, new_oresat_file
 from PIL import Image
 
-from oresat_star_tracker._lost_core import estimate  # type: ignore[import-untyped]
-
-from .camera import Camera, CameraError, CameraState, MockCamera
+from ._lost_core import estimate  # type: ignore[import-untyped]
+from .camera import BasicCamera, CameraError, CameraState
 
 
 class State(IntEnum):
@@ -43,17 +42,22 @@ class StarTrackerService(Service):
 
     node: Node
 
-    def __init__(self, mock_hw: bool = False):
+    def __init__(self, cap_dev: str = "/dev/prucam", mock_hw: bool = False):
         super().__init__()
 
         self._state = State.BOOT
 
-        if not mock_hw:
-            logger.debug("not mocking camera")
-            self._camera = Camera()
-        else:
-            logger.debug("mocking camera")
-            self._camera = MockCamera()
+        # Move the mock_hw to another place
+        # if not mock_hw:
+        #    logger.debug("not mocking camera")
+        #    self._camera = Camera()
+        # else:
+        #     logger.debug("mocking camera")
+        #     self._camera = MockCamera()
+
+        # TODO: determine if the camera
+        # should be a color camera.
+        self._camera = BasicCamera(cap_dev=cap_dev)
 
         self._last_capture = None
 
@@ -173,9 +177,10 @@ class StarTrackerService(Service):
         ts = time()
         try:
             data = self._camera.capture()
-        except Exception:
+        except Exception as e:
             self._state = State.ERROR
             logger.error("Camera capture failure")
+            logger.info(f"{e}")
             logger.info(f"changing status: {self._state.name} -> {State.STANDBY.name}")
             return
 

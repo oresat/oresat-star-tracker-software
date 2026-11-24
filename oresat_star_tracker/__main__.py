@@ -24,7 +24,9 @@ def main():
 
     app.od["versions"]["sw_version"].value = __version__
 
-    app.add_service(StarTrackerService(mock_camera))
+    cap_dev = "/dev/prucam"
+
+    app.add_service(StarTrackerService(cap_dev, mock_camera))
 
     rest_api.add_template(f"{path}/templates/star_tracker.html")
 
